@@ -1,169 +1,122 @@
-# PayrollPro Deployment Guide - AWS Amplify
+# Deployment Guide for PayrollPro Flask Application
 
-## Overview
-This guide will help you deploy the PayrollPro Flask application to AWS Amplify.
+## Current Issue
 
-## Prerequisites
-- AWS Account
-- Git repository with your code
-- AWS Amplify Console access
+The error "This page can't be found" at `main.dzx2fam15gdb8.amplifyapp.com` occurs because **AWS Amplify is designed for static websites and single-page applications (SPAs)**, not for server-side applications like Flask.
 
-## Deployment Steps
+## Why Amplify Doesn't Work for Flask Apps
 
-### 1. Prepare Your Repository
+AWS Amplify provides:
+- Static file hosting
+- CDN distribution
+- Build automation for frontend frameworks
 
-Make sure your repository contains these files:
-- `amplify.yml` - Build specification
-- `requirements.txt` - Python dependencies
-- `wsgi.py` - WSGI entry point
-- `Procfile` - Process definition
-- `config.py` - Application configuration
+Flask applications require:
+- Server-side processing
+- Database connections
+- Session management
+- Dynamic routing
 
-### 2. Connect to AWS Amplify
+## Recommended Deployment Options
 
-1. Go to [AWS Amplify Console](https://console.aws.amazon.com/amplify/)
-2. Click "New app" → "Host web app"
-3. Choose your Git provider (GitHub, GitLab, Bitbucket, etc.)
-4. Connect your repository
-5. Select the branch you want to deploy (usually `main` or `master`)
+### 1. AWS Elastic Beanstalk (Recommended)
+**Best for:** Production Flask applications with full server capabilities
 
-### 3. Configure Build Settings
-
-Amplify will automatically detect the `amplify.yml` file. The build process will:
-- Install Python dependencies from `requirements.txt`
-- Initialize the Flask application
-- Deploy using Gunicorn WSGI server
-
-### 4. Environment Variables
-
-Set these environment variables in Amplify Console:
-
-#### Required Variables:
-```
-FLASK_ENV=production
-SESSION_SECRET=your-super-secret-key-here
-```
-
-#### Optional Variables:
-```
-DATABASE_URL=your-database-url (if using external database)
-REDIS_URL=your-redis-url (if using Redis for caching)
-```
-
-### 5. Database Configuration
-
-#### Option A: SQLite (Default)
-- No additional setup required
-- Database file will be created automatically
-- **Note**: Data will be lost on each deployment
-
-#### Option B: PostgreSQL (Recommended for Production)
-1. Create an RDS PostgreSQL instance
-2. Set `DATABASE_URL` environment variable:
-   ```
-   DATABASE_URL=postgresql://username:password@host:port/database
-   ```
-
-### 6. Custom Domain (Optional)
-
-1. In Amplify Console, go to "Domain management"
-2. Add your custom domain
-3. Configure DNS settings as instructed
-
-### 7. SSL Certificate
-
-Amplify automatically provides SSL certificates for your domain.
-
-## Post-Deployment
-
-### 1. Initial Setup
-After deployment, visit your app URL and:
-1. Register a new account
-2. Create your first company
-3. Start using the payroll system
-
-### 2. Database Migration
-If using PostgreSQL, you may need to run database migrations:
 ```bash
-# Connect to your Amplify build environment
-# Run migrations if needed
+# Install EB CLI
+pip install awsebcli
+
+# Initialize EB application
+eb init -p python-3.9 payrollpro
+
+# Create environment
+eb create payrollpro-prod
+
+# Deploy
+eb deploy
 ```
 
-### 3. Monitoring
-- Use AWS CloudWatch for logs
-- Monitor application performance
-- Set up alerts for errors
+### 2. AWS App Runner
+**Best for:** Containerized applications with automatic scaling
 
-## Troubleshooting
+```bash
+# Create Dockerfile
+echo 'FROM python:3.9-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY . .
+EXPOSE 5000
+CMD ["python", "wsgi.py"]' > Dockerfile
 
-### Common Issues:
+# Deploy via AWS Console or CLI
+```
 
-1. **Build Failures**
-   - Check build logs in Amplify Console
-   - Verify all dependencies are in `requirements.txt`
-   - Ensure Python version compatibility
+### 3. Heroku
+**Best for:** Quick deployment and development
 
-2. **Database Connection Issues**
-   - Verify `DATABASE_URL` environment variable
-   - Check database security groups
-   - Ensure database is accessible from Amplify
+```bash
+# Install Heroku CLI
+# Create Procfile
+echo 'web: python wsgi.py' > Procfile
 
-3. **Static Files Not Loading**
-   - Check file paths in templates
-   - Verify static folder structure
+# Deploy
+git add .
+git commit -m "Deploy to Heroku"
+heroku create payrollpro-app
+git push heroku main
+```
 
-4. **WeasyPrint Issues**
-   - WeasyPrint requires system libraries
-   - Consider using alternative PDF generation for production
+### 4. DigitalOcean App Platform
+**Best for:** Simple containerized deployments
 
-### Build Logs
-Check build logs in Amplify Console for detailed error information.
+```bash
+# Create app.yaml
+echo 'name: payrollpro
+services:
+- name: web
+  source_dir: /
+  github:
+    repo: your-repo
+    branch: main
+  run_command: python wsgi.py
+  environment_slug: python' > app.yaml
+```
 
-## Security Considerations
+## Quick Fix for Current Amplify Setup
 
-1. **Environment Variables**
-   - Never commit secrets to Git
-   - Use Amplify environment variables for sensitive data
+The updated `amplify.yml` will now show an informational page explaining that this is a Flask application and suggesting proper deployment options.
 
-2. **Database Security**
-   - Use strong passwords
-   - Restrict database access
-   - Enable SSL connections
+## Database Considerations
 
-3. **Application Security**
-   - Keep dependencies updated
-   - Use HTTPS in production
-   - Implement proper session management
+For production deployment, consider:
+- **AWS RDS** for PostgreSQL/MySQL
+- **AWS DynamoDB** for NoSQL
+- **Heroku Postgres** for Heroku deployments
+- **DigitalOcean Managed Databases**
 
-## Performance Optimization
+## Environment Variables
 
-1. **Database**
-   - Use connection pooling
-   - Optimize queries
-   - Consider read replicas for heavy loads
-
-2. **Caching**
-   - Enable Redis caching
-   - Use CDN for static assets
-   - Implement application-level caching
-
-3. **Monitoring**
-   - Set up performance monitoring
-   - Monitor database performance
-   - Track user experience metrics
-
-## Support
-
-For issues specific to:
-- **AWS Amplify**: Check AWS documentation
-- **Flask Application**: Check application logs
-- **Database**: Check RDS console and logs
+Set these in your deployment platform:
+```bash
+FLASK_ENV=production
+DATABASE_URL=your_database_url
+SESSION_SECRET=your_secret_key
+REDIS_URL=your_redis_url  # Optional
+```
 
 ## Next Steps
 
-After successful deployment:
-1. Set up monitoring and alerts
-2. Configure backup strategies
-3. Plan for scaling
-4. Implement CI/CD pipeline
-5. Set up staging environment
+1. **Choose a deployment platform** from the options above
+2. **Set up a production database**
+3. **Configure environment variables**
+4. **Deploy your application**
+5. **Set up custom domain** (optional)
+
+## Support
+
+For specific deployment platform questions, refer to:
+- [AWS Elastic Beanstalk Documentation](https://docs.aws.amazon.com/elasticbeanstalk/)
+- [AWS App Runner Documentation](https://docs.aws.amazon.com/apprunner/)
+- [Heroku Python Documentation](https://devcenter.heroku.com/categories/python-support)
+- [DigitalOcean App Platform Documentation](https://docs.digitalocean.com/products/app-platform/)
