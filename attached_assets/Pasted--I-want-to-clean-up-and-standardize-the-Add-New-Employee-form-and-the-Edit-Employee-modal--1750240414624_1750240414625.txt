@@ -1,0 +1,45 @@
+# 🎯 I want to clean up and standardize the Add New Employee form and the Edit Employee modal.
+
+# Please help me verify the following across:
+# - templates/employees/new.html (Add form)
+# - templates/employees/view.html (Edit modal)
+# - routes in employees.py and services if applicable
+
+1. 🧹 LEGACY FIELDS:
+   - Check if any of these fields are still present in the templates or being processed in the backend:
+     - medical_aid_employee
+     - medical_aid_employer
+     - union_fees
+     - sdl_contributing (as a numeric value, not just a flag)
+     - uif_contributing (same)
+   - Highlight where they're used and confirm whether they’re safe to remove.
+
+2. ✅ NEW DEFAULTS & RECURRING DEDUCTIONS:
+   - In `POST /employees/` (Add route):
+     - Confirm that CompanyDeductionDefaults are applied when a new employee is created.
+     - Confirm that any employee-level recurring deductions are created accordingly.
+   - In `POST /employees/<id>/edit`:
+     - Confirm how recurring deductions are updated (or whether they're separate via AJAX)
+
+3. 🔁 AUTO-CALCULATED FIELDS:
+   - Identify whether UIF and SDL amounts are:
+     - Shown on-screen during salary input
+     - Stored in employee model (legacy) or only calculated at payroll entry time
+   - Confirm where calculation logic lives (JS, Python service)
+
+4. 🧪 JAVASCRIPT FUNCTIONALITY:
+   - Search for JS functions that handle:
+     - Real-time salary-based calculation (UIF, SDL, etc.)
+     - Toggle logic for medical aid, union, deductions
+     - SA ID validation and auto-filling DOB/gender
+   - Confirm if any functions exist only in the Add form but not reused in Edit modal
+
+5. 🧱 MODEL DEPENDENCIES:
+   - Confirm that `EmployeeRecurringDeduction` is the **only active source** for recurring deductions
+   - Confirm if any backend logic still reads deduction values from the `Employee` model itself
+
+# ✅ I want to:
+# - Remove legacy/duplicate deduction fields
+# - Centralize deduction handling via recurring system
+# - Auto-calculate UIF/SDL from salary in the form
+# - Keep both forms clean, functional, and consistent

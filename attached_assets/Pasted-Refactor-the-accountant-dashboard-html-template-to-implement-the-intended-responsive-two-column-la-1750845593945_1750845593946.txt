@@ -1,0 +1,44 @@
+Refactor the `accountant_dashboard.html` template to implement the intended responsive two-column layout and UI enhancements as per the PORTFOLIO_DASHBOARD_LAYOUT_VALIDATION.md findings.
+
+Tasks:
+
+1. **Layout Structure**:
+   - Wrap main content in a Bootstrap `<div class="row">` with two columns:
+     - Left: `<div class="col-lg-8 col-xl-9">` for Compliance Overview, Company Cards, and Calendar
+     - Right: `<div class="col-lg-4 col-xl-3">` for Sidebar Widgets (Alerts, Stats, Activity)
+
+2. **Compliance Metric Cards**:
+   - Add `compliance-metric-card` class to each card
+   - Make each card clickable with `onclick="filterComplianceCalendar('overdue')"` (adjust status accordingly)
+   - Add Bootstrap tooltip with `data-bs-toggle="tooltip"` and relevant title
+
+3. **Company Overview Cards**:
+   - Add `company-card` class
+   - Set consistent height (180px), use compact layout, remove `h-100` if present
+
+4. **Sidebar Widgets**:
+   - Add widgets for:
+     - Compliance Alerts (overdue/due soon counts)
+     - Quick Stats (estimated payroll, total employees)
+     - Recent Activity (timeline of actions)
+   - Use `<div class="sidebar-widget mb-3">` containers
+
+5. **Interactive Calendar Filtering**:
+   - Add JS function `filterComplianceCalendar(status)` to reload calendar with filter
+   - Trigger calendar refetch
+   - Log the filter status to console for debugging
+
+6. **Mobile Optimization**:
+   - Ensure layout stacks vertically on small screens
+   - Use responsive Bootstrap classes and collapse filters on mobile view
+
+7. **Tooltips Activation**:
+   - Add JS snippet to activate Bootstrap tooltips globally:
+     ```js
+     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+     tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+       new bootstrap.Tooltip(tooltipTriggerEl)
+     })
+     ```
+
+Goal: The `/accountant/dashboard` view should load a compact, interactive, and responsive interface with full compliance visibility and intuitive layout across screen sizes.

@@ -1,0 +1,75 @@
+Please follow the global rules in `PROJECT_RULES.md`
+
+---
+
+### 🧩 Context
+
+Two issues need to be resolved regarding decimal formatting and validation:
+
+---
+
+### 1️⃣: Default Piece Rate Should Show Two Decimal Places Only
+
+- File: `templates/company/defaults.html` or similar
+- Problem: Default piece rate input shows **four decimal places**
+- Required Fix:
+  - Change the input field to:
+    ```html
+    <input type="number" step="0.01" min="0" ... >
+    ```
+  - Update template or form formatting to use:
+    ```jinja2
+    value="{{ company.default_piece_rate | round(2) }}"
+    ```
+
+---
+
+### 2️⃣: New Employee Form Does Not Accept Decimals for Overtime Fields
+
+- File: `templates/employees/new.html`
+- Problem: Fields like:
+  - Ordinary Hours Per Day
+  - Work Days Per Month
+  - Derived Hourly Rate
+  - All show decimals but may fail validation on submit
+
+- Required Fix:
+  - Ensure all number fields accept decimals:
+    ```html
+    <input type="number" step="0.01" min="0" ... >
+    ```
+  - Specifically update the following fields:
+    - `ordinary_hours_per_day`
+    - `work_days_per_month`
+    - `salary` (if used in piece or hourly mode)
+    - `overtime_multiplier`, `sunday_multiplier`, `holiday_multiplier`
+
+  - Ensure backend validation accepts float/decimal values in:
+    - `routes/employees.py` (new employee save)
+    - Any WTForms validators (set to `DecimalField`, not `IntegerField`)
+
+---
+
+### 3️⃣: Edit Employee Modal Must Mirror These Fixes
+
+- File: `templates/employees/edit_employee_modal.html`
+- Ensure:
+  - Same decimal precision on input fields
+  - JS validation is not blocking decimal values
+  - Two-way binding still works when form loads from `.to_dict()`
+
+---
+
+### 🧪 Output
+
+- ✅ Piece Rate now shows `R 10.50`, not `R 10.5000`
+- ✅ New Employee form allows decimal overtime values and saves correctly
+- ✅ Edit Employee modal reflects and accepts decimals in all rate fields
+
+---
+
+### 📎 Knock-On Check
+
+- Make sure calculated hourly rate (if derived from monthly) also displays two decimals
+- Confirm that values round but do **not** truncate during backend save
+- Ensure PDF and reporting views use `round(2)` where applicable

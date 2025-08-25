@@ -1,0 +1,73 @@
+Goal: Refactor the existing accountant_dashboard.html and associated route logic to replace the scroll-heavy portfolio dashboard with a compact, single-frame desktop view that emphasizes usability and compliance insights.
+
+🔁 Replace Company Cards with a Responsive Portfolio Table
+In accountant_dashboard.html:
+
+Remove all .company-card elements.
+
+Add a responsive <table> with the following columns:
+
+Company Name (with logo/icon and optional link to details)
+
+Sector (with emoji or tag)
+
+Payroll Status (badges: Finalized ✅, Pending ⏳, Overdue ❌)
+
+Last Payroll Run
+
+Employee Count
+
+Compliance Status (e.g. “2 overdue”, “Compliant” with hover tooltips)
+
+Actions (buttons: [Details], [Reminders])
+
+Ensure the table supports:
+
+Responsive collapse on mobile (fallback to accordion/card layout)
+
+Sorting by column
+
+Hover tooltips (Bootstrap preferred)
+
+📆 Add a Mini month View Calendar (Top Right Corner)
+Use a lightweight JavaScript library (e.g., FullCalendar's dayGridMonth with header and toolbar hidden) or hand-rolled mini grid.
+
+Display current month, with navigation arrows
+
+On hover: show tooltips of reminders for that day.
+
+On click: filter portfolio table to companies with reminders due that day.
+
+Style to fit inside a 300px-wide sidebar or corner panel.
+Use existing /accountant/calendar-data endpoint with start/end parameters to power this.
+
+🧱 Sidebar Panel for Contextual Widgets
+Create a collapsible sidebar (right-hand side) with:
+
+🔔 Unread Notifications (summary with badge count)
+
+🕒 Upcoming Payroll Deadlines (7-day preview)
+
+📌 Key SARS Reminders (EMP201, IRP5, UI19, etc.)
+
+Make sidebar sticky on desktop, collapsible on mobile.
+
+🧹 Remove the Following:
+Remove:
+
+“Quick Stats”
+
+“Employees by Company” chart
+
+Old “Company Overview” cards
+
+Consolidate redundant employee/payroll data into table columns
+
+🧠 Additional Notes:
+Create a new PortfolioService.get_portfolio_table_data(user_id) method if needed to consolidate query logic for the new table.
+
+Reuse sars_config and reminder context objects where applicable.
+
+The calendar filtering logic should gracefully handle no matches and invalid input.
+
+Test layout on 1440px screen size to confirm all major elements fit above the fold.

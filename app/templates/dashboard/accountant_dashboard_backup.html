@@ -1,0 +1,1194 @@
+{% extends "base.html" %}
+
+{% block title %}Portfolio Dashboard - Payroll Management{% endblock %}
+
+{% block head %}
+<style>
+.compliance-metric-card {
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: 2px solid transparent;
+}
+
+.compliance-metric-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    border-color: rgba(255,255,255,0.2);
+}
+
+
+
+.badge-sm {
+    font-size: 0.65rem;
+    padding: 0.25em 0.4em;
+}
+
+/* Mini Calendar Styles */
+.mini-calendar-grid {
+    width: 100%;
+}
+
+.mini-calendar-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    margin-bottom: 2px;
+}
+
+@media (max-width: 576px) {
+    .mini-calendar-day {
+        padding: 8px 4px !important;
+        font-size: 0.85rem !important;
+    }
+    
+    .mini-calendar-day-header {
+        padding: 6px 2px !important;
+        font-size: 0.75rem !important;
+    }
+}
+
+.mini-calendar-day-header {
+    padding: 4px;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: #666;
+    background-color: #f8f9fa;
+}
+
+.mini-calendar-body {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+}
+
+.mini-calendar-day {
+    padding: 6px 4px;
+    text-align: center;
+    font-size: 0.8rem;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: background-color 0.2s;
+}
+
+.mini-calendar-day.current-month {
+    color: #333;
+}
+
+.mini-calendar-day.other-month {
+    color: #ccc;
+}
+
+.mini-calendar-day.today {
+    background-color: var(--bs-primary);
+    color: white;
+    font-weight: bold;
+}
+
+.mini-calendar-day:hover {
+    background-color: var(--bs-light);
+}
+
+.mini-calendar-day.today:hover {
+    background-color: var(--bs-primary);
+    opacity: 0.8;
+}
+
+/* Portfolio Table Enhancements */
+.company-name {
+    color: inherit;
+    transition: color 0.2s ease;
+}
+
+.company-name:hover {
+    color: var(--bs-primary) !important;
+}
+
+.table-responsive {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+    .sidebar-widget {
+        position: static;
+        max-height: none;
+    }
+    
+    .mini-calendar-day {
+        padding: 8px 4px;
+        font-size: 0.9rem;
+    }
+}
+
+.sidebar-widget {
+    position: sticky;
+    top: 20px;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+}
+
+.calendar-toggle {
+    background: none;
+    border: none;
+    color: inherit;
+    font-size: 1.1rem;
+    transition: transform 0.2s ease;
+}
+
+.calendar-toggle:hover {
+    transform: rotate(180deg);
+}
+
+.calendar-collapsed .calendar-body {
+    display: none;
+}
+
+.insight-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+}
+
+.insight-card .card-body {
+    position: relative;
+    overflow: hidden;
+}
+
+.insight-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    background: rgba(255,255,255,0.1);
+    transform: rotate(45deg);
+    transition: all 0.3s ease;
+}
+
+.insight-card:hover::before {
+    top: -10%;
+    right: -10%;
+}
+
+@media (max-width: 768px) {
+    .sidebar-widget {
+        position: static;
+        max-height: none;
+    }
+    
+    .compliance-metric-card {
+        margin-bottom: 1rem;
+    }
+    
+    .company-card {
+        height: auto;
+        min-height: 160px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <div class="mb-2 mb-md-0">
+                    <h2><i class="fas fa-briefcase me-2"></i>Portfolio Dashboard</h2>
+                    <p class="text-muted mb-0">Managing {{ total_companies }} companies with {{ total_employees }} total employees</p>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <span class="badge bg-primary fs-6">{{ total_companies }} Companies</span>
+                    <span class="badge bg-success fs-6">{{ total_employees }} Employees</span>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="PortfolioService.clearCache()">
+                        <i class="fas fa-sync-alt me-1"></i>Refresh Data
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Portfolio Compliance Metrics -->
+    {% if not no_companies %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <h4 class="mb-3">
+                <i class="fas fa-shield-alt me-2"></i>Portfolio Compliance Overview
+                <small class="text-muted">Click cards for details</small>
+            </h4>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card text-white bg-danger shadow-sm compliance-metric-card" 
+                 onclick="filterComplianceCalendar('overdue')" 
+                 data-bs-toggle="tooltip" 
+                 title="View overdue compliance items">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        </div>
+                        <div>
+                            <div class="fs-3 fw-bold">{{ compliance_metrics.overdue_count }}</div>
+                            <div class="small opacity-90">Overdue Reminders</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card text-white bg-warning shadow-sm compliance-metric-card" 
+                 onclick="filterComplianceCalendar('this_week')" 
+                 data-bs-toggle="tooltip" 
+                 title="View items due this week">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
+                        <div>
+                            <div class="fs-3 fw-bold">{{ compliance_metrics.this_week_count }}</div>
+                            <div class="small opacity-90">Due This Week</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card text-white bg-success shadow-sm compliance-metric-card" 
+                 onclick="showCompliantCompanies()" 
+                 data-bs-toggle="tooltip" 
+                 title="View compliant companies">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <i class="fas fa-check-circle fa-2x"></i>
+                        </div>
+                        <div>
+                            <div class="fs-3 fw-bold">{{ compliance_metrics.compliant_companies }}</div>
+                            <div class="small opacity-90">Compliant Companies</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card text-white bg-info shadow-sm compliance-metric-card" 
+                 onclick="filterComplianceCalendar('all')" 
+                 data-bs-toggle="tooltip" 
+                 title="View all active reminders">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <i class="fas fa-tasks fa-2x"></i>
+                        </div>
+                        <div>
+                            <div class="fs-3 fw-bold">{{ compliance_metrics.total_active }}</div>
+                            <div class="small opacity-90">Total Active Reminders</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Company Overview Cards -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h4 class="mb-3">Company Overview</h4>
+        </div>
+        
+        {% if no_companies %}
+        <!-- No Companies Message -->
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-building text-muted" style="font-size: 4rem;"></i>
+                    </div>
+                    <h4 class="text-muted mb-3">You haven't added any companies yet</h4>
+                    <p class="text-muted mb-4">Click "New Company" to begin managing your first client company.</p>
+                    <a href="{{ url_for('dashboard.new_company') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus me-2"></i>Add Your First Company
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% else %}
+    
+    <!-- Compact Portfolio Dashboard -->
+    <div class="row g-3">
+        <!-- Main Content Area -->
+        <div class="col-xl-8 col-lg-7">
+            <!-- Portfolio Table -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-building me-2"></i>Portfolio Overview
+                            <span class="badge bg-primary ms-2">{{ table_data|length }} companies</span>
+                        </h5>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-secondary" onclick="sortTable('name')">
+                                <i class="fas fa-sort-alpha-down"></i> Name
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="sortTable('sector')">
+                                <i class="fas fa-sort"></i> Sector
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="sortTable('status')">
+                                <i class="fas fa-sort"></i> Status
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="sortTable('lastrun')">
+                                <i class="fas fa-sort"></i> Last Run
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="sortTable('employees')">
+                                <i class="fas fa-sort-numeric-down"></i> Employees
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="sortTable('compliance')">
+                                <i class="fas fa-sort"></i> Compliance
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <!-- Desktop Table View -->
+                    <div class="table-responsive d-none d-md-block">
+                        <table class="table table-hover mb-0" id="portfolioTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="border-0 ps-3">Company</th>
+                                    <th class="border-0">Sector</th>
+                                    <th class="border-0">Payroll Status</th>
+                                    <th class="border-0">Last Run</th>
+                                    <th class="border-0">Employees</th>
+                                    <th class="border-0">Compliance</th>
+                                    <th class="border-0 pe-3">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for company in table_data %}
+                                <tr class="company-row" data-company-id="{{ company.id }}">
+                                    <td class="ps-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-2">
+                                                <i class="fas fa-building text-primary"></i>
+                                            </div>
+                                            <div>
+                                                <a href="{{ url_for('accountant_dashboard.switch_company', company_id=company.id) }}?next=/dashboard" 
+                                                   class="fw-bold text-decoration-none company-name">{{ company.name }}</a>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark border">
+                                            {% if company.industry == 'Manufacturing' %}🏭
+                                            {% elif company.industry == 'Technology' %}💻
+                                            {% elif company.industry == 'Healthcare' %}🏥
+                                            {% elif company.industry == 'Finance' %}💰
+                                            {% elif company.industry == 'Retail' %}🛍️
+                                            {% else %}🏢{% endif %}
+                                            {{ company.industry }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge {{ company.payroll_badge_class }}" 
+                                              data-bs-toggle="tooltip" 
+                                              title="{% if company.last_payroll_date %}Last payroll: {{ company.last_payroll_date.strftime('%d %b %Y') }}{% else %}No payroll records{% endif %}">
+                                            {{ company.payroll_status_text }}
+                                        </span>
+                                    </td>
+                                    <td class="text-muted">
+                                        {% if company.last_payroll_date %}
+                                            {{ company.last_payroll_date.strftime('%d %b') }}
+                                        {% else %}
+                                            Never
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="fw-bold">{{ company.employee_count }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="{{ company.compliance_class }}" 
+                                              data-bs-toggle="tooltip" 
+                                              title="{{ company.compliance_tooltip }}">
+                                            {{ company.compliance_status }}
+                                        </span>
+                                    </td>
+                                    <td class="pe-3">
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('accountant_dashboard.switch_company', company_id=company.id) }}?next=/dashboard" 
+                                               class="btn btn-outline-primary btn-sm" 
+                                               data-bs-toggle="tooltip" title="View details">
+                                                <i class="fas fa-chart-line"></i>
+                                            </a>
+                                            <a href="{{ url_for('accountant_dashboard.switch_company', company_id=company.id) }}?next=/reminders" 
+                                               class="btn btn-outline-warning btn-sm"
+                                               data-bs-toggle="tooltip" title="Compliance reminders">
+                                                <i class="fas fa-bell"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Mobile Accordion View -->
+                    <div class="d-md-none" id="mobileAccordion">
+                        {% for company in table_data %}
+                        <div class="card border-0 border-bottom rounded-0">
+                            <div class="card-header bg-transparent border-0 py-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-building text-primary me-2"></i>
+                                        <span class="fw-bold">{{ company.name }}</span>
+                                    </div>
+                                    <span class="badge {{ company.payroll_badge_class }}">{{ company.payroll_status_text }}</span>
+                                </div>
+                            </div>
+                            <div class="card-body py-2">
+                                <div class="row g-2 text-sm">
+                                    <div class="col-6">
+                                        <small class="text-muted">Sector:</small><br>
+                                        <span class="badge bg-light text-dark">{{ company.industry }}</span>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Employees:</small><br>
+                                        <span class="fw-bold">{{ company.employee_count }}</span>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Last Payroll:</small><br>
+                                        {% if company.last_payroll_date %}{{ company.last_payroll_date.strftime('%d %b') }}{% else %}Never{% endif %}
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Compliance:</small><br>
+                                        <span class="{{ company.compliance_class }}">{{ company.compliance_status }}</span>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <a href="{{ url_for('accountant_dashboard.switch_company', company_id=company.id) }}?next=/dashboard" 
+                                       class="btn btn-primary btn-sm me-1">Details</a>
+                                    <a href="{{ url_for('accountant_dashboard.switch_company', company_id=company.id) }}?next=/reminders" 
+                                       class="btn btn-warning btn-sm">Reminders</a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar: Mini Calendar & Widgets -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="sidebar-widget">
+                
+                <!-- Mini Calendar -->
+                <div class="card shadow-sm mb-3">
+                    <div class="card-header bg-light">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">
+                                <i class="fas fa-calendar text-primary me-2"></i>
+                                <span id="calendarMonth">June 2025</span>
+                            </h6>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-secondary" onclick="previousMonth()">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary" onclick="nextMonth()">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-2">
+                        <div id="miniCalendar" class="mini-calendar">
+                            <!-- Calendar will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Unread Notifications -->
+                <div class="card shadow-sm mb-3">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">
+                            <i class="fas fa-bell text-warning me-2"></i>Notifications
+                            {% if compliance_notifications|length > 0 %}
+                                <span class="badge bg-danger ms-2">{{ compliance_notifications|length }}</span>
+                            {% endif %}
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        {% if compliance_notifications %}
+                            {% for notification in compliance_notifications[:3] %}
+                            <div class="d-flex align-items-start mb-2">
+                                <div class="flex-shrink-0 me-2">
+                                    <i class="fas fa-circle text-danger" style="font-size: 0.5rem;"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p class="small mb-1">{{ notification.message }}</p>
+                                    <small class="text-muted">{{ notification.company_name }}</small>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            {% if compliance_notifications|length > 3 %}
+                                <small class="text-muted">{{ compliance_notifications|length - 3 }} more notifications...</small>
+                            {% endif %}
+                        {% else %}
+                            <div class="text-center text-success py-2">
+                                <i class="fas fa-check-circle fa-lg mb-2"></i>
+                                <p class="small mb-0">All caught up!</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Upcoming Payroll Deadlines -->
+                <div class="card shadow-sm mb-3">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">
+                            <i class="fas fa-clock text-info me-2"></i>Upcoming Deadlines
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        {% if upcoming_actions %}
+                            {% for action in upcoming_actions[:4] %}
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <p class="small mb-0 fw-bold">{{ action.title }}</p>
+                                    <small class="text-muted">{{ action.company_name }}</small>
+                                </div>
+                                <span class="badge bg-light text-dark">{{ action.due_date.strftime('%d %b') if action.due_date else 'TBD' }}</span>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center text-muted py-2">
+                                <i class="fas fa-calendar-check fa-lg mb-2"></i>
+                                <p class="small mb-0">No upcoming deadlines</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Key SARS Reminders -->
+                <div class="card shadow-sm mb-3">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">
+                            <i class="fas fa-bookmark text-success me-2"></i>SARS Reminders
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="small">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>EMP201 Monthly</span>
+                                <span class="text-muted">7th of month</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>IRP5 Annual</span>
+                                <span class="text-muted">31 May</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>UI19 Quarterly</span>
+                                <span class="text-muted">End of quarter</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>EMP501 Annual</span>
+                                <span class="text-muted">31 May</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+            <!-- Portfolio Insights -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h4 class="mb-3">
+                        <i class="fas fa-chart-line me-2"></i>Portfolio Insights
+                    </h4>
+                </div>
+                <div class="col-lg-6 mb-3">
+                    <div class="card insight-card h-100 shadow-sm">
+                        <div class="card-body text-center">
+                            <i class="fas fa-calculator fa-3x mb-3 opacity-80"></i>
+                            <h5>Monthly Payroll Value</h5>
+                            <h2 class="fw-bold">R {{ '{:,.0f}'.format((total_employees * 25000) if total_employees else 0) }}</h2>
+                            <p class="mb-0 opacity-90">Estimated across {{ total_companies }} companies</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 mb-3">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-clock me-2"></i>Upcoming Actions
+                                <span class="badge bg-primary ms-2">{{ upcoming_actions|length }}</span>
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if upcoming_actions %}
+                                <div class="list-group list-group-flush">
+                                    {% for action in upcoming_actions[:4] %}
+                                        <div class="list-group-item px-0 py-2 border-0">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div class="flex-grow-1">
+                                                    <h6 class="mb-1">{{ action.action }}</h6>
+                                                    <p class="mb-1 text-muted small">{{ action.company_name }}</p>
+                                                    <small class="text-muted">
+                                                        {{ action.due_date.strftime('%d %b') }}
+                                                        {% if action.days_until >= 0 %}
+                                                            ({{ action.days_until }}d)
+                                                        {% endif %}
+                                                    </small>
+                                                </div>
+                                                <span class="badge bg-{{ 'danger' if action.priority == 'high' else 'warning' if action.priority == 'medium' else 'secondary' }}">
+                                                    {{ action.priority|title }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                                {% if upcoming_actions|length > 4 %}
+                                    <div class="text-center mt-2">
+                                        <small class="text-muted">{{ upcoming_actions|length - 4 }} more actions...</small>
+                                    </div>
+                                {% endif %}
+                            {% else %}
+                                <div class="text-center text-muted py-3">
+                                    <i class="fas fa-check-circle fa-2x mb-2"></i>
+                                    <p class="mb-0">All payroll actions up to date</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Portfolio Compliance Calendar -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card shadow-sm" id="calendarCard">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-calendar-alt me-2"></i>Portfolio Compliance Calendar
+                            </h5>
+                            <div class="d-flex gap-2 align-items-center">
+                                <!-- Filter Toggle for Mobile -->
+                                <button class="btn btn-outline-secondary btn-sm d-md-none" data-bs-toggle="collapse" data-bs-target="#calendarFilters">
+                                    <i class="fas fa-filter"></i>
+                                </button>
+                                <!-- Export Buttons -->
+                                <button class="btn btn-outline-secondary btn-sm" onclick="exportCalendarPDF()">
+                                    <i class="fas fa-file-pdf me-1"></i>PDF
+                                </button>
+                                <!-- Collapse Toggle -->
+                                <button class="calendar-toggle" onclick="toggleCalendar()" aria-label="Toggle calendar">
+                                    <i class="fas fa-chevron-up" id="calendarToggleIcon"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Collapsible Filter Controls -->
+                        <div class="collapse show d-md-block" id="calendarFilters">
+                            <div class="card-body border-bottom">
+                                <div class="row g-2">
+                                    <div class="col-md-3 col-6">
+                                        <label class="form-label small">Companies</label>
+                                        <select class="form-select form-select-sm" id="companyFilter" multiple>
+                                            {% for company in company_data %}
+                                            <option value="{{ company.id }}" selected>{{ company.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 col-6">
+                                        <label class="form-label small">Categories</label>
+                                        <select class="form-select form-select-sm" id="categoryFilter" multiple>
+                                            <option value="tax" selected>Tax</option>
+                                            <option value="payroll" selected>Payroll</option>
+                                            <option value="employment" selected>Employment</option>
+                                            <option value="custom" selected>Custom</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 col-12">
+                                        <label class="form-label small">Actions</label>
+                                        <div class="d-flex gap-1">
+                                            <button class="btn btn-outline-primary btn-sm flex-fill" onclick="applyCalendarFilters()">
+                                                <i class="fas fa-filter me-1"></i>Apply
+                                            </button>
+                                            <button class="btn btn-outline-secondary btn-sm" onclick="resetCalendarFilters()">
+                                                <i class="fas fa-undo"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Calendar Container -->
+                        <div class="calendar-body">
+                            <div class="card-body">
+                                <div id="portfolioCalendar"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+        
+        <!-- Right Column: Sidebar Widgets -->
+        <div class="col-lg-4 col-xl-3">
+            <div class="sidebar-widget">
+                
+                <!-- Compliance Alerts Widget -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">
+                            <i class="fas fa-bell me-2"></i>Compliance Alerts
+                            {% if compliance_notifications %}
+                                <span class="badge bg-danger">{{ compliance_notifications|length }}</span>
+                            {% endif %}
+                        </h6>
+                    </div>
+                    <div class="card-body p-0">
+                        {% if compliance_notifications %}
+                            {% for notification in compliance_notifications[:3] %}
+                                <div class="border-bottom p-3">
+                                    <div class="d-flex align-items-start">
+                                        <div class="me-2">
+                                            <i class="fas fa-{{ 'exclamation-triangle' if notification.type == 'warning' else 'exclamation-circle' if notification.type == 'danger' else 'info-circle' }} 
+                                               text-{{ notification.type }}"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1 small">{{ notification.title }}</h6>
+                                            <p class="mb-1 small text-muted">{{ notification.company_name }}</p>
+                                            <p class="mb-2 small">{{ notification.message }}</p>
+                                            <button type="button" class="btn btn-outline-{{ notification.type }} btn-xs">
+                                                {{ notification.action }}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                            {% if compliance_notifications|length > 3 %}
+                                <div class="p-2 text-center">
+                                    <small class="text-muted">{{ compliance_notifications|length - 3 }} more alerts...</small>
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-check-circle fa-2x mb-2 text-success"></i>
+                                <p class="mb-0 small">No compliance issues</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Quick Stats Widget -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">
+                            <i class="fas fa-chart-pie me-2"></i>Quick Stats
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-6 border-end">
+                                <h4 class="text-primary">{{ total_companies }}</h4>
+                                <small class="text-muted">Companies</small>
+                            </div>
+                            <div class="col-6">
+                                <h4 class="text-success">{{ total_employees }}</h4>
+                                <small class="text-muted">Employees</small>
+                            </div>
+                        </div>
+                        <hr class="my-3">
+                        <div class="row text-center">
+                            <div class="col-6 border-end">
+                                <h5 class="text-info">{{ compliance_metrics.total_active }}</h5>
+                                <small class="text-muted">Active Reminders</small>
+                            </div>
+                            <div class="col-6">
+                                <h5 class="text-warning">{{ upcoming_actions|length }}</h5>
+                                <small class="text-muted">Pending Actions</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recent Activity Widget -->
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">
+                            <i class="fas fa-history me-2"></i>Recent Activity
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="activity-timeline">
+                            {% if upcoming_actions %}
+                                {% for action in upcoming_actions[:3] %}
+                                    <div class="d-flex mb-3">
+                                        <div class="me-2">
+                                            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                                                <i class="fas fa-clock text-white" style="font-size: 10px;"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-0 small">{{ action.action }}</h6>
+                                            <p class="mb-0 small text-muted">{{ action.company_name }}</p>
+                                            <small class="text-muted">Due {{ action.due_date.strftime('%d %b') }}</small>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="text-center text-muted py-3">
+                                    <i class="fas fa-check fa-2x mb-2"></i>
+                                    <p class="mb-0 small">All up to date</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+        {% endif %}
+    
+    {% endif %}
+</div>
+
+{% if not no_companies %}
+<!-- Portfolio Dashboard JavaScript -->
+<script src="{{ url_for('static', filename='js/portfolio_dashboard.js') }}"></script>
+{% endif %}
+
+{% endblock %}
+        type: 'bar',
+        data: {
+            labels: chartData.labels,
+            datasets: [{
+                label: 'Number of Employees',
+                data: chartData.data,
+                backgroundColor: [
+                    'rgba(54, 162, 235, 0.8)',
+                    'rgba(255, 99, 132, 0.8)',
+                    'rgba(255, 205, 86, 0.8)',
+                    'rgba(75, 192, 192, 0.8)',
+                    'rgba(153, 102, 255, 0.8)',
+                    'rgba(255, 159, 64, 0.8)'
+                ],
+                borderColor: [
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(255, 205, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 159, 64, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+    
+    // Portfolio Compliance Calendar
+    const calendarEl = document.getElementById('portfolioCalendar');
+    const portfolioReminders = {{ portfolio_reminders | tojson }};
+    
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,listWeek'
+        },
+        height: 600,
+        events: portfolioReminders,
+        eventClick: function(info) {
+            showReminderModal(info.event);
+        },
+        eventDidMount: function(info) {
+            // Add tooltips
+            info.el.setAttribute('title', 
+                `${info.event.title}\nCompany: ${info.event.extendedProps.company_name}\nDue: ${info.event.startStr}`
+            );
+        }
+    });
+    
+    calendar.render();
+    
+    // Store calendar globally for filter updates
+    window.portfolioCalendar = calendar;
+    
+    // Set default date range (next 30 days)
+    const today = new Date();
+    const thirtyDaysLater = new Date(today);
+    thirtyDaysLater.setDate(today.getDate() + 30);
+    
+    document.getElementById('startDate').value = today.toISOString().split('T')[0];
+    document.getElementById('endDate').value = thirtyDaysLater.toISOString().split('T')[0];
+});
+
+function applyCalendarFilters() {
+    const companyIds = Array.from(document.getElementById('companyFilter').selectedOptions)
+        .map(option => option.value);
+    const categories = Array.from(document.getElementById('categoryFilter').selectedOptions)
+        .map(option => option.value);
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    
+    // Build query parameters
+    const params = new URLSearchParams();
+    companyIds.forEach(id => params.append('companies', id));
+    categories.forEach(cat => params.append('categories', cat));
+    if (startDate) params.append('start', startDate);
+    if (endDate) params.append('end', endDate);
+    
+    // Fetch filtered events
+    console.log('Fetching calendar events with params', params.toString());
+    fetch(`{{ url_for('accountant_dashboard.portfolio_calendar_data') }}?${params}`)
+        .then(response => response.json())
+        .then(events => {
+            // Update calendar events
+            window.portfolioCalendar.removeAllEvents();
+            window.portfolioCalendar.addEventSource(events);
+        })
+        .catch(error => {
+            console.error('Error updating calendar:', error);
+            alert('Error loading calendar data. Please try again.');
+        });
+}
+
+function showReminderModal(event) {
+    const modalHtml = `
+        <div class="modal fade" id="reminderModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-${getCategoryIcon(event.extendedProps.category)} me-2"></i>
+                            ${event.title}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>Company:</strong><br>
+                                <span class="badge bg-secondary">${event.extendedProps.company_name}</span>
+                            </div>
+                            <div class="col-6">
+                                <strong>Category:</strong><br>
+                                <span class="badge bg-${getCategoryColor(event.extendedProps.category)}">${event.extendedProps.category}</span>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>Due Date:</strong><br>
+                                ${new Date(event.start).toLocaleDateString()}
+                            </div>
+                            <div class="col-6">
+                                <strong>Status:</strong><br>
+                                <span class="badge bg-${getStatusColor(event.extendedProps.status)}">${event.extendedProps.status}</span>
+                            </div>
+                        </div>
+                        ${event.extendedProps.description ? `<hr><p>${event.extendedProps.description}</p>` : ''}
+                    </div>
+                    <div class="modal-footer">
+                        <a id="manageRemindersLink" href="#" class="btn btn-primary">
+                            <i class="fas fa-external-link-alt me-1"></i>Manage Reminders
+                        </a>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing modal
+    const existingModal = document.getElementById('reminderModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Add new modal
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    // Set dynamic link
+    const baseSwitchUrl = "{{ url_for('accountant_dashboard.switch_company', company_id=0).rsplit('/', 1)[0] }}";
+    document.getElementById('manageRemindersLink').href = `${baseSwitchUrl}/${event.extendedProps.company_id}?next=/reminders`;
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('reminderModal'));
+    modal.show();
+}
+
+function getCategoryIcon(category) {
+    const icons = {
+        'tax': 'coins',
+        'payroll': 'money-bill-wave',
+        'employment': 'users',
+        'custom': 'bell'
+    };
+    return icons[category] || 'bell';
+}
+
+function getCategoryColor(category) {
+    const colors = {
+        'tax': 'danger',
+        'payroll': 'warning',
+        'employment': 'success',
+        'custom': 'info'
+    };
+    return colors[category] || 'secondary';
+}
+
+function getStatusColor(status) {
+    const colors = {
+        'overdue': 'danger',
+        'due_soon': 'warning',
+        'upcoming': 'success'
+    };
+    return colors[status] || 'secondary';
+}
+
+function exportCompliance(format) {
+    const companyIds = Array.from(document.getElementById('companyFilter').selectedOptions)
+        .map(option => option.value);
+    const categories = Array.from(document.getElementById('categoryFilter').selectedOptions)
+        .map(option => option.value);
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    
+    // Build export URL (placeholder for now)
+    const params = new URLSearchParams();
+    params.append('format', format);
+    companyIds.forEach(id => params.append('companies', id));
+    categories.forEach(cat => params.append('categories', cat));
+    if (startDate) params.append('start', startDate);
+    if (endDate) params.append('end', endDate);
+    
+    // For now, show alert - implement actual export endpoint later
+    alert(`Export to ${format.toUpperCase()} functionality will be implemented in the next phase.`);
+}
+</script>
+
+<style>
+.timeline-item {
+    position: relative;
+}
+
+.timeline-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 20px;
+    top: 40px;
+    height: calc(100% + 12px);
+    width: 2px;
+    background-color: #dee2e6;
+}
+
+.card {
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.badge.rounded-circle {
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Compliance Calendar Styles */
+.calendar-overdue {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+    color: white !important;
+}
+
+.calendar-due-soon {
+    background-color: #fd7e14 !important;
+    border-color: #fd7e14 !important;
+    color: white !important;
+}
+
+.calendar-upcoming {
+    background-color: #198754 !important;
+    border-color: #198754 !important;
+    color: white !important;
+}
+
+.fc-event-tax {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+}
+
+.fc-event-payroll {
+    background-color: #fd7e14 !important;
+    border-color: #fd7e14 !important;
+}
+
+.fc-event-employment {
+    background-color: #198754 !important;
+    border-color: #198754 !important;
+}
+
+.fc-event-custom {
+    background-color: #6f42c1 !important;
+    border-color: #6f42c1 !important;
+}
+
+/* Multi-select styling */
+select[multiple] {
+    min-height: 80px;
+}
+
+/* Portfolio metrics cards */
+.bg-danger .fs-4 {
+    font-weight: 700;
+}
+
+.bg-warning .fs-4 {
+    font-weight: 700;
+}
+
+.bg-success .fs-4 {
+    font-weight: 700;
+}
+
+.bg-info .fs-4 {
+    font-weight: 700;
+}
+</style>
+{% endif %}
+{% endblock %}

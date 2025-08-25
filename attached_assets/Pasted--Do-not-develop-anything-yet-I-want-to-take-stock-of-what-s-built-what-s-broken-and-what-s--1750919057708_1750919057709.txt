@@ -1,0 +1,63 @@
+🛑 Do not develop anything yet.
+📋 I want to take stock of what’s built, what’s broken, and what’s missing.
+
+Please do the following:
+
+Create a new file in the project root called FEATURES_AND_GAPS.md.
+
+Use the following structure to populate it:
+
+# 📋 Payroll Platform – Features & Development Gaps (Agricultural Sector Focus)
+
+## ✅ Core Platform Features
+
+| Feature                             | Status      | Notes |
+|-------------------------------------|-------------|-------|
+| Employee Management                 | ✅ Complete | Add/edit/assign to company works |
+| Payroll Entry & Payslip             | ⚠️ Partial  | Works, but lacks daily/wage/hourly flexibility |
+| Compliance Calendar                 | 🔄 In Progress | Rules defined, calendar UI not yet fully rendering |
+| SARS Config Management              | ✅ Working  | Global SARS settings editable by power users |
+| Statutory Deduction Logic           | ⚠️ Buggy    | UIF, SDL thresholds not applying consistently |
+| Notifications + Reminders           | ⚠️ Partial  | Needs sync with compliance calendar logic |
+| Admin UI for Compliance Rules       | ❌ Not Started | Needed for non-dev control |
+
+## 🌾 Agriculture-Specific Feature Roadmap
+
+| Feature                                       | Status         | Notes |
+|-----------------------------------------------|----------------|-------|
+| 📅 Compliance Calendar + Alerts               | 🔄 In Progress | Rules seeded, calendar events missing |
+| 📤 UI19 Termination Toolkit                   | ❌ Not Started | Auto-generate UI19, payslip bundle, salary schedule |
+| 🧥 Clothing Issue Tracker                     | ❌ Not Started | Track PPE annually, support bulk edit/export |
+| ⏱️ Casual Labour Wizard & Importer            | ❌ Not Started | Add batch daily/hourly/piecework input tools |
+| 🔁 Bulk Employee Update Tools                 | ⚠️ Partial     | Needed for leave, clothing, termination batches |
+| 📆 Leave Cycle Flexibility                    | ❌ Not Started | Set leave accrual window by company or contract |
+| 📩 WhatsApp/SMS Payslip Delivery              | ❌ Not Started | Needed for rural farm workers without email access |
+| 🧮 Piecework / Per-Unit Payroll Support       | ❌ Not Started | Especially important during seasonal harvest periods |
+| 📝 Mobile-Friendly Capture                    | ⚠️ Early Idea  | Needed for field managers during harvests |
+| 🧾 Export Bundles for Audit (ZIP/PDF)         | ❌ Not Started | UI19 + payslip + letter + schedule = 1 click export |
+
+## 🛠 Known Functional Gaps
+
+- [ ] Compliance reminders don’t always render in calendar
+- [ ] Stats cards show zero even when deadlines exist
+- [ ] Payslip logic doesn’t account for irregular work patterns
+- [ ] Cannot import batch casuals via CSV
+- [ ] Leave tracking not implemented
+- [ ] No support for managing issued PPE/clothing per season
+
+## 🔜 Next Actions
+
+- [ ] Fix compliance calendar rendering issue
+- [ ] Add `/admin/compliance-rules` for power users
+- [ ] Build UI19 generation logic (template + PDF exporter)
+- [ ] Scope CSV import for casuals
+Once the file is created, cross-check all entries against what is currently implemented in the app.
+
+✅ Confirm what is fully functional
+
+⚠️ Flag what is partially implemented or buggy
+
+❌ Clearly mark what is not started
+
+Do not build or modify any features yet.
+This is purely for status and gap analysis.

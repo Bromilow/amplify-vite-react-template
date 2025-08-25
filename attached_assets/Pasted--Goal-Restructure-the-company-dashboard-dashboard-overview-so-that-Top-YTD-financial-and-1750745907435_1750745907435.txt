@@ -1,0 +1,79 @@
+🎯 Goal: Restructure the company dashboard (/dashboard/overview) so that:
+
+📊 Top: YTD financial and compliance summary cards
+
+📅 Middle: Full-width interactive calendar (FullCalendar.js)
+
+⚠️ Optional bottom: Alerts, quick actions, or compliance warnings
+
+🔧 Tasks:
+1. In /templates/dashboard/overview.html
+🟦 Step 1: Redesign Top KPI Cards (4 or 6 in a responsive row)
+<div class="row g-3 mb-4">
+  <div class="col-xl-3 col-md-6">
+    <div class="card shadow-sm border-start border-success">
+      <div class="card-body">
+        <h6 class="text-muted">YTD Gross Pay</h6>
+        <h4>R {{ "{:,.2f}".format(ytd_stats.gross_total) }}</h4>
+      </div>
+    </div>
+  </div>
+  <!-- Repeat for PAYE, UIF, SDL, Net Pay, Finalized Periods -->
+</div>
+🟦 Step 2: Add Compliance & Trends Row
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">Compliance Warnings</div>
+      <div class="card-body small text-danger">
+        - {{ unverified_count }} unverified payrolls<br>
+        - {{ exempt_count }} PAYE-exempt employees<br>
+        - 2 employees missing salary config
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <canvas id="payrollTrendChart" height="150"></canvas>
+  </div>
+</div>
+🟦 Step 3: Embed FullCalendar.js
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <div id='calendar'></div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+      initialView: 'dayGridMonth',
+      events: [
+        // Inject upcoming payroll periods and filing deadlines
+        { title: 'PAYE Submission Due', start: '2025-07-07', color: 'red' },
+        { title: 'Payroll Period Start', start: '2025-07-01', color: 'green' },
+      ]
+    });
+    calendar.render();
+  });
+</script>
+🔄 Backend Context Variables Required
+Make sure your route in dashboard.py passes:
+
+ytd_stats → { gross_total, paye_total, uif_total, sdl_total }
+
+unverified_count, exempt_count
+
+Optional: payroll_trend_data for Chart.js
+
+✅ Result
+You now have:
+
+Clear top-row financial and tax metrics
+
+Immediate visual calendar of payroll-related deadlines
+
+Real space for compliance alerts and operational indicators

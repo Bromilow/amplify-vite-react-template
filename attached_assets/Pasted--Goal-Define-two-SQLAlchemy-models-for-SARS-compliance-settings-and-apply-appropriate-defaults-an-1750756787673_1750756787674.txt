@@ -1,0 +1,70 @@
+🎯 Goal: Define two SQLAlchemy models for SARS compliance settings and apply appropriate defaults and relationships.
+
+🔧 Files to Modify
+models/sars_config.py (new)
+
+models/__init__.py (to register)
+
+migrations/ or Alembic script (or SQL)
+
+✅ Create GlobalSARSConfig model
+# models/sars_config.py
+
+from app import db
+from decimal import Decimal
+
+class GlobalSARSConfig(db.Model):
+    __tablename__ = 'global_sars_config'
+
+    id = db.Column(db.Integer, primary_key=True)
+    uif_percent = db.Column(db.Numeric(4, 3), default=Decimal("0.01"))
+    sdl_percent = db.Column(db.Numeric(4, 3), default=Decimal("0.01"))
+    uif_monthly_cap = db.Column(db.Numeric(10, 2), default=Decimal("17712.00"))
+    tax_year_start_month = db.Column(db.Integer, default=3)
+    tax_year_start_day = db.Column(db.Integer, default=1)
+    medical_primary_credit = db.Column(db.Numeric(10, 2), default=Decimal("364.00"))
+    medical_dependant_credit = db.Column(db.Numeric(10, 2), default=Decimal("246.00"))
+    tax_authority_name = db.Column(db.String(64), default="SARS")
+✅ Create SARSConfig model (per-company override)
+class SARSConfig(db.Model):
+    __tablename__ = 'sars_config'
+
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), unique=True)
+
+    uif_percent = db.Column(db.Numeric(4, 3), nullable=True)
+    sdl_percent = db.Column(db.Numeric(4, 3), nullable=True)
+    uif_monthly_cap = db.Column(db.Numeric(10, 2), nullable=True)
+    tax_year_start_month = db.Column(db.Integer, nullable=True)
+    tax_year_start_day = db.Column(db.Integer, nullable=True)
+    medical_primary_credit = db.Column(db.Numeric(10, 2), nullable=True)
+    medical_dependant_credit = db.Column(db.Numeric(10, 2), nullable=True)
+    tax_authority_name = db.Column(db.String(64), nullable=True)
+
+    company = db.relationship("Company", back_populates="sars_config")
+✅ Modify Company model
+In models/company.py, add:
+
+sars_config = db.relationship("SARSConfig", back_populates="company", uselist=False)
+✅ Migration Script
+If you're using Alembic:
+
+alembic revision -m "Add SARSConfig and GlobalSARSConfig"
+alembic upgrade head
+Otherwise, create raw SQL or a script to run manually:
+
+CREATE TABLE global_sars_config (...);
+CREATE TABLE sars_config (...);
+ALTER TABLE company ADD COLUMN sars_config_id INT UNIQUE;
+📁 Register the Models
+In models/__init__.py, add:
+
+from .sars_config import SARSConfig, GlobalSARSConfig
+✅ Output
+Once this runs, you’ll have:
+
+Two models representing both global and company SARS settings
+
+Space to control system-wide compliance values
+
+Foundations to display them in the UI and consume them in tooltips

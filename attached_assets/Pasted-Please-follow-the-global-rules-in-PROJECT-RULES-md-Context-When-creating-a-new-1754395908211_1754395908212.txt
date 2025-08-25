@@ -1,0 +1,70 @@
+Please follow the global rules in `PROJECT_RULES.md`
+
+---
+
+### 🧩 Context
+
+When creating a new employee, recurring deduction defaults (e.g. Medical Aid, Provident Fund) are preloaded into the form from company defaults.
+
+Users are allowed to:
+- Remove 1 or more of these default deductions before clicking **Save**
+
+🚨 **Bug**: Even if the user deletes these from the form before saving, the employee is still created with all default deductions re-attached — including those the user explicitly removed.
+
+---
+
+### 🧠 Hypothesis
+
+The backend logic that applies default recurring deductions is being triggered during employee creation — regardless of whether the user removed them in the UI.
+
+---
+
+### 🔍 Diagnostic Task
+
+1. **Review Recurring Deduction Injection**
+   - File: `routes/employees.py` (new employee route)
+   - Look for logic like:
+     ```python
+     if company.default_recurring_deductions:
+         for d in company.default_recurring_deductions:
+             employee.recurring_deductions.append(...)
+     ```
+
+2. **Check What’s Posted From the Form**
+   - Confirm whether the deleted deductions are removed from the form payload
+   - If deleted in the frontend, the backend must **not re-add** them
+
+3. **Fix the Flow**
+   - Only apply recurring deduction defaults if:
+     - The form is blank (first load)
+     - Or the user explicitly re-added them
+
+   - Recommended flow:
+     - Populate default recurring deductions **client-side** only
+     - On submit, rely entirely on the user's final list
+
+4. **Adjust Backend Logic**
+   - In the `/employees/new` POST route:
+     - Remove any logic that re-fetches and re-adds company defaults
+     - Only persist the form-submitted `recurring_deductions`
+
+---
+
+### ✅ Fix Summary
+
+- Do not apply recurring deductions by default at the backend
+- Respect user deletion actions made in the form
+- Treat form-submitted deductions as the **single source of truth**
+- Ensure edit modal follows the same rule (in next step)
+
+---
+
+### 🧪 Output
+
+- Create a new employee
+- Remove one or more default recurring deductions before saving
+- ✅ Employee is saved with **only** the deductions shown at the time of submission
+
+---
+
+Let me know if you’d like a separate QA checklist to confirm recurring deduction behavior across **Add**, **Edit**, and **Company Settings**.

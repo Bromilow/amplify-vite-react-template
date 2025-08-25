@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Import Preview{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+  <h2 class="mb-4">Preview Employees</h2>
+  <form method="post" action="{{ url_for('employees.import_confirm') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="apply_defaults" value="{{ apply_defaults|int }}">
+    <div class="table-responsive w-100">
+    <table class="table table-bordered table-sm text-wrap w-100 import-preview-table">
+      <thead>
+        <tr>
+          <th>Skip</th>
+          {% for col in columns %}<th>{{ col }}</th>{% endfor %}
+          <th>Errors</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr class="{% if row.errors %}table-danger{% endif %}">
+          <td><input type="checkbox" name="skip_{{ loop.index0 }}"></td>
+          {% for field in field_order %}
+          <td>
+            <input type="text" class="form-control form-control-sm import-input" name="rows-{{ loop.index0 }}-{{ field }}" value="{{ row.data[field] or '' }}" title="{{ row.data[field] or '' }}">
+          </td>
+          {% endfor %}
+          <td>{% for e in row.errors %}{{ e }}<br>{% endfor %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    <button type="submit" class="btn btn-primary">Confirm Import</button>
+  </form>
+</div>
+{% endblock %}

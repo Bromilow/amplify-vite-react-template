@@ -1,0 +1,57 @@
+Refactor the existing "Add Employee" form (`templates/employees/new.html`) and its associated backend (`routes/employees.py`) to match the following updated structure:
+
+1. **Personal Information**
+   - First Name (required)
+   - Last Name (required)
+   - ID Number (required, 13 digits, validated)
+   - Date of Birth (auto-derived from ID or manually entered)
+   - Gender (Male/Female/Other)
+   - Marital Status (optional)
+   - Tax Number (optional)
+   - Cell Number (required)
+   - Email Address (optional)
+   - Physical Address (required text area)
+
+2. **Employment Details**
+   - Auto-generate Employee ID using company slug (e.g., WFLOR-EMP001)
+   - Department (required dropdown)
+   - Job Title (required)
+   - Start Date (required)
+   - End Date (optional)
+   - Employment Status (dropdown: Full-Time, Part-Time, Contract, Temp)
+   - Reporting Manager (optional)
+   - Union Member (yes/no)
+
+3. **Compensation**
+   - Salary Type (dropdown: Monthly/Hourly)
+   - Monthly Salary or Hourly Rate (required depending on selection)
+   - Overtime Eligible (yes/no)
+   - Allowances (optional R value)
+   - Bonus Type (optional dropdown: Fixed/Discretionary/None)
+
+4. **Statutory Deductions**
+   - UIF Contributing (yes/no, default yes)
+   - SDL Contributing (yes/no, default yes)
+   - PAYE Exempt (yes/no, optional override)
+
+5. **Medical Aid**
+   - Is Member (yes/no)
+   - Employee Contribution (R value, optional)
+   - Employer Contribution (R value, optional)
+   - Number of Dependants (optional)
+   - Fringe Benefit Applies (yes/no)
+
+6. **Leave & Bank**
+   - Annual Leave Days per Year (required, default 15)
+   - Bank Name (required dropdown)
+   - Account Number (required)
+   - Account Type (dropdown: Savings/Cheque)
+
+**Additional Requirements:**
+- Retain field validation and existing styling.
+- Show/hide Medical Aid section dynamically based on "Is Member".
+- Add logic to auto-generate Employee ID and prevent duplicates.
+- Include tooltips or small help text under relevant fields.
+- Ensure form submission works and routes to the correct backend function.
+
+Update any related models or services (`models/employee.py`, `employee_service.py`) to store the new fields as needed.

@@ -1,0 +1,124 @@
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-building me-2"></i>Company Information
+                </h5>
+                {% if show_edit_button %}
+                <div class="text-end">
+                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editCompanyModal">
+                        <i class="bi bi-pencil-square me-1"></i> Edit Company
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-1">Company Name</h6>
+                            <p class="mb-0 fw-bold">{{ company.name }}</p>
+                        </div>
+                        {% if company.industry %}
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-1">Industry</h6>
+                            <p class="mb-0">{{ company.industry }}</p>
+                        </div>
+                        {% endif %}
+                        {% if company.registration_number %}
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-1">Registration Number</h6>
+                            <p class="mb-0">{{ company.registration_number }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        {% if company.email %}
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-1">Email</h6>
+                            <p class="mb-0">{{ company.email }}</p>
+                        </div>
+                        {% endif %}
+                        {% if company.phone %}
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-1">Phone</h6>
+                            <p class="mb-0">{{ company.phone }}</p>
+                        </div>
+                        {% endif %}
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-1">Tax Year End</h6>
+                            <p class="mb-0">{{ company.tax_year_end or 'February' }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        {% if company.address %}
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-1">Address</h6>
+                            <p class="mb-0">{{ company.address }}</p>
+                        </div>
+                        {% endif %}
+                        {% if company.default_pay_date %}
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-1">Default Pay Date</h6>
+                            <p class="mb-0">{{ company.default_pay_date }}</p>
+                        </div>
+                        {% endif %}
+                        {% if company.default_hourly_rate %}
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-1">Default Hourly Rate</h6>
+                            <p class="mb-0">R{{ "{:,.2f}".format(company.default_hourly_rate) }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- SARS Declaration Information -->
+                {% if company.uif_reference_number or company.paye_reference_number or company.employer_first_name or company.employer_last_name or company.employer_id_number %}
+                <hr class="my-4">
+                <h6 class="text-muted mb-3">
+                    <i class="fas fa-shield-alt me-2"></i>SARS Declaration Details
+                </h6>
+                <div class="row">
+                    <div class="col-md-4">
+                        {% if company.uif_reference_number %}
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-1">UIF Reference Number</h6>
+                            <p class="mb-0 font-monospace">{{ company.uif_reference_number }}</p>
+                        </div>
+                        {% endif %}
+                        {% if company.paye_reference_number %}
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-1">PAYE Reference Number</h6>
+                            <p class="mb-0 font-monospace">{{ company.paye_reference_number }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        {% if company.employer_first_name %}
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-1">Employer First Name</h6>
+                            <p class="mb-0">{{ company.employer_first_name }}</p>
+                        </div>
+                        {% endif %}
+                        {% if company.employer_last_name %}
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-1">Employer Last Name</h6>
+                            <p class="mb-0">{{ company.employer_last_name }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        {% if company.employer_id_number %}
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-1">Employer ID Number</h6>
+                            <p class="mb-0 font-monospace">{{ company.employer_id_number }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}New Payroll Entry - {{ employee.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard.overview') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('employees.index') }}">Employees</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('employees.view', employee_id=employee.id) }}">{{ employee.full_name }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">New Payroll Entry</li>
+                </ol>
+            </nav>
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-1">New Payroll Entry</h1>
+                    <p class="text-muted mb-0">Enter payroll data for {{ employee.full_name }} (
+                        <a href="{{ url_for('employees.view', employee_id=employee.id) }}" class="text-decoration-none text-primary" title="View Employee Profile">
+                            {{ employee.employee_id }}
+                        </a>)
+                    </p>
+                </div>
+                <a href="{{ url_for('employees.view', employee_id=employee.id) }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Employee
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payroll Entry Form -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-calculator me-2"></i>
+                        Payroll Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('employees.payroll_new', employee_id=employee.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <!-- Pay Period -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="pay_period_start" class="form-label">Pay Period Start <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="pay_period_start" name="pay_period_start" 
+                                       value="{{ default_data.pay_period_start }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="pay_period_end" class="form-label">Pay Period End <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="pay_period_end" name="pay_period_end" 
+                                       value="{{ default_data.pay_period_end }}" required>
+                            </div>
+                        </div>
+
+                        <!-- Hours Worked -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="ordinary_hours" class="form-label">Ordinary Hours <span class="text-danger">*</span></label>
+                                <input type="number" step="0.01" class="form-control" id="ordinary_hours" name="ordinary_hours" 
+                                       value="{{ default_data.ordinary_hours }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="overtime_hours" class="form-label">Overtime Hours</label>
+                                <input type="number" step="0.01" class="form-control" id="overtime_hours" name="overtime_hours" 
+                                       value="{{ default_data.overtime_hours }}">
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="sunday_hours" class="form-label">Sunday Hours</label>
+                                <input type="number" step="0.01" class="form-control" id="sunday_hours" name="sunday_hours" 
+                                       value="{{ default_data.sunday_hours }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="public_holiday_hours" class="form-label">Public Holiday Hours</label>
+                                <input type="number" step="0.01" class="form-control" id="public_holiday_hours" name="public_holiday_hours" 
+                                       value="{{ default_data.public_holiday_hours }}">
+                            </div>
+                        </div>
+
+                        <!-- Rates and Allowances -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="hourly_rate" class="form-label">Hourly Rate (R) <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R</span>
+                                    <input type="number" step="0.01" class="form-control" id="hourly_rate" name="hourly_rate" 
+                                           value="{{ default_data.hourly_rate }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="allowances" class="form-label">Allowances (R)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R</span>
+                                    <input type="number" step="0.01" class="form-control" id="allowances" name="allowances" 
+                                           value="{{ default_data.allowances }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Deductions -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <label for="union_fee" class="form-label">Union Fee (R)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R</span>
+                                    <input type="number" step="0.01" class="form-control" id="union_fee" name="union_fee"
+                                           value="{{ default_data.union_fee }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('employees.view', employee_id=employee.id) }}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Save Payroll Entry
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employee Summary Card -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-user me-2"></i>
+                        Employee Summary
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Full Name</label>
+                        <p class="fw-bold mb-2">{{ employee.full_name }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Employee ID</label>
+                        <p class="fw-bold mb-2">
+                            <a href="{{ url_for('employees.view', employee_id=employee.id) }}" class="text-decoration-none text-primary" title="View Employee Profile">
+                                {{ employee.employee_id }}
+                            </a>
+                        </p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Department</label>
+                        <p class="fw-bold mb-2">{{ employee.department }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Job Title</label>
+                        <p class="fw-bold mb-2">{{ employee.job_title }}</p>
+                    </div>
+                    {% if employee.salary_type == 'monthly' %}
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Monthly Salary</label>
+                        <p class="fw-bold mb-2 text-success">R{{ "{:,.2f}".format(employee.salary) }}</p>
+                    </div>
+                    {% elif employee.salary_type == 'hourly' %}
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Hourly Rate</label>
+                        <p class="fw-bold mb-2 text-success">R{{ "{:,.2f}".format(employee.salary) }}/hr</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

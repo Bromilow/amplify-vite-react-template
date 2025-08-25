@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payslip - {{ employee.full_name }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .payslip-container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: white;
+        }
+        
+        .header {
+            border-bottom: 3px solid #2c3e50;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .company-info {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .company-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .company-address {
+            font-size: 11px;
+            color: #666;
+            line-height: 1.3;
+        }
+        
+        .payslip-title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 20px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .employee-info {
+            display: table;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        
+        .employee-info-left,
+        .employee-info-right {
+            display: table-cell;
+            width: 50%;
+            vertical-align: top;
+            padding-right: 20px;
+        }
+        
+        .employee-info-right {
+            padding-left: 20px;
+            padding-right: 0;
+        }
+        
+        .info-row {
+            margin-bottom: 8px;
+            display: table;
+            width: 100%;
+        }
+        
+        .info-label {
+            display: table-cell;
+            width: 40%;
+            font-weight: bold;
+            padding-right: 10px;
+        }
+        
+        .info-value {
+            display: table-cell;
+            color: #666;
+        }
+        
+        .pay-period {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .pay-period h3 {
+            margin: 0;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+        
+        .earnings-deductions {
+            display: table;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        
+        .earnings,
+        .deductions {
+            display: table-cell;
+            width: 50%;
+            vertical-align: top;
+            padding: 20px;
+            border: 1px solid #ddd;
+        }
+        
+        .earnings {
+            margin-right: 10px;
+            background: #f8fff8;
+        }
+        
+        .deductions {
+            margin-left: 10px;
+            background: #fff8f8;
+        }
+        
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            border-bottom: 2px solid #2c3e50;
+            padding-bottom: 5px;
+        }
+        
+        .item {
+            display: table;
+            width: 100%;
+            margin-bottom: 8px;
+            font-size: 11px;
+        }
+        
+        .item-label {
+            display: table-cell;
+            width: 70%;
+        }
+        
+        .item-amount {
+            display: table-cell;
+            text-align: right;
+            font-weight: bold;
+        }
+        
+        .subtotal {
+            border-top: 1px solid #ccc;
+            margin-top: 10px;
+            padding-top: 10px;
+            font-weight: bold;
+        }
+        
+        .summary {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+        }
+        
+        .summary-row {
+            display: table;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+        
+        .summary-label {
+            display: table-cell;
+            width: 70%;
+            font-size: 14px;
+        }
+        
+        .summary-amount {
+            display: table-cell;
+            text-align: right;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .net-pay {
+            border-top: 2px solid #fff;
+            padding-top: 15px;
+            margin-top: 15px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .compliance-note {
+            background: #f0f0f0;
+            padding: 15px;
+            border-left: 4px solid #2c3e50;
+            margin-bottom: 20px;
+            font-size: 10px;
+            line-height: 1.6;
+        }
+        
+        .footer {
+            text-align: center;
+            font-size: 10px;
+            color: #666;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+        
+        .footer p {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="payslip-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="company-info">
+                <div class="company-name">{{ company.name }}</div>
+                <div class="company-address">
+                    {% if company.address %}{{ company.address }}<br>{% endif %}
+                    {% if company.phone %}Tel: {{ company.phone }} | {% endif %}{% if company.email %}Email: {{ company.email }}<br>{% endif %}
+                    {% if company.registration_number %}Registration: {{ company.registration_number }}{% endif %}
+                </div>
+            </div>
+            <div class="payslip-title">Payslip</div>
+        </div>
+
+        <!-- Employee Information -->
+        <div class="employee-info">
+            <div class="employee-info-left">
+                <div class="info-row">
+                    <span class="info-label">Employee Name:</span>
+                    <span class="info-value">{{ employee.full_name }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Employee ID:</span>
+                    <span class="info-value">
+                        <a href="{{ url_for('employees.view', employee_id=employee.id) }}" class="text-decoration-none text-primary" title="View Employee Profile">
+                            {{ employee.employee_id }}
+                        </a>
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">ID Number:</span>
+                    <span class="info-value">{{ employee.id_number }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Tax Number:</span>
+                    <span class="info-value">{{ employee.tax_number or 'N/A' }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Department:</span>
+                    <span class="info-value">{{ employee.department }}</span>
+                </div>
+            </div>
+            <div class="employee-info-right">
+                <div class="info-row">
+                    <span class="info-label">Job Title:</span>
+                    <span class="info-value">{{ employee.job_title }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Bank:</span>
+                    <span class="info-value">{{ employee.bank_name }}</span>
+                </div>
+                {% if employee.medical_aid_member and employee.medical_aid_number %}
+                <div class="info-row">
+                    <span class="info-label">Medical Aid:</span>
+                    <span class="info-value">{{ employee.medical_aid_scheme }} ({{ employee.medical_aid_number }})</span>
+                </div>
+                {% endif %}
+                <div class="info-row">
+                    <span class="info-label">Salary Type:</span>
+                    <span class="info-value">{{ employee.salary_type|title }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Employment Status:</span>
+                    <span class="info-value">{{ employee.employment_status }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pay Period -->
+        <div class="pay-period">
+            <h3>Pay Period: {{ entry.pay_period_start.strftime('%d %B %Y') }} to {{ entry.pay_period_end.strftime('%d %B %Y') }}</h3>
+        </div>
+
+        <!-- Earnings and Deductions -->
+        <div class="earnings-deductions">
+            <div class="earnings">
+                <div class="section-title">Earnings</div>
+                
+                {% if employee.salary_type == 'piece' %}
+                    {% set piece_pay = (entry.pieces_produced or 0) * (entry.piece_rate or 0) %}
+                    {% if piece_pay > 0 %}
+                    <div class="item">
+                        <span class="item-label">Piece Work ({{ "%.0f"|format(entry.pieces_produced or 0) }} units @ R{{ "%.4f"|format(entry.piece_rate or 0) }})</span>
+                        <span class="item-amount">R {{ "{:,.2f}".format(piece_pay) }}</span>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    {% set basic_salary = entry.ordinary_hours * entry.hourly_rate %}
+                    {% if basic_salary > 0 %}
+                    <div class="item">
+                        <span class="item-label">Basic Salary ({{ "%.1f"|format(entry.ordinary_hours) }} hrs @ R{{ "%.2f"|format(entry.hourly_rate) }})</span>
+                        <span class="item-amount">R {{ "{:,.2f}".format(basic_salary) }}</span>
+                    </div>
+                    {% endif %}
+                {% endif %}
+                
+                {% if employee.salary_type != 'piece' and employee.salary_type != 'monthly' %}
+                    {% set overtime_pay = entry.overtime_hours * entry.hourly_rate * company.overtime_multiplier %}
+                    {% if overtime_pay > 0 %}
+                    <div class="item">
+                        <span class="item-label">Overtime ({{ "%.1f"|format(entry.overtime_hours) }} hrs @ {{ company.overtime_multiplier }}x)</span>
+                        <span class="item-amount">R {{ "{:,.2f}".format(overtime_pay) }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% set sunday_pay = entry.sunday_hours * entry.hourly_rate * company.sunday_multiplier %}
+                    {% if sunday_pay > 0 %}
+                    <div class="item">
+                        <span class="item-label">Sunday Hours ({{ "%.1f"|format(entry.sunday_hours) }} hrs @ {{ company.sunday_multiplier }}x)</span>
+                        <span class="item-amount">R {{ "{:,.2f}".format(sunday_pay) }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% set holiday_pay = entry.public_holiday_hours * entry.hourly_rate * company.public_holiday_multiplier %}
+                    {% if holiday_pay > 0 %}
+                    <div class="item">
+                        <span class="item-label">Public Holiday ({{ "%.1f"|format(entry.public_holiday_hours) }} hrs @ {{ company.public_holiday_multiplier }}x)</span>
+                        <span class="item-amount">R {{ "{:,.2f}".format(holiday_pay) }}</span>
+                    </div>
+                    {% endif %}
+                {% endif %}
+                
+                {% if entry.allowances > 0 %}
+                <div class="item">
+                    <span class="item-label">Allowances</span>
+                    <span class="item-amount">R {{ "{:,.2f}".format(entry.allowances) }}</span>
+                </div>
+                {% endif %}
+                
+                {% if entry.fringe_benefit_medical > 0 %}
+                <div class="item">
+                    <span class="item-label">Fringe Benefit - Medical Aid (Taxable)</span>
+                    <span class="item-amount">R {{ "{:,.2f}".format(entry.fringe_benefit_medical) }}</span>
+                </div>
+                {% endif %}
+                
+                <div class="item subtotal">
+                    <span class="item-label">GROSS PAY</span>
+                    <span class="item-amount">R {{ "{:,.2f}".format(entry.gross_pay) }}</span>
+                </div>
+            </div>
+            
+            <div class="deductions">
+                <div class="section-title">Deductions</div>
+                
+                {% if entry.paye > 0 %}
+                <div class="item">
+                    <span class="item-label">PAYE Tax</span>
+                    <span class="item-amount">R {{ "{:,.2f}".format(entry.paye) }}</span>
+                </div>
+                {% endif %}
+                
+                {% if entry.uif > 0 %}
+                <div class="item">
+                    <span class="item-label">UIF ({{ company.uif_percent }}%)</span>
+                    <span class="item-amount">R {{ "{:,.2f}".format(entry.uif) }}</span>
+                </div>
+                {% endif %}
+                
+                {% if entry.sdl > 0 %}
+                <div class="item">
+                    <span class="item-label">SDL ({{ company.sdl_percent }}%)</span>
+                    <span class="item-amount">R {{ "{:,.2f}".format(entry.sdl) }}</span>
+                </div>
+                {% endif %}
+                
+                {% if employee.medical_aid_employee and employee.medical_aid_employee > 0 %}
+                <div class="item">
+                    <span class="item-label">Medical Aid - Employee</span>
+                    <span class="item-amount">R {{ "{:,.2f}".format(employee.medical_aid_employee) }}</span>
+                </div>
+                {% endif %}
+                
+                {% if entry.union_fee > 0 %}
+                <div class="item">
+                    <span class="item-label">Union Fee</span>
+                    <span class="item-amount">R {{ "{:,.2f}".format(entry.union_fee) }}</span>
+                </div>
+                {% endif %}
+                
+                
+                {% if entry.medical_aid_tax_credit > 0 %}
+                <div class="item" style="color: green;">
+                    <span class="item-label">Medical Aid Tax Credit</span>
+                    <span class="item-amount">-R {{ "{:,.2f}".format(entry.medical_aid_tax_credit) }}</span>
+                </div>
+                {% endif %}
+                
+                <div class="item subtotal">
+                    <span class="item-label">TOTAL DEDUCTIONS</span>
+                    <span class="item-amount">R {{ "{:,.2f}".format(entry.total_deductions) }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="summary">
+            <div class="summary-row">
+                <span class="summary-label">Total Earnings:</span>
+                <span class="summary-amount">R {{ "{:,.2f}".format(entry.gross_pay) }}</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">Total Deductions:</span>
+                <span class="summary-amount">R {{ "{:,.2f}".format(entry.total_deductions) }}</span>
+            </div>
+            <div class="summary-row net-pay">
+                <span class="summary-label">NET PAY:</span>
+                <span class="summary-amount">R {{ "{:,.2f}".format(entry.net_pay) }}</span>
+            </div>
+        </div>
+
+        <!-- BCEA Compliance Note -->
+        <div class="compliance-note">
+            <strong>BCEA Compliance:</strong> This payslip complies with the Basic Conditions of Employment Act (BCEA) requirements. 
+            All statutory deductions are calculated according to South African labour legislation. 
+            Medical Aid Tax Credit has been applied where applicable according to SARS regulations.
+            For queries regarding your pay, please contact HR within 30 days.
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>Payslip generated on {{ current_date.strftime('%d %B %Y at %H:%M') }}</p>
+            <p>This is a computer-generated document and does not require a signature.</p>
+            <p>Please retain this payslip for your records.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,393 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2><i class="fas fa-building me-2"></i>{{ company.name }} - Beneficiaries</h2>
+                    <p class="text-muted mb-0">Manage third-party payment recipients for recurring deductions</p>
+                </div>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBeneficiaryModal">
+                    <i class="fas fa-plus me-2"></i>Add Beneficiary
+                </button>
+            </div>
+
+            <!-- Beneficiaries Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-users me-2"></i>Company Beneficiaries
+                        <span class="badge bg-secondary ms-2">{{ beneficiaries|length }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if beneficiaries %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th><i class="fas fa-tag me-1"></i>Type</th>
+                                    <th><i class="fas fa-user me-1"></i>Name</th>
+                                    <th><i class="fas fa-university me-1"></i>Bank</th>
+                                    <th><i class="fas fa-credit-card me-1"></i>Account</th>
+                                    <th><i class="fas fa-code-branch me-1"></i>Branch</th>
+                                    <th><i class="fas fa-file-export me-1"></i>EFT Export</th>
+                                    <th><i class="fas fa-cogs me-1"></i>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for beneficiary in beneficiaries %}
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-info">{{ beneficiary.type }}</span>
+                                    </td>
+                                    <td><strong>{{ beneficiary.name }}</strong></td>
+                                    <td>{{ beneficiary.bank_name or '-' }}</td>
+                                    <td>
+                                        {% if beneficiary.account_number %}
+                                            <code>{{ beneficiary.account_number }}</code>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ beneficiary.branch_code or '-' }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if beneficiary.include_in_eft_export else 'secondary' }}">
+                                            {{ 'Yes' if beneficiary.include_in_eft_export else 'No' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button class="btn btn-outline-primary edit-beneficiary-btn"
+                                                    data-beneficiary-id="{{ beneficiary.id }}">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-outline-danger" 
+                                                    onclick="deleteBeneficiary({{ beneficiary.id }}, '{{ beneficiary.name }}')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Beneficiaries Found</h5>
+                        <p class="text-muted">Add your first third-party payment recipient to get started.</p>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBeneficiaryModal">
+                            <i class="fas fa-plus me-2"></i>Add First Beneficiary
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Beneficiary Modal -->
+<div class="modal fade" id="addBeneficiaryModal" tabindex="-1" aria-labelledby="beneficiaryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="beneficiaryForm" method="POST" action="/company/{{ current_company_id }}/beneficiaries/add">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="beneficiaryModalLabel">
+                        <i class="fas fa-plus me-2"></i>Add Beneficiary
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Beneficiary Information Section -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="text-muted mb-3">
+                                <i class="fas fa-info-circle me-2"></i>Beneficiary Information
+                            </h6>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="type" class="form-label">Type <span class="text-danger">*</span></label>
+                            <select class="form-select" id="type" name="type" required onchange="toggleCustomType()">
+                                <option value="">Select Type</option>
+                                <option value="Medical Aid">Medical Aid</option>
+                                <option value="Pension Fund">Pension Fund</option>
+                                <option value="Provident Fund">Provident Fund</option>
+                                <option value="Garnishee Order">Garnishee Order</option>
+                                <option value="Insurance">Insurance</option>
+                                <option value="Union Dues">Union Dues</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="name" class="form-label">Beneficiary Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name" required
+                                   placeholder="e.g., Discovery Health Medical Scheme">
+                        </div>
+                    </div>
+
+                    <!-- Custom Beneficiary Type Field (hidden by default, full-width row) -->
+                    <div class="row mb-3" id="custom_type_field" style="display: none;">
+                        <div class="col-12">
+                            <label for="custom_beneficiary_type" class="form-label">Custom Beneficiary Type <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="custom_beneficiary_type" name="custom_type"
+                                   placeholder="Enter custom beneficiary type">
+                        </div>
+                    </div>
+
+                    <!-- Banking Information Section -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="text-muted mb-3">
+                                <i class="fas fa-university me-2"></i>Banking Information
+                            </h6>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="bank_name" class="form-label">Bank Name</label>
+                            <select class="form-select" id="bank_name" name="bank_name" onchange="toggleCustomBank()">
+                                <option value="">Select Bank</option>
+                                <option value="ABSA Bank">ABSA Bank</option>
+                                <option value="Standard Bank">Standard Bank</option>
+                                <option value="First National Bank">First National Bank</option>
+                                <option value="Nedbank">Nedbank</option>
+                                <option value="Capitec Bank">Capitec Bank</option>
+                                <option value="African Bank">African Bank</option>
+                                <option value="Investec">Investec</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="account_type" class="form-label">Account Type</label>
+                            <select class="form-select" id="account_type" name="account_type">
+                                <option value="Savings">Savings</option>
+                                <option value="Cheque">Cheque</option>
+                                <option value="Current">Current</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Custom Bank Name Field (hidden by default, full-width row) -->
+                    <div class="row mb-3" id="custom_bank_field" style="display: none;">
+                        <div class="col-12">
+                            <label for="custom_bank_name" class="form-label">Custom Bank Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="custom_bank_name" name="custom_bank_name" 
+                                   placeholder="Enter custom bank name">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="account_number" class="form-label">Account Number</label>
+                            <input type="text" class="form-control" id="account_number" name="account_number"
+                                   placeholder="Account number">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="branch_code" class="form-label">Branch Code</label>
+                            <input type="text" class="form-control" id="branch_code" name="branch_code"
+                                   placeholder="Branch code">
+                        </div>
+                    </div>
+
+                    <!-- EFT Export Configuration -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="text-muted mb-3">
+                                <i class="fas fa-file-export me-2"></i>EFT Export Configuration
+                            </h6>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="include_in_eft_export" 
+                                       name="include_in_eft_export" value="1">
+                                <label class="form-check-label" for="include_in_eft_export">
+                                    Include in EFT Export Files
+                                </label>
+                                <div class="form-text">
+                                    When enabled, this beneficiary will be included in exported payment files for bank processing.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Save Beneficiary
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2 text-warning"></i>Confirm Delete
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete beneficiary <strong id="deleteBeneficiaryName"></strong>?</p>
+                <p class="text-muted small">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    let editingBeneficiaryId = null;
+
+async function editBeneficiary(beneficiaryId) {
+    try {
+        const response = await fetch(`/company/beneficiaries/${beneficiaryId}/json`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch beneficiary');
+        }
+        const beneficiary = await response.json();
+        if (!beneficiary || beneficiary.error) {
+            alert(beneficiary.error || 'No beneficiary data returned');
+            return;
+        }
+        editingBeneficiaryId = beneficiary.id;
+
+        const modalEl = document.getElementById('addBeneficiaryModal');
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+        // Update modal title
+        document.getElementById('beneficiaryModalLabel').innerHTML = '<i class="fas fa-edit me-2"></i>Edit Beneficiary';
+
+        // Populate standard fields
+        document.getElementById('name').value = beneficiary.name || '';
+        document.getElementById('account_number').value = beneficiary.account_number || '';
+        document.getElementById('branch_code').value = beneficiary.branch_code || '';
+        document.getElementById('account_type').value = beneficiary.account_type || 'Savings';
+        document.getElementById('include_in_eft_export').checked = beneficiary.include_in_eft_export || false;
+
+        // Populate type with custom handling
+        const typeSelect = document.getElementById('type');
+        const availableTypes = Array.from(typeSelect.options).map(o => o.value);
+        if (availableTypes.includes(beneficiary.type)) {
+            typeSelect.value = beneficiary.type;
+            toggleCustomType();
+            if (beneficiary.type === 'Other') {
+                document.getElementById('custom_beneficiary_type').value = '';
+            }
+        } else {
+            typeSelect.value = 'Other';
+            toggleCustomType();
+            document.getElementById('custom_beneficiary_type').value = beneficiary.type || '';
+        }
+
+        // Populate bank name with custom handling
+        const bankSelect = document.getElementById('bank_name');
+        const availableBanks = Array.from(bankSelect.options).map(o => o.value);
+        if (availableBanks.includes(beneficiary.bank_name)) {
+            bankSelect.value = beneficiary.bank_name;
+            toggleCustomBank();
+            if (beneficiary.bank_name === 'Other') {
+                document.getElementById('custom_bank_name').value = '';
+            }
+        } else {
+            bankSelect.value = 'Other';
+            toggleCustomBank();
+            document.getElementById('custom_bank_name').value = beneficiary.bank_name || '';
+        }
+
+        // Update form action and submit button text
+        document.getElementById('beneficiaryForm').action = `/company/update_beneficiary/${beneficiary.id}`;
+        document.querySelector('#beneficiaryForm button[type="submit"]').innerHTML = '<i class="fas fa-save me-2"></i>Update Beneficiary';
+
+        modal.show();
+    } catch (error) {
+        console.error(error);
+        alert('Failed to load beneficiary data');
+    }
+}
+
+$(document).on('click', '.edit-beneficiary-btn', function (e) {
+    e.preventDefault();
+    const beneficiaryId = $(this).data('beneficiary-id');
+    editBeneficiary(beneficiaryId);
+});
+
+// Toggle custom beneficiary type field visibility
+function toggleCustomType() {
+    const typeSelect = document.getElementById('type');
+    const customTypeField = document.getElementById('custom_type_field');
+    const customTypeInput = document.getElementById('custom_beneficiary_type');
+    
+    if (typeSelect.value === 'Other') {
+        customTypeField.style.display = 'block';
+        customTypeInput.required = true;
+    } else {
+        customTypeField.style.display = 'none';
+        customTypeInput.required = false;
+        customTypeInput.value = '';
+    }
+}
+
+// Toggle custom bank name field visibility
+function toggleCustomBank() {
+    const bankSelect = document.getElementById('bank_name');
+    const customBankField = document.getElementById('custom_bank_field');
+    const customBankInput = document.getElementById('custom_bank_name');
+    
+    if (bankSelect.value === 'Other') {
+        customBankField.style.display = 'block';
+        customBankInput.required = true;
+    } else {
+        customBankField.style.display = 'none';
+        customBankInput.required = false;
+        customBankInput.value = '';
+    }
+}
+
+function deleteBeneficiary(beneficiaryId, beneficiaryName) {
+    document.getElementById('deleteBeneficiaryName').textContent = beneficiaryName;
+    document.getElementById('deleteForm').action = `/company/{{ current_company_id }}/beneficiaries/${beneficiaryId}/delete`;
+    
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+}
+
+// Reset modal when it's hidden
+document.getElementById('addBeneficiaryModal').addEventListener('hidden.bs.modal', function () {
+    editingBeneficiaryId = null;
+    document.getElementById('beneficiaryModalLabel').innerHTML = '<i class="fas fa-plus me-2"></i>Add Beneficiary';
+    document.getElementById('beneficiaryForm').action = '/company/{{ current_company_id }}/beneficiaries/add';
+    document.querySelector('#beneficiaryForm button[type="submit"]').innerHTML = '<i class="fas fa-save me-2"></i>Save Beneficiary';
+    document.getElementById('beneficiaryForm').reset();
+    
+    // Hide custom fields
+    document.getElementById('custom_type_field').style.display = 'none';
+    document.getElementById('custom_bank_field').style.display = 'none';
+    
+    // Clear custom field requirements
+    document.getElementById('custom_beneficiary_type').required = false;
+    document.getElementById('custom_bank_name').required = false;
+});
+});
+</script>
+{% endblock %}

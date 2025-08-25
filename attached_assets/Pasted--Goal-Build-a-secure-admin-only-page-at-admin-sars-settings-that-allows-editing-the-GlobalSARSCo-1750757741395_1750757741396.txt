@@ -1,0 +1,99 @@
+🎯 Goal: Build a secure admin-only page at /admin/sars-settings that allows editing the GlobalSARSConfig values used across the system as defaults.
+
+🗂️ 1. Route Setup
+File: routes/admin.py (create if it doesn’t exist)
+
+from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask_login import login_required, current_user
+from app.models import db, GlobalSARSConfig
+from decimal import Decimal
+
+admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
+
+def global_admin_required(func):
+    def wrapper(*args, **kwargs):
+        if not current_user.is_authenticated or not current_user.is_global_admin:
+            flash("Access denied.", "danger")
+            return redirect(url_for('dashboard.overview'))
+        return func(*args, **kwargs)
+    wrapper.__name__ = func.__name__
+    return login_required(wrapper)
+
+@admin_bp.route('/sars-settings', methods=['GET', 'POST'])
+@global_admin_required
+def sars_settings():
+    config = GlobalSARSConfig.query.first()
+    if not config:
+        config = GlobalSARSConfig()
+        db.session.add(config)
+
+    if request.method == 'POST':
+        try:
+            config.uif_percent = Decimal(request.form.get('uif_percent', 0)) / 100
+            config.sdl_percent = Decimal(request.form.get('sdl_percent', 0)) / 100
+            config.uif_monthly_cap = Decimal(request.form.get('uif_cap', 0))
+            config.tax_year_start_day = int(request.form.get('tax_day'))
+            config.tax_year_start_month = int(request.form.get('tax_month'))
+            config.medical_primary_credit = Decimal(request.form.get('med_primary'))
+            config.medical_dependant_credit = Decimal(request.form.get('med_dependant'))
+            config.tax_authority_name = request.form.get('tax_authority')
+            db.session.commit()
+            flash("SARS configuration updated successfully.", "success")
+        except Exception as e:
+            db.session.rollback()
+            flash("Error updating configuration: " + str(e), "danger")
+
+    return render_template('admin/sars_settings.html', config=config)
+🖼️ 2. Template: templates/admin/sars_settings.html
+{% extends "layout.html" %}
+{% block content %}
+<h2 class="mb-4">Global SARS Configuration</h2>
+<form method="post">
+  <div class="row">
+    <div class="col-md-4">
+      <label>UIF Rate (%)</label>
+      <input type="number" name="uif_percent" step="0.01" value="{{ (config.uif_percent * 100)|round(2) }}" class="form-control">
+    </div>
+    <div class="col-md-4">
+      <label>SDL Rate (%)</label>
+      <input type="number" name="sdl_percent" step="0.01" value="{{ (config.sdl_percent * 100)|round(2) }}" class="form-control">
+    </div>
+    <div class="col-md-4">
+      <label>UIF Salary Cap (R)</label>
+      <input type="number" name="uif_cap" step="0.01" value="{{ config.uif_monthly_cap }}" class="form-control">
+    </div>
+    <div class="col-md-4 mt-3">
+      <label>Tax Year Start Day</label>
+      <input type="number" name="tax_day" value="{{ config.tax_year_start_day }}" class="form-control">
+    </div>
+    <div class="col-md-4 mt-3">
+      <label>Tax Year Start Month</label>
+      <input type="number" name="tax_month" value="{{ config.tax_year_start_month }}" class="form-control">
+    </div>
+    <div class="col-md-4 mt-3">
+      <label>Tax Authority Name</label>
+      <input type="text" name="tax_authority" value="{{ config.tax_authority_name }}" class="form-control">
+    </div>
+    <div class="col-md-6 mt-3">
+      <label>Medical Credit (Primary)</label>
+      <input type="number" name="med_primary" step="0.01" value="{{ config.medical_primary_credit }}" class="form-control">
+    </div>
+    <div class="col-md-6 mt-3">
+      <label>Medical Credit (Dependant)</label>
+      <input type="number" name="med_dependant" step="0.01" value="{{ config.medical_dependant_credit }}" class="form-control">
+    </div>
+  </div>
+  <button type="submit" class="btn btn-primary mt-4">Save Changes</button>
+</form>
+{% endblock %}
+🧩 3. Register Blueprint
+In your app.py or main routes config:
+
+from app.routes.admin import admin_bp
+app.register_blueprint(admin_bp)
+✅ Result
+Global admin users can visit /admin/sars-settings
+
+Modify all SARS global defaults in one place
+
+Changes automatically flow through to fallback logic + tooltips

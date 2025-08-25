@@ -1,0 +1,90 @@
+# ✅ PHASE 1: MODELS
+
+# In models.py, define the Beneficiary model
+class Beneficiary(db.Model):
+    __tablename__ = 'beneficiaries'
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False)
+    type = db.Column(db.String(50), nullable=False)  # Garnishee, Medical Aid, etc.
+    name = db.Column(db.String(255), nullable=False)
+    bank_name = db.Column(db.String(100), nullable=True)
+    account_number = db.Column(db.String(50), nullable=True)
+    branch_code = db.Column(db.String(20), nullable=True)
+    account_type = db.Column(db.String(20), nullable=True)
+    include_in_eft_export = db.Column(db.Boolean, default=False)
+
+    company = db.relationship('Company', backref=db.backref('beneficiaries', lazy='dynamic'))
+
+# Run migrations:
+flask db migrate -m "Add Beneficiary model"
+flask db upgrade
+
+
+# ✅ PHASE 2: ROUTES
+
+# In routes/company.py, add:
+@bp.route('/company/<int:company_id>/beneficiaries')
+@login_required
+def beneficiaries(company_id):
+    company = Company.query.get_or_404(company_id)
+    beneficiaries = company.beneficiaries.order_by(Beneficiary.name.asc()).all()
+    return render_template('company/beneficiaries.html', company=company, beneficiaries=beneficiaries)
+
+
+# ✅ PHASE 3: NAVIGATION
+
+# In templates/company/layout.html (or equivalent nav bar template), add:
+<li class="nav-item">
+  <a class="nav-link {% if 'beneficiaries' in request.path %}active{% endif %}"
+     href="{{ url_for('company.beneficiaries', company_id=company.id) }}">
+    Beneficiaries
+  </a>
+</li>
+
+
+# ✅ PHASE 4: BASIC TEMPLATE
+
+# Create templates/company/beneficiaries.html
+# Basic scaffold with table and placeholder for future modal:
+
+{% extends "base.html" %}
+{% block content %}
+  <div class="container mt-4">
+    <h2>Company Beneficiaries</h2>
+    <p class="text-muted">Below are all third-party payment recipients configured for this company.</p>
+    <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#beneficiaryModal">Add Beneficiary</button>
+
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Name</th>
+          <th>Bank</th>
+          <th>Account</th>
+          <th>Include in EFT</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in beneficiaries %}
+        <tr>
+          <td>{{ b.type }}</td>
+          <td>{{ b.name }}</td>
+          <td>{{ b.bank_name }}</td>
+          <td>{{ b.account_number }}</td>
+          <td>{{ 'Yes' if b.include_in_eft_export else 'No' }}</td>
+          <td>
+            <button class="btn btn-sm btn-outline-primary">Edit</button>
+            <button class="btn btn-sm btn-outline-danger">Delete</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modal Placeholder -->
+  <div class="modal fade" id="beneficiaryModal" tabindex="-1">
+    <!-- Modal form for Add/Edit will go here later -->
+  </div>
+{% endblock %}

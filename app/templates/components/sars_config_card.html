@@ -1,0 +1,109 @@
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-shield-alt me-2"></i>
+                    SARS Configuration
+                </h5>
+                <i class="fas fa-lock text-muted" data-bs-toggle="tooltip" title="These settings are managed by your system administrator and ensure SARS compliance."></i>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>System Controlled:</strong> These values are configured centrally to ensure compliance with current SARS regulations and tax year requirements.
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6 class="text-muted mb-2">Tax Rates & Caps</h6>
+                        <div class="mb-3">
+                            <label class="form-label text-muted small"><strong>UIF Rate</strong></label>
+                            <p class="mb-1">{{ "{:.1f}".format(sars_config.uif_percent) }}%</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted small"><strong>SDL Rate</strong></label>
+                            <p class="mb-1">{{ "{:.1f}".format(sars_config.sdl_percent) }}%</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted small"><strong>UIF Monthly Cap</strong></label>
+                            <p class="mb-1">{{ sars_config.currency_symbol }}{{ "{:,.2f}".format(sars_config.uif_monthly_cap) }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted small"><strong>UIF Salary Cap</strong></label>
+                            <p class="mb-1">{{ sars_config.currency_symbol }}{{ "{:,.0f}".format(sars_config.uif_salary_cap) }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <h6 class="text-muted mb-2">Medical Aid Credits</h6>
+                        <div class="mb-3">
+                            <label class="form-label text-muted small"><strong>Primary Member Credit</strong></label>
+                            <p class="mb-1">{{ sars_config.currency_symbol }}{{ "{:,.0f}".format(sars_config.medical_primary_credit) }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted small"><strong>Dependant Credit</strong></label>
+                            <p class="mb-1">{{ sars_config.currency_symbol }}{{ "{:,.0f}".format(sars_config.medical_dependant_credit) }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted small"><strong>Tax Authority</strong></label>
+                            <p class="mb-1">{{ sars_config.tax_authority_name }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted small"><strong>Currency Symbol</strong></label>
+                            <p class="mb-1">{{ sars_config.currency_symbol }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <h6 class="text-muted mb-2">Tax Year Configuration</h6>
+                        <div class="mb-3">
+                            <label class="form-label text-muted small"><strong>Tax Year Start</strong></label>
+                            <p class="mb-1">{{ sars_config.tax_year_start_display }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted small"><strong>Current Tax Year</strong></label>
+                            <p class="mb-1">{{ sars_config.tax_year_display }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted small"><strong>Configuration Source</strong></label>
+                            <p class="mb-1">
+                                <span class="badge bg-{{ 'warning' if sars_config.use_global_defaults else 'primary' }}">
+                                    {{ 'Global Defaults' if sars_config.use_global_defaults else 'Company Override' }}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr class="my-3">
+                
+                <div class="row">
+                    <div class="col-12">
+                        <h6 class="text-muted mb-2">Calculation Examples</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card bg-light border-0">
+                                    <div class="card-body py-2">
+                                        <small class="text-muted">For a monthly salary of {{ sars_config.currency_symbol }}20,000:</small><br>
+                                        <small><strong>UIF:</strong> {{ sars_config.currency_symbol }}{{ "{:,.2f}".format(20000 * (sars_config.uif_percent / 100) if (20000 * (sars_config.uif_percent / 100)) <= sars_config.uif_monthly_cap else sars_config.uif_monthly_cap) }}</small><br>
+                                        <small><strong>SDL:</strong> {{ sars_config.currency_symbol }}{{ "{:,.2f}".format(20000 * (sars_config.sdl_percent / 100)) }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card bg-light border-0">
+                                    <div class="card-body py-2">
+                                        <small class="text-muted">Medical aid credit for 2 dependants:</small><br>
+                                        <small><strong>Total Credit:</strong> {{ sars_config.currency_symbol }}{{ "{:,.0f}".format((sars_config.medical_primary_credit * 2) + sars_config.medical_dependant_credit) }}</small><br>
+                                        <small class="text-muted">(Primary × 2 + 1 dependant credit)</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

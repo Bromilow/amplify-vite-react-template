@@ -1,0 +1,126 @@
+<div class="modal fade" id="editMedicalAidModal" tabindex="-1" aria-labelledby="editMedicalAidModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('employees.update_medical_aid', employee_id=employee.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editMedicalAidModalLabel">Edit Medical Aid Information</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        {% if employee.medical_aid_member %}
+                            <span class="badge bg-success">Medical Aid Active</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Not Active</span>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label for="linked_medical_beneficiary_id" class="form-label">Linked Beneficiary</label>
+                        <select class="form-select" id="linked_medical_beneficiary_id" name="linked_medical_beneficiary_id">
+                            <option value="">-- Select Beneficiary --</option>
+                            {% for b in medical_beneficiaries %}
+                                <option value="{{ b.id }}" data-name="{{ b.name }}" {% if (default_medical_beneficiary_id or employee.linked_medical_beneficiary_id) == b.id %}selected{% endif %}>{{ b.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="medical_aid_scheme" class="form-label">Scheme Name</label>
+                        <input type="text" class="form-control" id="medical_aid_scheme" name="medical_aid_scheme" value="{{ employee.medical_aid_scheme or '' }}" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="medical_aid_number" class="form-label">Membership Number</label>
+                        <input type="text" class="form-control" id="medical_aid_number" name="medical_aid_number" value="{{ employee.medical_aid_number or '' }}">
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="medical_aid_principal_member" name="medical_aid_principal_member" {% if employee.medical_aid_principal_member %}checked{% endif %}>
+                        <label class="form-check-label" for="medical_aid_principal_member">Principal Member?</label>
+                    </div>
+                    <div class="mb-3">
+                        <label for="medical_aid_dependants" class="form-label">Number of Dependants</label>
+                        <input type="number" class="form-control" id="medical_aid_dependants" name="medical_aid_dependants" value="{{ employee.medical_aid_dependants or 0 }}" min="0">
+                    </div>
+                    <div class="mb-3">
+                        <label for="medical_aid_additional_dependants" class="form-label">Additional Dependants</label>
+                        <input type="number" class="form-control" id="medical_aid_additional_dependants" name="additional_dependants" value="{{ employee_medical_aid_info.additional_dependants if employee_medical_aid_info else 0 }}" min="0">
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="use_sars_calc" name="use_sars_calculation" {% if not employee_medical_aid_info or employee_medical_aid_info.use_sars_calculation %}checked{% endif %}>
+                        <label class="form-check-label" for="use_sars_calc">
+                            Use SARS Tax Credit Calculation?
+                            <i class="fas fa-info-circle text-muted" data-bs-toggle="tooltip" title="If checked, deduction is based on {{ sars_config.tax_authority_name if sars_config else 'SARS' }} medical tax credit tables."></i>
+                        </label>
+                    </div>
+                    <div id="manual_override_section" class="mb-3">
+                        <label for="employer_contribution_override" class="form-label">
+                            Employer Contribution Override
+                            <i class="fas fa-info-circle text-muted" data-bs-toggle="tooltip" title="Manual employer portion when not using {{ sars_config.tax_authority_name if sars_config else 'SARS' }} calculation."></i>
+                        </label>
+                        <input type="number" step="0.01" class="form-control" id="employer_contribution_override" name="employer_contribution_override" value="{{ employee_medical_aid_info.employer_contribution_override if employee_medical_aid_info else '' }}">
+                    </div>
+                    <div id="manual_employee_section" class="mb-3">
+                        <label for="employee_contribution_override" class="form-label">
+                            Employee Contribution Override
+                            <i class="fas fa-info-circle text-muted" data-bs-toggle="tooltip" title="Manual employee portion when not using {{ sars_config.tax_authority_name if sars_config else 'SARS' }} calculation."></i>
+                        </label>
+                        <input type="number" step="0.01" class="form-control" id="employee_contribution_override" name="employee_contribution_override" value="{{ employee_medical_aid_info.employee_contribution_override if employee_medical_aid_info else '' }}">
+                    </div>
+                    <div id="effective_from_section" class="mb-3">
+                        <label for="effective_from" class="form-label">Effective From Date</label>
+                        <input type="date" class="form-control" id="effective_from" name="effective_from" value="{{ employee_medical_aid_info.effective_from.isoformat() if employee_medical_aid_info and employee_medical_aid_info.effective_from else '' }}">
+                    </div>
+                </div>
+                <div class="modal-footer flex-column align-items-start">
+                    <div id="deduction_summary" class="mb-2"></div>
+                    <div>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+(function(){
+    const benSelect = document.getElementById('linked_medical_beneficiary_id');
+    const schemeInput = document.getElementById('medical_aid_scheme');
+    function updateScheme(){
+        const opt = benSelect && benSelect.selectedOptions[0];
+        if(opt && opt.dataset.name){ schemeInput.value = opt.dataset.name; }
+    }
+    benSelect && benSelect.addEventListener('change', updateScheme);
+    document.addEventListener('DOMContentLoaded', updateScheme);
+
+    function toggleOverrides(){
+        const checked = document.getElementById('use_sars_calc').checked;
+        document.getElementById('manual_override_section').style.display = checked?'none':'block';
+        document.getElementById('manual_employee_section').style.display = checked?'none':'block';
+        document.getElementById('effective_from_section').style.display = checked?'none':'block';
+    }
+    document.getElementById('use_sars_calc')?.addEventListener('change', toggleOverrides);
+    document.addEventListener('DOMContentLoaded', toggleOverrides);
+
+    function updateSummary(){
+        const summary = document.getElementById('deduction_summary');
+        const useSars = document.getElementById('use_sars_calc').checked;
+        if(useSars){
+            const base = parseInt(document.getElementById('medical_aid_dependants').value||0);
+            const addl = parseInt(document.getElementById('medical_aid_additional_dependants').value||0);
+            const deps = base + addl;
+            let amt = 0;
+            if(deps===0) amt=364; else if(deps===1) amt=728; else amt=728+(deps-1)*246;
+            summary.innerHTML = `<span class="badge bg-info">SARS Calculation: R${amt.toFixed(2)}</span>`;
+        }else{
+            const emp = parseFloat(document.getElementById('employee_contribution_override').value||0);
+            const comp = parseFloat(document.getElementById('employer_contribution_override').value||0);
+            summary.innerHTML = `<span class="badge bg-info">Manual Total: R${(emp+comp).toFixed(2)}</span>`;
+        }
+    }
+    ['medical_aid_dependants','medical_aid_additional_dependants','employer_contribution_override','employee_contribution_override','use_sars_calc'].forEach(id=>{
+        document.getElementById(id)?.addEventListener('input', updateSummary);
+        document.getElementById(id)?.addEventListener('change', updateSummary);
+    });
+    document.addEventListener('DOMContentLoaded', updateSummary);
+})();
+</script>

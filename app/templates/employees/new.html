@@ -1,0 +1,1470 @@
+{% extends "base.html" %}
+
+{% block title %}Add New Employee - Payroll Management System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('employees.index') }}">Employees</a></li>
+                    <li class="breadcrumb-item active">Add New Employee</li>
+                </ol>
+            </nav>
+            <h1 class="h2">
+                <i class="fas fa-user-plus me-2"></i>
+                Add New Employee
+            </h1>
+            <p class="text-muted">Complete employee information for payroll and HR management</p>
+        </div>
+        <div class="col-auto">
+            <a href="{{ url_for('employees.index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>
+                Back to Employees
+            </a>
+        </div>
+    </div>
+    
+    <!-- Employee Form -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-user-circle me-2"></i>
+                        Employee Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('employees.new') }}" novalidate>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <!-- Personal Information Section -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-muted mb-3">
+                                    <i class="fas fa-user me-2"></i>
+                                    Personal Information
+                                </h6>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="first_name" class="form-label">First Name <span class="text-danger">*</span></label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="first_name" 
+                                       name="first_name" 
+                                       value="{{ form_data.first_name if form_data else '' }}"
+                                       required>
+                                <div class="invalid-feedback">
+                                    Please provide a valid first name.
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="last_name" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="last_name" 
+                                       name="last_name" 
+                                       value="{{ form_data.last_name if form_data else '' }}"
+                                       required>
+                                <div class="invalid-feedback">
+                                    Please provide a valid last name.
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="employee_id" class="form-label">Employee ID</label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="employee_id" 
+                                       name="employee_id" 
+                                       value="{{ generated_employee_id if generated_employee_id else 'Will be auto-generated' }}"
+                                       readonly
+                                       style="background-color: var(--bs-secondary-bg);">
+                                <div class="form-text">Auto-generated unique identifier for this employee</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="identification_type" class="form-label">Identification Type <span class="text-danger">*</span></label>
+                                <select class="form-select" 
+                                        id="identification_type" 
+                                        name="identification_type" 
+                                        onchange="toggleIdentificationFields()" 
+                                        required>
+                                    <option value="sa_id" {{ 'selected' if not form_data or form_data.identification_type == 'sa_id' else '' }}>South African ID</option>
+                                    <option value="passport" {{ 'selected' if form_data and form_data.identification_type == 'passport' else '' }}>Passport Number</option>
+                                </select>
+                                <div class="form-text">Select the type of identification document</div>
+                            </div>
+                            <div class="col-md-6 mb-3" id="sa_id_field">
+                                <label for="id_number" class="form-label">South African ID Number <span class="text-danger">*</span></label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="id_number" 
+                                       name="id_number" 
+                                       value="{{ form_data.id_number if form_data else '' }}"
+                                       placeholder="e.g., 8311155310095"
+                                       maxlength="13"
+                                       pattern="[0-9]{13}"
+                                       oninput="validateAndExtractFromId()">
+                                <div class="form-text">13-digit SA ID number - Auto-fills date of birth and gender</div>
+                                <div id="id_validation_message" class="text-danger small" style="display: none;"></div>
+                                <div id="id_success_message" class="text-success small" style="display: none;">
+                                    <i class="fas fa-check-circle me-1"></i>Valid SA ID - Fields auto-populated
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3" id="passport_field" style="display: none;">
+                                <label for="passport_number" class="form-label">Passport Number <span class="text-danger">*</span></label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="passport_number" 
+                                       name="passport_number" 
+                                       value="{{ form_data.passport_number if form_data else '' }}"
+                                       placeholder="e.g., A1234567"
+                                       maxlength="20">
+                                <div class="form-text">International passport number</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="tax_number" class="form-label">Tax Number</label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="tax_number" 
+                                       name="tax_number" 
+                                       value="{{ form_data.tax_number if form_data else '' }}"
+                                       placeholder="e.g., TX006789012">
+                                <div class="form-text">Optional tax identification number</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="cell_number" class="form-label">Cell Number <span class="text-danger">*</span></label>
+                                <input type="tel" 
+                                       class="form-control" 
+                                       id="cell_number" 
+                                       name="cell_number" 
+                                       value="{{ form_data.cell_number if form_data else '' }}"
+                                       placeholder="e.g., 0791234567"
+                                       pattern="^(\+27|0)[6-8][0-9]{8}$"
+                                       oninput="validateSACellNumber(this)"
+                                       required>
+                                <small class="form-text text-muted">
+                                    Formats: 0791234567 or +27791234567 (will be saved as +27791234567)
+                                </small>
+                                <div class="invalid-feedback">
+                                    Please enter a valid South African mobile number (0791234567 or +27791234567).
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email Address</label>
+                                <input type="email" 
+                                       class="form-control" 
+                                       id="email" 
+                                       name="email" 
+                                       value="{{ form_data.email if form_data else '' }}"
+                                       placeholder="e.g., employee@company.co.za">
+                                <div class="form-text">Optional email address</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="date_of_birth" class="form-label">Date of Birth <span id="dob_required" class="text-danger" style="display: none;">*</span></label>
+                                <input type="date" 
+                                       class="form-control" 
+                                       id="date_of_birth" 
+                                       name="date_of_birth" 
+                                       value="{{ form_data.date_of_birth if form_data else '' }}">
+                                <div class="form-text" id="dob_help_text">Auto-filled from SA ID number</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="gender" class="form-label">Gender <span id="gender_required" class="text-danger" style="display: none;">*</span></label>
+                                <select class="form-select" id="gender" name="gender">
+                                    <option value="">Choose gender...</option>
+                                    <option value="Male" {{ 'selected' if form_data and form_data.gender == 'Male' else '' }}>Male</option>
+                                    <option value="Female" {{ 'selected' if form_data and form_data.gender == 'Female' else '' }}>Female</option>
+                                    <option value="Other" {{ 'selected' if form_data and form_data.gender == 'Other' else '' }}>Other</option>
+                                </select>
+                                <div class="form-text" id="gender_help_text">Auto-filled from SA ID number</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="marital_status" class="form-label">Marital Status</label>
+                                <select class="form-select" id="marital_status" name="marital_status">
+                                    <option value="">Choose marital status...</option>
+                                    <option value="Single" {{ 'selected' if form_data and form_data.marital_status == 'Single' else '' }}>Single</option>
+                                    <option value="Married" {{ 'selected' if form_data and form_data.marital_status == 'Married' else '' }}>Married</option>
+                                    <option value="Divorced" {{ 'selected' if form_data and form_data.marital_status == 'Divorced' else '' }}>Divorced</option>
+                                    <option value="Widowed" {{ 'selected' if form_data and form_data.marital_status == 'Widowed' else '' }}>Widowed</option>
+                                </select>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label for="physical_address" class="form-label">Physical Address <span class="text-danger">*</span></label>
+                                <textarea class="form-control" 
+                                          id="physical_address" 
+                                          name="physical_address" 
+                                          rows="3" 
+                                          placeholder="e.g., 123 Main Street, Suburb, City, Province, Postal Code"
+                                          required>{{ form_data.physical_address if form_data else '' }}</textarea>
+                                <div class="form-text">Complete residential address</div>
+                                <div class="invalid-feedback">
+                                    Please provide a physical address.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Employment Information Section -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-muted mb-3">
+                                    <i class="fas fa-briefcase me-2"></i>
+                                    Employment Information
+                                </h6>
+                            </div>
+                            
+                            <!-- Left Column -->
+                            <div class="col-md-6">
+                                <!-- Department (1st field - Tab order 1) -->
+                                <div class="mb-3">
+                                    <label for="department" class="form-label">Department <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="department" name="department" required tabindex="1">
+                                        <option value="">Choose department...</option>
+                                        {% for dept in departments %}
+                                        <option value="{{ dept }}" {% if form_data and form_data.department == dept %}selected{% endif %}>
+                                            {{ dept }}
+                                        </option>
+                                        {% endfor %}
+                                        <option value="Other">Other (specify below)</option>
+                                    </select>
+                                    <div class="invalid-feedback">
+                                        Please select a department.
+                                    </div>
+                                </div>
+                                
+                                <!-- Custom Department Field (hidden by default) - positioned directly below department dropdown -->
+                                <div class="mb-3" id="custom_department_group" style="display: none;">
+                                    <label for="custom_department" class="form-label">Custom Department <span class="text-danger">*</span></label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="custom_department" 
+                                           name="custom_department"
+                                           value="{{ form_data.custom_department if form_data else '' }}"
+                                           placeholder="Enter new department name"
+                                           tabindex="2">
+                                    <div class="form-text">Specify the custom department name</div>
+                                    <div class="invalid-feedback">
+                                        Please specify the custom department name.
+                                    </div>
+                                </div>
+                                
+                                <!-- Employment Type (now 3rd field - Tab order 3) -->
+                                <div class="mb-3">
+                                    <label for="employment_type" class="form-label">Employment Type <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="employment_type" name="employment_type" required tabindex="3">
+                                        <option value="">Choose employment type...</option>
+                                        <option value="Full-Time" {% if form_data and form_data.employment_type == 'Full-Time' %}selected{% endif %}>Full-Time</option>
+                                        <option value="Part-Time" {% if form_data and form_data.employment_type == 'Part-Time' %}selected{% endif %}>Part-Time</option>
+                                        <option value="Contract" {% if form_data and form_data.employment_type == 'Contract' %}selected{% endif %}>Contract</option>
+                                        <option value="Temporary" {% if form_data and form_data.employment_type == 'Temporary' %}selected{% endif %}>Temporary</option>
+                                        <option value="Seasonal" {% if form_data and form_data.employment_type == 'Seasonal' %}selected{% endif %}>Seasonal</option>
+                                    </select>
+                                    <div class="invalid-feedback">
+                                        Please select an employment type.
+                                    </div>
+                                </div>
+                                
+                                <!-- Start Date (4th field - Tab order 5) -->
+                                <div class="mb-3">
+                                    <label for="start_date" class="form-label">Start Date <span class="text-danger">*</span></label>
+                                    <input type="date" 
+                                           class="form-control" 
+                                           id="start_date" 
+                                           name="start_date" 
+                                           value="{{ form_data.start_date if form_data else '' }}"
+                                           required
+                                           tabindex="5">
+                                    <div class="invalid-feedback">
+                                        Please provide a valid start date.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Right Column -->
+                            <div class="col-md-6">
+                                <!-- Job Title (1st field in right column - Tab order 4) -->
+                                <div class="mb-3">
+                                    <label for="job_title" class="form-label">Job Title <span class="text-danger">*</span></label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="job_title" 
+                                           name="job_title" 
+                                           value="{{ form_data.job_title if form_data else '' }}"
+                                           placeholder="e.g., Software Developer, Accountant"
+                                           required
+                                           tabindex="4">
+                                    <div class="invalid-feedback">
+                                        Please provide a job title.
+                                    </div>
+                                </div>
+                                
+                                <!-- Employment Status (2nd field - Tab order 6) -->
+                                <div class="mb-3">
+                                    <label for="employment_status" class="form-label">Employment Status <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="employment_status" name="employment_status" required tabindex="6">
+                                        <option value="Active" {% if not form_data or form_data.employment_status == 'Active' %}selected{% endif %}>Active</option>
+                                        <option value="Suspended" {% if form_data and form_data.employment_status == 'Suspended' %}selected{% endif %}>Suspended</option>
+                                        <option value="Terminated" {% if form_data and form_data.employment_status == 'Terminated' %}selected{% endif %}>Terminated</option>
+                                    </select>
+                                    <div class="invalid-feedback">
+                                        Please select an employment status.
+                                    </div>
+                                </div>
+                                
+                                <!-- End Date (3rd field - Tab order 7) -->
+                                <div class="mb-3">
+                                    <label for="end_date" class="form-label">End Date</label>
+                                    <input type="date" 
+                                           class="form-control" 
+                                           id="end_date" 
+                                           name="end_date" 
+                                           value="{{ form_data.end_date if form_data else '' }}"
+                                           tabindex="7">
+                                    <div class="form-text">Optional termination or contract end date</div>
+                                </div>
+                            </div>
+                            
+
+                            
+                            <!-- Reporting Manager (separate from main grid) -->
+                            <div class="col-md-6 mb-3">
+                                <label for="reporting_manager" class="form-label">Reporting Manager</label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="reporting_manager" 
+                                       name="reporting_manager" 
+                                       value="{{ form_data.reporting_manager if form_data else '' }}"
+                                       placeholder="e.g., John Smith"
+                                       tabindex="7">
+                                <div class="form-text">Direct supervisor or manager</div>
+                            </div>
+
+                        </div>
+                        
+                        <!-- Compensation Information Section -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-muted mb-3">
+                                    <i class="fas fa-dollar-sign me-2"></i>
+                                    Compensation Information
+                                </h6>
+                            </div>
+                            <!-- DEBUG: Company Default Salary Type = {{ company.default_salary_type }} -->
+                            <!-- DEBUG: Company Default Monthly Salary = {{ company.default_salary }} -->
+                            <!-- DEBUG: Company Default Hourly Rate = {{ company.default_hourly_rate }} -->
+                            <div class="col-md-6 mb-3">
+                                <label for="salary_type" class="form-label">Salary Type <span class="text-danger">*</span></label>
+                                <select class="form-select" id="salary_type" name="salary_type" required>
+                                    <option value="">Choose salary type...</option>
+                                    <option value="monthly" {% if form_data and form_data.salary_type == 'monthly' %}selected{% elif not form_data and company and company.default_salary_type == 'monthly' %}selected{% endif %}>Monthly</option>
+                                    <option value="hourly" {% if form_data and form_data.salary_type == 'hourly' %}selected{% elif not form_data and company and company.default_salary_type == 'hourly' %}selected{% endif %}>Hourly</option>
+                                    <option value="daily" {% if form_data and form_data.salary_type == 'daily' %}selected{% elif not form_data and company and company.default_salary_type == 'daily' %}selected{% endif %}>Daily</option>
+                                    <option value="piece" {% if form_data and form_data.salary_type == 'piece' %}selected{% elif not form_data and company and company.default_salary_type == 'piece' %}selected{% endif %}>Piece Work</option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select a salary type.
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="salary" class="form-label">
+                                    <span id="salary_label">Salary Amount</span> <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R</span>
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="salary" 
+                                           name="salary" 
+                                           value="{{ form_data.salary if form_data else '' }}"
+                                           data-monthly-default="{{ company.default_salary if company and company.default_salary else '' }}"
+                                           data-hourly-default="{{ company.default_hourly_rate if company and company.default_hourly_rate else '' }}"
+                                           data-daily-default="{{ company.default_daily_rate if company and company.default_daily_rate else '' }}"
+                                           data-piece-default="{{ company.default_piece_rate if company and company.default_piece_rate else '' }}"
+                                           step="0.01" 
+                                           min="0"
+                                           required>
+                                    <span class="input-group-text" id="salary_unit">/month</span>
+                                </div>
+                                <div class="form-text" id="salary_help">Enter the monthly salary amount in South African Rand</div>
+                                <div class="invalid-feedback">
+                                    Please provide a valid salary amount.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           id="overtime_eligible"
+                                           name="overtime_eligible"
+                                           value="1"
+                                           onchange="toggleOvertimeFields()"
+                                           {% if form_data and form_data.overtime_eligible %}checked{% elif not form_data and company and company.default_overtime_eligible %}checked{% elif not form_data and not company %}checked{% endif %}>
+                                    <label class="form-check-label" for="overtime_eligible">
+                                        Overtime Eligible
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="overtime_settings" style="display:none;">
+                            <div class="row mb-3" id="overtime_method_field">
+                                <div class="col-12">
+                                    <label for="overtime_calc_method" class="form-label">Overtime Calculation Method</label>
+                                    <select class="form-select" id="overtime_calc_method" name="overtime_calc_method">
+                                        <option value="per_hour" selected>Per Hour</option>
+                                        <option value="per_day">Per Day</option>
+                                        <option value="fixed_amount">Fixed Amount</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <label for="ordinary_hours_per_day" class="form-label">Ordinary Hours per Day</label>
+                                    <input type="number"
+                                           class="form-control"
+                                           id="ordinary_hours_per_day"
+                                           name="ordinary_hours_per_day"
+                                           value="{{ form_data.ordinary_hours_per_day if form_data else company.default_ordinary_hours_per_day if company and company.default_ordinary_hours_per_day else 8 }}"
+                                           min="0.01" max="24" step="0.01">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="work_days_per_month" class="form-label">Work Days per Month</label>
+                                    <input type="number"
+                                           class="form-control"
+                                           id="work_days_per_month"
+                                           name="work_days_per_month"
+                                           value="{{ form_data.work_days_per_month if form_data else company.default_work_days_per_month if company and company.default_work_days_per_month else 22 }}"
+                                           min="0.01" max="31" step="0.01">
+                                </div>
+                                <div class="col-md-4">
+                                    <label id="derived_hourly_label" for="derived_hourly_rate" class="form-label">Derived Hourly Rate</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">R</span>
+                                        <input type="number" class="form-control" id="derived_hourly_rate" step="0.01" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-4" id="overtime_multiplier_field">
+                                    <label for="overtime_multiplier" class="form-label">Overtime Multiplier</label>
+                                    <input type="number"
+                                           class="form-control"
+                                           id="overtime_multiplier"
+                                           name="overtime_multiplier"
+                                           value="{{ form_data.overtime_multiplier if form_data else company.overtime_multiplier if company and company.overtime_multiplier else '' }}"
+                                           step="0.01" min="1.00" max="5.0">
+                                    <div class="form-text" id="overtime_multiplier_preview"></div>
+                                </div>
+                                <div class="col-md-4" id="sunday_multiplier_field">
+                                    <label for="sunday_multiplier" class="form-label">Sunday Overtime Multiplier</label>
+                                    <input type="number"
+                                           class="form-control"
+                                           id="sunday_multiplier"
+                                           name="sunday_multiplier"
+                                           value="{{ form_data.sunday_multiplier if form_data else company.sunday_multiplier if company and company.sunday_multiplier else '' }}"
+                                           step="0.01" min="1.00" max="5.0">
+                                    <div class="form-text" id="sunday_multiplier_preview"></div>
+                                </div>
+                                <div class="col-md-4" id="holiday_multiplier_field">
+                                    <label for="holiday_multiplier" class="form-label">Public Holiday Overtime Multiplier</label>
+                                    <input type="number"
+                                           class="form-control"
+                                           id="holiday_multiplier"
+                                           name="holiday_multiplier"
+                                           value="{{ form_data.holiday_multiplier if form_data else company.public_holiday_multiplier if company and company.public_holiday_multiplier else '' }}"
+                                           step="0.01" min="1.00" max="5.0">
+                                    <div class="form-text" id="holiday_multiplier_preview"></div>
+                                </div>
+                            </div>
+                        </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="allowances" class="form-label">Allowances</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R</span>
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="allowances" 
+                                           name="allowances" 
+                                           value="{{ form_data.allowances if form_data else '0' }}"
+                                           step="0.01" 
+                                           min="0">
+                                    <span class="input-group-text">/month</span>
+                                </div>
+                                <div class="form-text">Additional monthly allowances (transport, housing, etc.)</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="bonus_type" class="form-label">Bonus Type</label>
+                                <select class="form-select" id="bonus_type" name="bonus_type">
+                                    <option value="">No Bonus</option>
+                                    <option value="Annual" {% if form_data and form_data.bonus_type == 'Annual' %}selected{% endif %}>Annual</option>
+                                    <option value="Performance-based" {% if form_data and form_data.bonus_type == 'Performance-based' %}selected{% endif %}>Performance-based</option>
+                                    <option value="Fixed" {% if form_data and form_data.bonus_type == 'Fixed' %}selected{% endif %}>Fixed</option>
+                                    <option value="Discretionary" {% if form_data and form_data.bonus_type == 'Discretionary' %}selected{% endif %}>Discretionary</option>
+                                </select>
+                                <div class="form-text">Type of bonus structure</div>
+                            </div>
+                        </div>
+
+                        
+                        <!-- Leave & Banking Information Section -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-muted mb-3">
+                                    <i class="fas fa-calendar me-2"></i>
+                                    Leave & Banking Information
+                                </h6>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="annual_leave_days" class="form-label">Annual Leave Days</label>
+                                <input type="number" 
+                                       class="form-control" 
+                                       id="annual_leave_days" 
+                                       name="annual_leave_days" 
+                                       value="{{ form_data.annual_leave_days if form_data else '15' }}"
+                                       min="0"
+                                       max="30">
+                                <div class="form-text">Number of annual leave days per year (default: 15)</div>
+                            </div>
+
+                        </div>
+                        
+                        <!-- Banking Information Section -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-muted mb-3">
+                                    <i class="fas fa-university me-2"></i>
+                                    Banking Information
+                                </h6>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="bank_name" class="form-label">Bank Name <span class="text-danger">*</span></label>
+                                <select class="form-select" id="bank_name" name="bank_name" required>
+                                    <option value="">Choose bank...</option>
+                                    <option value="Standard Bank" {% if form_data and form_data.bank_name == 'Standard Bank' %}selected{% endif %}>Standard Bank</option>
+                                    <option value="FNB" {% if form_data and form_data.bank_name == 'FNB' %}selected{% endif %}>First National Bank (FNB)</option>
+                                    <option value="ABSA" {% if form_data and form_data.bank_name == 'ABSA' %}selected{% endif %}>ABSA</option>
+                                    <option value="Nedbank" {% if form_data and form_data.bank_name == 'Nedbank' %}selected{% endif %}>Nedbank</option>
+                                    <option value="Capitec Bank" {% if form_data and form_data.bank_name == 'Capitec Bank' %}selected{% endif %}>Capitec Bank</option>
+                                    <option value="African Bank" {% if form_data and form_data.bank_name == 'African Bank' %}selected{% endif %}>African Bank</option>
+                                    <option value="Investec" {% if form_data and form_data.bank_name == 'Investec' %}selected{% endif %}>Investec</option>
+                                    <option value="Other" {% if form_data and form_data.bank_name == 'Other' %}selected{% endif %}>Other</option>
+                                </select>
+                                <div class="form-text">Select the employee's bank</div>
+                                <div class="invalid-feedback">
+                                    Please select a bank.
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="account_number" class="form-label">Account Number <span class="text-danger">*</span></label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="account_number" 
+                                       name="account_number" 
+                                       value="{{ form_data.account_number if form_data else '' }}"
+                                       placeholder="e.g., 401234567890"
+                                       required>
+                                <div class="form-text">Bank account number for salary payments</div>
+                                <div class="invalid-feedback">
+                                    Please provide a valid account number.
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="account_type" class="form-label">Account Type</label>
+                                <select class="form-select" id="account_type" name="account_type">
+                                    <option value="Savings" {% if not form_data or form_data.account_type == 'Savings' %}selected{% endif %}>Savings</option>
+                                    <option value="Cheque" {% if form_data and form_data.account_type == 'Cheque' %}selected{% endif %}>Cheque</option>
+                                    <option value="Transmission" {% if form_data and form_data.account_type == 'Transmission' %}selected{% endif %}>Transmission</option>
+                                </select>
+                                <div class="form-text">Type of bank account</div>
+                            </div>
+                        </div>
+                        
+
+                        
+                        <!-- Statutory Deductions Section -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-muted mb-3">
+                                    <i class="fas fa-gavel me-2"></i>
+                                    Statutory Deductions
+                                </h6>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" 
+                                           type="checkbox" 
+                                           id="uif_contributing" 
+                                           name="uif_contributing" 
+                                           value="1"
+                                           {% if form_data and form_data.uif_contributing %}checked{% elif not form_data and company and company.default_uif %}checked{% elif not form_data and not company %}checked{% endif %}>
+                                    <label class="form-check-label" for="uif_contributing">
+                                        UIF Contributing
+                                    </label>
+                                    <div class="form-text">Unemployment Insurance Fund contributions</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" 
+                                           type="checkbox" 
+                                           id="sdl_contributing" 
+                                           name="sdl_contributing" 
+                                           value="1"
+                                           {% if form_data and form_data.sdl_contributing %}checked{% elif not form_data and company and company.default_sdl %}checked{% elif not form_data and not company %}checked{% endif %}>
+                                    <label class="form-check-label" for="sdl_contributing">
+                                        SDL Contributing
+                                    </label>
+                                    <div class="form-text">Skills Development Levy contributions</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" 
+                                           type="checkbox" 
+                                           id="paye_exempt" 
+                                           name="paye_exempt" 
+                                           value="1"
+                                           {% if form_data and form_data.paye_exempt %}checked{% elif not form_data and company and company.default_paye_exempt %}checked{% endif %}>
+                                    <label class="form-check-label" for="paye_exempt">
+                                        PAYE Exempt
+                                    </label>
+                                    <div class="form-text">Exempt from Pay-As-You-Earn tax</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+
+                        
+                        <!-- Recurring Deductions Section -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-muted mb-3">
+                                    <i class="fas fa-cogs me-2"></i>
+                                    Recurring Deductions
+                                </h6>
+                            </div>
+                            <div class="col-12 mb-2">
+                                <div class="form-text">medical aid, pension, garnishee orders, etc.</div>
+                            </div>
+                        </div>
+
+                        <!-- Recurring Deductions Details -->
+                        <div id="recurring_deductions_details">
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <div class="card border-info">
+                                        <div class="card-header bg-light">
+                                            <h6 class="card-title mb-0">
+                                                <i class="fas fa-list me-2"></i>
+                                                Configure Recurring Deductions
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <!-- Hidden field to track if deduction table was populated with defaults -->
+                                            <input type="hidden" id="deductions_populated" name="deductions_populated" value="{% if deduction_defaults or form_deductions %}1{% else %}0{% endif %}">
+                                            <div class="table-responsive">
+                                                <table class="table table-sm" id="deductions_table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th width="30%">Beneficiary</th>
+                                                            <th width="15%">Type</th>
+                                                            <th width="18%">Deduction Type</th>
+                                                            <th width="37%">Value</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="deductions_tbody">
+                                                        {% if form_deductions %}
+                                                            {% for deduction in form_deductions %}
+                                                            <tr>
+                                                                <td>
+                                                                    {% set beneficiary = beneficiaries|selectattr('id', 'equalto', deduction.beneficiary_id|int)|first %}
+                                                                    {% if beneficiary %}
+                                                                        <strong>{{ beneficiary.name }}</strong>
+                                                                    {% else %}
+                                                                        <select class="form-select form-select-sm" name="deduction_beneficiary_id[]">
+                                                                            <option value="">Select Beneficiary...</option>
+                                                                            {% for b in beneficiaries %}
+                                                                            <option value="{{ b.id }}" {{ 'selected' if b.id == deduction.beneficiary_id|int else '' }}>{{ b.name }}</option>
+                                                                            {% endfor %}
+                                                                        </select>
+                                                                    {% endif %}
+                                                                    {% if beneficiary %}
+                                                                        <input type="hidden" name="deduction_beneficiary_id[]" value="{{ deduction.beneficiary_id }}">
+                                                                    {% endif %}
+                                                                </td>
+                                                                <td>
+                                                                    {% if beneficiary %}
+                                                                        <span class="badge bg-secondary">{{ beneficiary.type }}</span>
+                                                                    {% else %}
+                                                                        <span class="badge bg-secondary dynamic-type">Select Beneficiary</span>
+                                                                    {% endif %}
+                                                                </td>
+                                                                <td>
+                                                                    <select class="form-select form-select-sm" name="deduction_amount_type[]" onchange="updateDeductionValueField(this)">
+                                                                        <option value="fixed" {{ 'selected' if deduction.amount_type|lower == 'fixed' else '' }}>Fixed Amount</option>
+                                                                        <option value="percent" {{ 'selected' if deduction.amount_type|lower == 'percent' else '' }}>Percentage</option>
+                                                                        {% if beneficiary and beneficiary.type == 'Medical Aid' %}
+                                                                        <option value="calculated" {{ 'selected' if deduction.amount_type|lower == 'calculated' else '' }}>Calculated</option>
+                                                                        {% endif %}
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <div class="d-flex align-items-center">
+                                                                        <div class="input-group input-group-sm flex-grow-1">
+                                                                            <span class="input-group-text deduction-prefix">{{ 'R' if deduction.amount_type|lower != 'percent' else '%' }}</span>
+                                                                            <input type="number"
+   class="form-control"
+   name="deduction_value[]"
+   value="{{ deduction.amount }}"
+   step="0.01"
+   min="0"
+   placeholder="0.00"
+   {% if deduction.amount_type|lower == 'calculated' %}disabled title="This deduction will be automatically calculated using the employee’s Medical Aid information"{% endif %}>
+                                                                        </div>
+                                                                        <button type="button" class="btn btn-outline-danger btn-sm ms-2" onclick="removeDeductionRow(this)" title="Remove this deduction">
+                                                                            <i class="fas fa-trash"></i>
+                                                                        </button>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                            {% endfor %}
+                                                        {% elif deduction_defaults %}
+                                                            {% for default in deduction_defaults %}
+                                                            <tr>
+                                                                <td>
+                                                                    <strong>{{ default.beneficiary.name }}</strong>
+                                                                    <input type="hidden" name="deduction_beneficiary_id[]" value="{{ default.beneficiary_id }}">
+                                                                </td>
+                                                                <td>
+                                                                    <span class="badge bg-secondary">{{ default.beneficiary.type }}</span>
+                                                                </td>
+                                                                <td>
+                                                                    <select class="form-select form-select-sm" name="deduction_amount_type[]" onchange="updateDeductionValueField(this)">
+                                                                        <option value="fixed" {{ 'selected' if default.amount_type|lower == 'fixed' else '' }}>Fixed Amount</option>
+                                                                        <option value="percent" {{ 'selected' if default.amount_type|lower == 'percent' else '' }}>Percentage</option>
+                                                                        {% if default.beneficiary.type == 'Medical Aid' %}
+                                                                        <option value="calculated" {{ 'selected' if default.amount_type|lower == 'calculated' else '' }}>Calculated</option>
+                                                                        {% endif %}
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <div class="d-flex align-items-center">
+                                                                        <div class="input-group input-group-sm flex-grow-1">
+                                                                            <span class="input-group-text deduction-prefix">{{ 'R' if default.amount_type|lower != 'percent' else '%' }}</span>
+                                                                            <input type="number"
+   class="form-control"
+   name="deduction_value[]"
+   value="{{ default.amount }}"
+   step="0.01"
+   min="0"
+   placeholder="0.00"
+   {% if default.amount_type|lower == 'calculated' %}disabled title="This deduction will be automatically calculated using the employee’s Medical Aid information"{% endif %}>
+                                                                        </div>
+                                                                        <button type="button" class="btn btn-outline-danger btn-sm ms-2" onclick="removeDeductionRow(this)" title="Remove this deduction">
+                                                                            <i class="fas fa-trash"></i>
+                                                                        </button>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                            {% endfor %}
+                                                        {% else %}
+                                                            <tr>
+                                                                <td colspan="4" class="text-center text-muted">No deduction defaults configured for this company</td>
+                                                            </tr>
+                                                        {% endif %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="addDeductionRow()">
+                                                    <i class="fas fa-plus me-1"></i>
+                                                    Add New Deduction
+                                                </button>
+                                                <div class="alert alert-info py-2 mb-0 flex-grow-1 ms-3">
+                                                    <small>
+                                                        <i class="fas fa-info-circle me-1"></i>
+                                                        <strong>Note:</strong> Company deduction defaults are automatically loaded. Adjust amounts or remove rows as needed.
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Form Actions -->
+                        <div class="row">
+                            <div class="col-12">
+                                <hr>
+                                <div class="d-flex justify-content-between">
+                                    <a href="{{ url_for('employees.index') }}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times me-2"></i>
+                                        Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>
+                                        Add Employee
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    
+    // Deduction table functions
+    function updateDeductionValueField(selectElement) {
+        const row = selectElement.closest('tr');
+        const prefix = row.querySelector('.deduction-prefix');
+        const valueField = row.querySelector('input[name="deduction_value[]"]');
+
+        if (selectElement.value === 'fixed') {
+            prefix.textContent = 'R';
+            valueField.placeholder = '0.00';
+            valueField.step = '0.01';
+            valueField.disabled = false;
+            valueField.removeAttribute('title');
+        } else if (selectElement.value === 'percent') {
+            prefix.textContent = '%';
+            valueField.placeholder = '0.00';
+            valueField.step = '0.01';
+            valueField.disabled = false;
+            valueField.removeAttribute('title');
+        } else {
+            prefix.textContent = 'R';
+            valueField.value = '';
+            valueField.placeholder = 'Auto-calculated';
+            valueField.disabled = true;
+            valueField.title = "This deduction will be automatically calculated using the employee’s Medical Aid information";
+        }
+    }
+    
+    // Get all beneficiaries for dropdown (passed from server)
+    const beneficiaries = {{ (beneficiaries|tojson)|safe if beneficiaries else '[]' }};
+    let deductionRowCounter = {{ (deduction_defaults|length) if deduction_defaults else 0 }};
+    
+    function addDeductionRow() {
+        const tbody = document.getElementById('deductions_tbody');
+        const newRow = document.createElement('tr');
+        
+        newRow.innerHTML = `
+            <td>
+                <select class="form-select form-select-sm" name="deduction_beneficiary_id[]" required>
+                    <option value="">Select Beneficiary...</option>
+                    ${beneficiaries.map(b => `<option value="${b.id}" data-type="${b.type}">${b.name}</option>`).join('')}
+                </select>
+            </td>
+            <td>
+                <span class="badge bg-secondary dynamic-type">Select Beneficiary</span>
+            </td>
+            <td>
+                <select class="form-select form-select-sm" name="deduction_amount_type[]" onchange="updateDeductionValueField(this)">
+                    <option value="fixed" selected>Fixed Amount</option>
+                    <option value="percent">Percentage</option>
+                </select>
+            </td>
+            <td>
+                <div class="d-flex align-items-center">
+                    <div class="input-group input-group-sm flex-grow-1">
+                        <span class="input-group-text deduction-prefix">R</span>
+                        <input type="number" 
+                               class="form-control" 
+                               name="deduction_value[]" 
+                               value="0.00"
+                               step="0.01" 
+                               min="0"
+                               placeholder="0.00">
+                    </div>
+                    <button type="button" class="btn btn-outline-danger btn-sm ms-2" onclick="removeDeductionRow(this)" title="Remove this deduction">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        
+        tbody.appendChild(newRow);
+        
+        // Add event listener for beneficiary selection to update type badge
+        const beneficiarySelect = newRow.querySelector('select[name="deduction_beneficiary_id[]"]');
+        beneficiarySelect.addEventListener('change', function() {
+            const typeBadge = newRow.querySelector('.dynamic-type');
+            const amountTypeSelect = newRow.querySelector('select[name="deduction_amount_type[]"]');
+            if (this.value) {
+                const selectedBeneficiary = beneficiaries.find(b => b.id == this.value);
+                typeBadge.textContent = selectedBeneficiary ? selectedBeneficiary.type : 'Unknown';
+                if (selectedBeneficiary && selectedBeneficiary.type === 'Medical Aid') {
+                    if (!Array.from(amountTypeSelect.options).some(o => o.value === 'calculated')) {
+                        amountTypeSelect.insertAdjacentHTML('beforeend', '<option value="calculated">Calculated</option>');
+                    }
+                } else {
+                    const opt = Array.from(amountTypeSelect.options).find(o => o.value === 'calculated');
+                    if (opt) opt.remove();
+                    if (amountTypeSelect.value === 'calculated') {
+                        amountTypeSelect.value = 'fixed';
+                        updateDeductionValueField(amountTypeSelect);
+                    }
+                }
+            } else {
+                typeBadge.textContent = 'Select Beneficiary';
+            }
+        });
+        
+        deductionRowCounter++;
+    }
+    
+    function removeDeductionRow(button) {
+        const row = button.closest('tr');
+        row.remove();
+    }
+    
+
+
+
+
+    // Initialize state on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('select[name="deduction_beneficiary_id[]"]').forEach(function(sel) {
+            sel.dispatchEvent(new Event('change'));
+        });
+        document.querySelectorAll('select[name="deduction_amount_type[]"]').forEach(function(sel) {
+            updateDeductionValueField(sel);
+        });
+    });
+
+    // Global salary handling variables and functions
+    let salaryTypeSelect, salaryInput, salaryLabel, salaryUnit, salaryHelp;
+    let overtimeEligibleCheckbox, overtimeSettings, overtimeMethodSelect;
+
+    function updateSalaryLabels() {
+        console.log('📦 updateSalaryLabels called');
+        if (!salaryTypeSelect || !salaryInput || !salaryLabel || !salaryUnit || !salaryHelp) {
+            console.log('Missing salary elements, exiting');
+            return;
+        }
+
+        const salaryType = salaryTypeSelect.value;
+        console.log("updateSalaryLabels triggered. Salary type:", salaryType);
+
+        if (salaryType === 'hourly') {
+            salaryLabel.textContent = 'Hourly Rate';
+            salaryUnit.textContent = '/hour';
+            salaryHelp.textContent = 'Enter the hourly rate in South African Rand';
+
+            if (!salaryInput.value && salaryInput.dataset.hourlyDefault) {
+                console.log("Auto-filling hourly default:", salaryInput.dataset.hourlyDefault);
+                salaryInput.value = salaryInput.dataset.hourlyDefault;
+            }
+            document.getElementById('derived_hourly_rate').value = salaryInput.value;
+        } else if (salaryType === 'monthly') {
+            salaryLabel.textContent = 'Monthly Salary';
+            salaryUnit.textContent = '/month';
+            salaryHelp.textContent = 'Enter the monthly salary amount in South African Rand';
+
+            if (!salaryInput.value && salaryInput.dataset.monthlyDefault) {
+                console.log("Auto-filling monthly default:", salaryInput.dataset.monthlyDefault);
+                salaryInput.value = salaryInput.dataset.monthlyDefault;
+            }
+            const hrs = parseFloat(document.getElementById('ordinary_hours_per_day').value || 8);
+            const days = parseInt(document.getElementById('work_days_per_month').value || 22);
+            document.getElementById('derived_hourly_rate').value = (salaryInput.value/(hrs*days)).toFixed(2);
+        } else if (salaryType === 'daily') {
+            salaryLabel.textContent = 'Daily Rate';
+            salaryUnit.textContent = '/day';
+            salaryHelp.textContent = 'Enter the daily rate in South African Rand';
+
+            if (!salaryInput.value && salaryInput.dataset.dailyDefault) {
+                salaryInput.value = salaryInput.dataset.dailyDefault;
+            }
+            const hrs = parseFloat(document.getElementById('ordinary_hours_per_day').value || 8);
+            document.getElementById('derived_hourly_rate').value = (salaryInput.value/hrs).toFixed(2);
+        } else if (salaryType === 'piece') {
+            salaryLabel.textContent = 'Piece Rate';
+            salaryUnit.textContent = '/piece';
+            salaryHelp.textContent = 'Enter the rate per piece in South African Rand';
+
+            if (!salaryInput.value && salaryInput.dataset.pieceDefault) {
+                console.log("Auto-filling piece default:", salaryInput.dataset.pieceDefault);
+                salaryInput.value = salaryInput.dataset.pieceDefault;
+            }
+            // For piece work, set derived hourly rate to 0 as it's production-based
+            document.getElementById('derived_hourly_rate').value = '0.00';
+        } else {
+            salaryLabel.textContent = 'Salary Amount';
+            salaryUnit.textContent = '';
+            salaryHelp.textContent = 'Enter the salary amount in South African Rand';
+        }
+    }
+
+    function calculateDerivedHourlyRate() {
+        const salaryType = salaryTypeSelect.value;
+        const salaryVal = parseFloat(salaryInput.value) || 0;
+        const hours = parseFloat(document.getElementById('ordinary_hours_per_day').value) || 0;
+        const days = parseFloat(document.getElementById('work_days_per_month').value) || 0;
+
+        if (overtimeMethodSelect && overtimeMethodSelect.value === 'fixed_amount') {
+            return parseFloat(document.getElementById('derived_hourly_rate').value) || 0;
+        }
+
+        if (salaryType === 'hourly') {
+            return salaryVal;
+        } else if (salaryType === 'daily') {
+            return hours ? salaryVal / hours : 0;
+        } else if (salaryType === 'piece') {
+            return 0; // Piece work doesn't have a derived hourly rate
+        } else {
+            return hours && days ? salaryVal / (hours * days) : 0;
+        }
+    }
+
+    function updateMultiplierPreviews() {
+        const rate = parseFloat(document.getElementById('derived_hourly_rate').value) || 0;
+        const ot = parseFloat(document.getElementById('overtime_multiplier').value) || 0;
+        const sun = parseFloat(document.getElementById('sunday_multiplier').value) || 0;
+        const hol = parseFloat(document.getElementById('holiday_multiplier').value) || 0;
+        document.getElementById('overtime_multiplier_preview').textContent = rate ? `R${(rate * ot).toFixed(2)}` : '';
+        document.getElementById('sunday_multiplier_preview').textContent = rate ? `R${(rate * sun).toFixed(2)}` : '';
+        document.getElementById('holiday_multiplier_preview').textContent = rate ? `R${(rate * hol).toFixed(2)}` : '';
+    }
+
+    function updateDerivedHourly() {
+        updateSalaryLabels();
+        const rate = calculateDerivedHourlyRate();
+        document.getElementById('derived_hourly_rate').value = rate.toFixed(2);
+        updateMultiplierPreviews();
+    }
+
+    function toggleOvertimeFields() {
+        const visible = overtimeEligibleCheckbox && overtimeEligibleCheckbox.checked;
+        if (overtimeSettings) overtimeSettings.style.display = visible ? 'block' : 'none';
+    }
+
+    function updateOvertimeMethodFields() {
+        if (!overtimeMethodSelect) return;
+        const method = overtimeMethodSelect.value;
+        const hrs = document.getElementById('ordinary_hours_per_day');
+        const days = document.getElementById('work_days_per_month');
+        const derived = document.getElementById('derived_hourly_rate');
+        const derivedLabel = document.getElementById('derived_hourly_label');
+
+        if (method === 'fixed_amount') {
+            if (hrs) { hrs.value = 0; hrs.disabled = true; hrs.required = false; }
+            if (days) { days.value = 0; days.disabled = true; days.required = false; }
+            if (derived) derived.readOnly = false;
+            if (derivedLabel) derivedLabel.textContent = 'Hourly Rate';
+        } else {
+            if (hrs) { hrs.disabled = false; hrs.required = true; }
+            if (days) {
+                days.disabled = false;
+                days.required = method === 'per_day';
+            }
+            if (derived) derived.readOnly = true;
+            if (derivedLabel) derivedLabel.textContent = 'Derived Hourly Rate';
+        }
+        updateDerivedHourly();
+    }
+
+    // Initialize salary handling
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🔍 Salary script loaded');
+        
+        // Initialize salary elements
+        salaryTypeSelect = document.getElementById('salary_type');
+        salaryInput = document.getElementById('salary');
+        salaryLabel = document.getElementById('salary_label');
+        salaryUnit = document.getElementById('salary_unit');
+        salaryHelp = document.getElementById('salary_help');
+
+        overtimeEligibleCheckbox = document.getElementById('overtime_eligible');
+        overtimeSettings = document.getElementById('overtime_settings');
+        overtimeMethodSelect = document.getElementById('overtime_calc_method');
+
+        console.log("🎯 Initializing salary handling");
+        console.log("Salary elements found:");
+        console.log("Selected salary type:", salaryTypeSelect?.value);
+        console.log("Hourly default:", salaryInput?.dataset.hourlyDefault);
+        console.log("Monthly default:", salaryInput?.dataset.monthlyDefault);
+        console.log("Salary field current value:", salaryInput?.value);
+
+        // Add event listener for salary type changes
+        if (salaryTypeSelect) {
+            salaryTypeSelect.addEventListener('change', () => {
+                console.log("Salary type changed. Clearing salary field.");
+                salaryInput.value = '';
+                updateSalaryLabels();
+                updateDerivedHourly();
+            });
+        }
+
+        if (overtimeEligibleCheckbox) {
+            overtimeEligibleCheckbox.addEventListener('change', toggleOvertimeFields);
+        }
+
+        if (overtimeMethodSelect) {
+            overtimeMethodSelect.addEventListener('change', updateOvertimeMethodFields);
+        }
+
+        const hoursInput = document.getElementById('ordinary_hours_per_day');
+        const daysInput = document.getElementById('work_days_per_month');
+        const otInput = document.getElementById('overtime_multiplier');
+        const sunInput = document.getElementById('sunday_multiplier');
+        const holInput = document.getElementById('holiday_multiplier');
+        const derivedInput = document.getElementById('derived_hourly_rate');
+        [salaryInput, hoursInput, daysInput].forEach(el => {
+            if (el) el.addEventListener('input', updateDerivedHourly);
+        });
+        [otInput, sunInput, holInput, derivedInput].forEach(el => {
+            if (el) el.addEventListener('input', updateMultiplierPreviews);
+        });
+
+        // Initialize salary labels and auto-fill on page load
+        toggleOvertimeFields();
+        updateOvertimeMethodFields();
+        updateDerivedHourly();
+    });
+</script>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle department selection
+    const departmentSelect = document.getElementById('department');
+    const customDeptGroup = document.getElementById('custom_department_group');
+    const customDeptInput = document.getElementById('custom_department');
+    
+    if (departmentSelect) {
+        departmentSelect.addEventListener('change', function() {
+            if (this.value === 'Other') {
+                customDeptGroup.style.display = 'block';
+                customDeptInput.required = true;
+            } else {
+                customDeptGroup.style.display = 'none';
+                customDeptInput.required = false;
+                customDeptInput.value = '';
+            }
+        });
+    }
+
+    // Identification Type Toggle Functionality
+    function toggleIdentificationFields() {
+        const identificationType = document.getElementById('identification_type').value;
+        const saIdField = document.getElementById('sa_id_field');
+        const passportField = document.getElementById('passport_field');
+        const idNumberInput = document.getElementById('id_number');
+        const passportNumberInput = document.getElementById('passport_number');
+        const dateOfBirthInput = document.getElementById('date_of_birth');
+        const genderSelect = document.getElementById('gender');
+        const dobRequired = document.getElementById('dob_required');
+        const genderRequired = document.getElementById('gender_required');
+        const dobHelpText = document.getElementById('dob_help_text');
+        const genderHelpText = document.getElementById('gender_help_text');
+        
+        if (identificationType === 'sa_id') {
+            // Show SA ID field, hide passport field
+            saIdField.style.display = 'block';
+            passportField.style.display = 'none';
+            
+            // Clear passport field
+            passportNumberInput.value = '';
+            passportNumberInput.removeAttribute('required');
+            
+            // Set SA ID as required
+            idNumberInput.setAttribute('required', 'required');
+            
+            // Make DOB readonly and remove required (auto-filled)
+            dateOfBirthInput.setAttribute('readonly', 'readonly');
+            dateOfBirthInput.removeAttribute('required');
+            dobRequired.style.display = 'none';
+            genderRequired.style.display = 'none';
+            
+            // Update help text
+            dobHelpText.textContent = 'Auto-filled from SA ID number';
+            genderHelpText.textContent = 'Auto-filled from SA ID number';
+            
+            // Trigger validation if ID already exists
+            if (idNumberInput.value.trim()) {
+                validateAndExtractFromId();
+            }
+            
+        } else {
+            // Show passport field, hide SA ID field
+            saIdField.style.display = 'none';
+            passportField.style.display = 'block';
+            
+            // Clear SA ID field and validation
+            idNumberInput.value = '';
+            idNumberInput.removeAttribute('required');
+            clearIdValidation();
+            
+            // Set passport as required
+            passportNumberInput.setAttribute('required', 'required');
+            
+            // Make DOB editable and required
+            dateOfBirthInput.removeAttribute('readonly');
+            dateOfBirthInput.setAttribute('required', 'required');
+            genderSelect.setAttribute('required', 'required');
+            dobRequired.style.display = 'inline';
+            genderRequired.style.display = 'inline';
+            
+            // Update help text
+            dobHelpText.textContent = 'Required - enter manually';
+            genderHelpText.textContent = 'Required - select manually';
+            
+            // Clear auto-filled values
+            dateOfBirthInput.value = '';
+            genderSelect.value = '';
+        }
+    }
+    
+    // Make toggle function globally available
+    window.toggleIdentificationFields = toggleIdentificationFields;
+    
+    // Initialize on page load
+    toggleIdentificationFields();
+
+    // South African ID Number Validation and Auto-population
+    const idNumberInput = document.getElementById('id_number');
+    const dateOfBirthInput = document.getElementById('date_of_birth');
+    const genderSelect = document.getElementById('gender');
+    const idValidationMessage = document.getElementById('id_validation_message');
+    const idSuccessMessage = document.getElementById('id_success_message');
+    
+    console.log("ID validation elements found:", {
+        idNumberInput: !!idNumberInput,
+        dateOfBirthInput: !!dateOfBirthInput,
+        genderSelect: !!genderSelect,
+        idValidationMessage: !!idValidationMessage,
+        idSuccessMessage: !!idSuccessMessage
+    });
+    
+    function parseSouthAfricanID(idNumber) {
+        console.log("Parsing ID:", idNumber);
+        
+        // Check if ID is exactly 13 digits
+        if (!/^\d{13}$/.test(idNumber)) {
+            return { valid: false, message: 'ID number must be exactly 13 digits' };
+        }
+        
+        // Extract date components (YYMMDD)
+        const year = parseInt(idNumber.substring(0, 2));
+        const month = parseInt(idNumber.substring(2, 4));
+        const day = parseInt(idNumber.substring(4, 6));
+        
+        console.log("Extracted date components:", { year, month, day });
+        
+        // Determine century (if year > 21, assume 19xx, else 20xx)
+        const fullYear = year > 21 ? 1900 + year : 2000 + year;
+        
+        // Basic date validation
+        if (month < 1 || month > 12) {
+            return { valid: false, message: 'Invalid month in ID number' };
+        }
+        
+        if (day < 1 || day > 31) {
+            return { valid: false, message: 'Invalid day in ID number' };
+        }
+        
+        // Check if date is not in the future (with flexibility for edge cases)
+        try {
+            const testDate = new Date(fullYear, month - 1, day);
+            if (testDate > new Date()) {
+                return { valid: false, message: 'Date of birth cannot be in the future' };
+            }
+        } catch (e) {
+            console.log("Date validation edge case:", e);
+        }
+        
+        // Extract gender sequence (digits 7-10) - basic range check
+        const genderSequence = parseInt(idNumber.substring(6, 10));
+        if (genderSequence < 0 || genderSequence > 9999) {
+            return { valid: false, message: 'Invalid gender sequence in ID number' };
+        }
+        
+        // Determine gender (>= 5000 = Male, < 5000 = Female)
+        const gender = genderSequence >= 5000 ? 'Male' : 'Female';
+        
+        console.log("Parsed gender:", gender, "from sequence:", genderSequence);
+        
+        // Format date for input field (YYYY-MM-DD)
+        const formattedDate = `${fullYear}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+        
+        console.log("Formatted date:", formattedDate);
+        
+        return {
+            valid: true,
+            dateOfBirth: formattedDate,
+            gender: gender,
+            age: new Date().getFullYear() - fullYear
+        };
+    }
+    
+    function clearIdValidation() {
+        if (idValidationMessage) idValidationMessage.style.display = 'none';
+        if (idSuccessMessage) idSuccessMessage.style.display = 'none';
+        if (idNumberInput) {
+            idNumberInput.classList.remove('is-valid', 'is-invalid');
+        }
+    }
+    
+    // Make validation function globally available for the oninput attribute
+    function validateAndExtractFromId() {
+        // Only validate if SA ID is selected
+        const identificationType = document.getElementById('identification_type').value;
+        if (identificationType !== 'sa_id') {
+            return;
+        }
+        
+        const idNumber = idNumberInput.value.trim();
+        console.log("validateAndExtractFromId called with:", idNumber);
+        
+        // Clear previous validation
+        clearIdValidation();
+        
+        if (!idNumber) {
+            return;
+        }
+        
+        const result = parseSouthAfricanID(idNumber);
+        
+        if (result.valid) {
+            // Auto-fill date of birth and gender
+            dateOfBirthInput.value = result.dateOfBirth;
+            genderSelect.value = result.gender;
+            
+            // Show success message
+            if (idSuccessMessage) {
+                idSuccessMessage.style.display = 'block';
+            }
+            idNumberInput.classList.add('is-valid');
+            
+        } else {
+            // Show error message
+            if (idValidationMessage) {
+                idValidationMessage.textContent = result.message;
+                idValidationMessage.style.display = 'block';
+            }
+            idNumberInput.classList.add('is-invalid');
+        }
+    }
+    
+    // Make function globally available
+    window.validateAndExtractFromId = validateAndExtractFromId;
+    
+    function updateFieldsFromID() {
+        console.log("updateFieldsFromID called - deprecated, using validateAndExtractFromId");
+        validateAndExtractFromId();
+    }
+
+    function legacyUpdateFieldsFromID() {
+        console.log("legacyUpdateFieldsFromID called");
+        const idNumber = idNumberInput.value.trim();
+        
+        // Clear previous messages
+        if (idValidationMessage) idValidationMessage.style.display = 'none';
+        if (idSuccessMessage) idSuccessMessage.style.display = 'none';
+        idNumberInput.classList.remove('is-invalid', 'is-valid');
+        
+        if (idNumber.length === 0) {
+            return;
+        }
+        
+        const validation = parseSouthAfricanID(idNumber);
+        
+        if (validation.valid) {
+            console.log("ID validation successful, updating fields");
+            // Auto-populate fields
+            if (dateOfBirthInput) dateOfBirthInput.value = validation.dateOfBirth;
+            if (genderSelect) genderSelect.value = validation.gender;
+            
+            // Show success message
+            if (idSuccessMessage) idSuccessMessage.style.display = 'block';
+            idNumberInput.classList.add('is-valid');
+            
+            // Trigger change events to update dependent fields
+            if (dateOfBirthInput) dateOfBirthInput.dispatchEvent(new Event('change'));
+            if (genderSelect) genderSelect.dispatchEvent(new Event('change'));
+        } else {
+            console.log("ID validation failed:", validation.message);
+            // Show error message
+            if (idValidationMessage) {
+                idValidationMessage.textContent = validation.message;
+                idValidationMessage.style.display = 'block';
+            }
+            idNumberInput.classList.add('is-invalid');
+            
+            // Clear auto-populated fields if ID becomes invalid
+            if (dateOfBirthInput && genderSelect && dateOfBirthInput.value && genderSelect.value) {
+                dateOfBirthInput.value = '';
+                genderSelect.value = '';
+            }
+        }
+    }
+    
+    // Add event listeners for ID validation
+    if (idNumberInput) {
+        console.log("Adding event listeners to ID number input");
+        
+        // Input event for real-time validation
+        idNumberInput.addEventListener('input', function() {
+            console.log("ID input event fired, value:", this.value);
+            // Allow only digits and limit to 13 characters
+            const value = this.value.replace(/\D/g, '');
+            this.value = value.slice(0, 13);
+            
+            // Validate and auto-populate on every input
+            setTimeout(updateFieldsFromID, 100); // Small delay to ensure value is set
+        });
+        
+        // Blur event for final validation
+        idNumberInput.addEventListener('blur', updateFieldsFromID);
+    } else {
+        console.log("ID number input not found!");
+    }
+
+
+    
+    // South African Cell Number Validation
+    window.validateSACellNumber = function(input) {
+        const value = input.value.trim();
+        const isValid = /^(\+27|0)[6-8][0-9]{8}$/.test(value);
+        
+        if (value && !isValid) {
+            input.setCustomValidity('Please enter a valid South African mobile number (0791234567 or +27791234567).');
+            input.classList.add('is-invalid');
+            input.classList.remove('is-valid');
+        } else if (value && isValid) {
+            input.setCustomValidity('');
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+        } else {
+            input.setCustomValidity('');
+            input.classList.remove('is-invalid', 'is-valid');
+        }
+    };
+
+    // Prevent scroll-wheel incrementing on all number inputs
+    document.querySelectorAll('input[type=number]').forEach(input => {
+        input.addEventListener('wheel', function(e) {
+            e.preventDefault();
+        });
+    });
+    
+    // Set default date to today
+    const startDateInput = document.getElementById('start_date');
+    if (startDateInput && !startDateInput.value) {
+        const today = new Date().toISOString().split('T')[0];
+        startDateInput.value = today;
+    }
+});
+</script>
+{% endblock %}

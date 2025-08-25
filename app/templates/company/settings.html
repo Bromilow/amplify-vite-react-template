@@ -1,0 +1,590 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mt-3"><i class="bi bi-gear-fill me-2"></i> Company Settings</h2>
+  <hr>
+
+  {% include 'components/company_info_card.html' with context %}
+  {% include 'components/departments_management_card.html' %}
+  {% include 'components/employee_defaults_card.html' %}
+  {% include 'components/sars_config_card.html' %}
+  {% include 'components/recurring_deduction_defaults_card.html' %}
+</div>
+
+<!-- Edit Company Modal -->
+<div class="modal fade" id="editCompanyModal" tabindex="-1" aria-labelledby="editCompanyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editCompanyModalLabel">
+                    <i class="fas fa-building me-2"></i>Edit Company Information
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('company.edit_company', company_id=company.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="modal-body">
+                    <!-- Basic Company Information -->
+                    <h6 class="text-muted mb-3">
+                        <i class="fas fa-info-circle me-2"></i>Basic Information
+                    </h6>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="company_name" class="form-label">Company Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="company_name" name="company_name" 
+                                   value="{{ company.name }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="industry" class="form-label">Industry</label>
+                            <input type="text" class="form-control" id="industry" name="industry" 
+                                   value="{{ company.industry or '' }}">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="registration_number" class="form-label">
+                                Registration Number
+                                <i class="fas fa-info-circle text-muted ms-1" 
+                                   data-bs-toggle="tooltip" 
+                                   title="Format: YYYY/NNNNNN/YY (e.g. 2019/123456/07)"></i>
+                            </label>
+                            <input type="text" class="form-control" id="registration_number" name="registration_number" 
+                                   value="{{ company.registration_number or '' }}" placeholder="e.g., 2023/123456/07"
+                                   title="Format: YYYY/NNNNNN/YY (e.g. 2019/123456/07)">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="tax_year_end" class="form-label">Tax Year End</label>
+                            <select class="form-select" id="tax_year_end" name="tax_year_end">
+                                <option value="February" {% if company.tax_year_end == 'February' %}selected{% endif %}>February</option>
+                                <option value="March" {% if company.tax_year_end == 'March' %}selected{% endif %}>March</option>
+                                <option value="December" {% if company.tax_year_end == 'December' %}selected{% endif %}>December</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="company_email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="company_email" name="company_email" 
+                                   value="{{ company.email or '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="company_phone" class="form-label">Phone</label>
+                            <input type="tel" class="form-control" id="company_phone" name="company_phone" 
+                                   value="{{ company.phone or '' }}" placeholder="e.g., +27 11 123 4567">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="company_address" class="form-label">Address</label>
+                        <textarea class="form-control" id="company_address" name="company_address" rows="3" 
+                                  placeholder="Full business address">{{ company.address or '' }}</textarea>
+                    </div>
+                    
+                    <!-- SARS Declaration Information -->
+                    <hr class="my-4">
+                    <h6 class="text-muted mb-3">
+                        <i class="fas fa-shield-alt me-2"></i>SARS Declaration Details
+                    </h6>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="uif_reference_number" class="form-label">
+                                UIF Employer Reference Number
+                                <i class="fas fa-info-circle text-muted ms-1" 
+                                   data-bs-toggle="tooltip" 
+                                   title="Format: 7 digits, slash, 1 digit (e.g. 1234567/8)"></i>
+                            </label>
+                            <input type="text" class="form-control" id="uif_reference_number" name="uif_reference_number" 
+                                   value="{{ company.uif_reference_number or '' }}" 
+                                   placeholder="1234567/8" maxlength="10"
+                                   title="Format: 7 digits, slash, 1 digit (e.g. 1234567/8)">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="paye_reference_number" class="form-label">
+                                PAYE Reference Number
+                                <i class="fas fa-info-circle text-muted ms-1" 
+                                   data-bs-toggle="tooltip" 
+                                   title="Must be 10 digits starting with 7 (e.g. 7123456789)"></i>
+                            </label>
+                            <input type="text" class="form-control" id="paye_reference_number" name="paye_reference_number" 
+                                   value="{{ company.paye_reference_number or '' }}" 
+                                   placeholder="7123456789" maxlength="10"
+                                   title="Must be 10 digits starting with 7 (e.g. 7123456789)">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="employer_first_name" class="form-label">Employer First Name</label>
+                            <input type="text" class="form-control" id="employer_first_name" name="employer_first_name" 
+                                   value="{{ company.employer_first_name or '' }}" maxlength="50">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="employer_last_name" class="form-label">Employer Last Name</label>
+                            <input type="text" class="form-control" id="employer_last_name" name="employer_last_name" 
+                                   value="{{ company.employer_last_name or '' }}" maxlength="50">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="employer_id_number" class="form-label">
+                                Employer ID Number
+                                <i class="fas fa-info-circle text-muted ms-1" 
+                                   data-bs-toggle="tooltip" 
+                                   title="South African 13-digit ID number"></i>
+                            </label>
+                            <input type="text" class="form-control" id="employer_id_number" name="employer_id_number" 
+                                   value="{{ company.employer_id_number or '' }}" 
+                                   placeholder="8001015009087" maxlength="13">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Initialize input masks for all company reference fields
+    if (typeof Inputmask !== 'undefined') {
+        // UIF Reference Number: 1234567/8 format
+        Inputmask("9999999/9").mask("#uif_reference_number");
+        
+        // PAYE Reference Number: 7123456789 format (starts with 7, 10 digits total)
+        Inputmask("7999999999").mask("#paye_reference_number");
+        
+        // Company Registration Number: 2023/123456/07 format
+        Inputmask("9999/999999/99").mask("#registration_number");
+        
+        // Employer ID Number: 13-digit SA ID format
+        Inputmask("9999999999999").mask("#employer_id_number");
+    }
+});
+
+// Deduction amount type handler
+document.addEventListener('DOMContentLoaded', function() {
+    const amountTypeSelect = document.getElementById('amount_type');
+    const amountField = document.getElementById('amount_field');
+    const amountPrefix = document.getElementById('amount_prefix');
+    const amountInput = document.getElementById('amount');
+
+    if (amountTypeSelect) {
+        amountTypeSelect.addEventListener('change', function() {
+            const selectedType = this.value;
+
+            if (selectedType === 'calculated') {
+                if (amountField) amountField.style.display = 'none';
+                if (amountInput) amountInput.required = false;
+            } else {
+                if (amountField) amountField.style.display = 'block';
+                if (amountInput) amountInput.required = true;
+
+                if (selectedType === 'percentage') {
+                    if (amountPrefix) amountPrefix.textContent = '%';
+                } else {
+                    if (amountPrefix) amountPrefix.textContent = 'R';
+                }
+            }
+        });
+
+        // Initialize on page load
+        amountTypeSelect.dispatchEvent(new Event('change'));
+    }
+});
+
+// Form validation for SARS fields
+document.getElementById('editCompanyModal').addEventListener('shown.bs.modal', function() {
+    const uifInput = document.getElementById('uif_reference_number');
+    const payeInput = document.getElementById('paye_reference_number');
+    const regInput = document.getElementById('registration_number');
+    const idInput = document.getElementById('employer_id_number');
+    
+    // Re-apply input masks when modal opens (in case they weren't applied initially)
+    if (typeof Inputmask !== 'undefined') {
+        Inputmask("9999999/9").mask(uifInput);
+        Inputmask("7999999999").mask(payeInput);
+        Inputmask("9999/999999/99").mask(regInput);
+        Inputmask("9999999999999").mask(idInput);
+    }
+    
+    // UIF Reference validation (format: 1234567/8)
+    uifInput.addEventListener('input', function() {
+        const value = this.value;
+        if (value && !/^\d{7}\/\d$/.test(value)) {
+            this.setCustomValidity('UIF Reference must be in format 1234567/8');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+    
+    // PAYE Reference validation (starts with 7, 10 digits total)
+    payeInput.addEventListener('input', function() {
+        const value = this.value;
+        if (value && (!/^7\d{9}$/.test(value))) {
+            this.setCustomValidity('PAYE Reference must start with 7 and be 10 digits total');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+    
+    // Company Registration Number validation (format: YYYY/NNNNNN/YY)
+    regInput.addEventListener('input', function() {
+        const value = this.value;
+        if (value && !/^\d{4}\/\d{6}\/\d{2}$/.test(value)) {
+            this.setCustomValidity('Registration Number must be in format YYYY/NNNNNN/YY');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+    
+    // SA ID Number validation (13 digits)
+    idInput.addEventListener('input', function() {
+        const value = this.value;
+        if (value && !/^\d{13}$/.test(value)) {
+            this.setCustomValidity('ID Number must be exactly 13 digits');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+    
+});
+
+// Modal utility functions
+function showAddForm() {
+    const modalTitle = document.getElementById('deductionDefaultsModalLabel');
+    const modalForm = document.getElementById('deductionDefaultForm');
+    const amountTypeSelect = document.getElementById('amount_type');
+    
+    if (modalTitle) modalTitle.innerHTML = '<i class="fas fa-repeat me-2"></i>Add Recurring Deduction Default';
+    if (modalForm) {
+        modalForm.action = '{{ url_for("company.create_deduction_default", company_id=company.id) }}';
+        modalForm.reset();
+    }
+    if (amountTypeSelect) amountTypeSelect.dispatchEvent(new Event('change'));
+}
+
+function editDeductionDefault(defaultId) {
+    const modalTitle = document.getElementById('deductionDefaultsModalLabel');
+    const modalForm = document.getElementById('deductionDefaultForm');
+    
+    if (modalTitle) modalTitle.innerHTML = '<i class="fas fa-repeat me-2"></i>Edit Recurring Deduction Default';
+    if (modalForm) {
+        modalForm.action = '{{ url_for("company.update_deduction_default", company_id=company.id, default_id=0) }}'.replace('0', defaultId);
+    }
+    
+    // Load existing data via AJAX
+    fetch(`/company/recurring-deductions/${defaultId}/json`)
+        .then(response => response.json())
+        .then(data => {
+            const beneficiarySelect = document.getElementById('beneficiary_id');
+            const amountTypeSelect = document.getElementById('amount_type');
+            const amountInput = document.getElementById('amount');
+            
+            if (beneficiarySelect) beneficiarySelect.value = data.beneficiary_id;
+            if (amountTypeSelect) amountTypeSelect.value = data.amount_type || 'fixed';
+            if (amountInput) amountInput.value = data.amount || '';
+            if (amountTypeSelect) amountTypeSelect.dispatchEvent(new Event('change'));
+        })
+        .catch(error => console.error('Error loading deduction default:', error));
+}
+</script>
+
+<!-- Recurring Deduction Defaults Modal -->
+<div class="modal fade" id="deductionDefaultsModal" tabindex="-1" aria-labelledby="deductionDefaultsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deductionDefaultsModalLabel">
+                    <i class="fas fa-repeat me-2"></i>Add Recurring Deduction Default
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="deductionDefaultForm" method="POST" action="{{ url_for('company.create_deduction_default', company_id=company.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="beneficiary_id" class="form-label">Beneficiary</label>
+                            <select class="form-select" id="beneficiary_id" name="beneficiary_id" required>
+                                <option value="">Select Beneficiary...</option>
+                                {% for beneficiary in beneficiaries %}
+                                    <option value="{{ beneficiary.id }}" data-type="{{ beneficiary.type }}">
+                                        {{ beneficiary.name }} ({{ beneficiary.type }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Choose the beneficiary for this deduction</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="amount_type" class="form-label">Amount Type</label>
+                            <select class="form-select" id="amount_type" name="amount_type" required>
+                                <option value="fixed">Fixed Amount</option>
+                                <option value="percentage">Percentage</option>
+                                <option value="calculated">Calculated</option>
+                            </select>
+                            <div class="form-text">How the deduction amount is determined</div>
+                        </div>
+                        <div class="col-md-6" id="amount_field">
+                            <label for="amount" class="form-label">Amount</label>
+                            <div class="input-group">
+                                <span class="input-group-text" id="amount_prefix">R</span>
+                                <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="0" placeholder="0.00">
+                            </div>
+                            <div class="form-text">Enter the deduction amount</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Save Default
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Employee Defaults Modal -->
+<div class="modal fade" id="employeeDefaultsModal" tabindex="-1" aria-labelledby="employeeDefaultsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="employeeDefaultsModalLabel">
+                    <i class="fas fa-puzzle-piece me-2"></i>Edit Employee Defaults
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('dashboard.update_employee_defaults', company_id=company.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="modal-body">
+                    <!-- Payroll & Salary Defaults -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-muted mb-3">
+                                <i class="fas fa-money-bill-wave me-2"></i>Payroll & Salary Defaults
+                            </h6>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="default_salary_type" class="form-label">Default Salary Type</label>
+                            <select class="form-select" id="default_salary_type" name="default_salary_type">
+                                <option value="monthly" {{ 'selected' if company.default_salary_type == 'monthly' else '' }}>Monthly</option>
+                                <option value="hourly" {{ 'selected' if company.default_salary_type == 'hourly' else '' }}>Hourly</option>
+                                <option value="daily" {{ 'selected' if company.default_salary_type == 'daily' else '' }}>Daily</option>
+                                <option value="piece" {{ 'selected' if company.default_salary_type == 'piece' else '' }}>Piece Work</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="default_salary" class="form-label">Default Monthly Salary</label>
+                            <div class="input-group">
+                                <span class="input-group-text">R</span>
+                                <input type="number" class="form-control" id="default_salary" name="default_salary" 
+                                       value="{{ company.default_salary or '' }}" step="0.01" min="0" placeholder="0.00">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="default_hourly_rate" class="form-label">Default Hourly Rate</label>
+                            <div class="input-group">
+                                <span class="input-group-text">R</span>
+                                <input type="number" class="form-control" id="default_hourly_rate" name="default_hourly_rate" 
+                                       value="{{ company.default_hourly_rate or '' }}" step="0.01" min="0" placeholder="0.00">
+                            </div>
+                            <small class="text-muted">For hourly employees only</small>
+                        </div>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <label for="default_piece_rate" class="form-label">Default Piece Rate</label>
+                            <div class="input-group">
+                                <span class="input-group-text">R</span>
+                                <input type="number" class="form-control" id="default_piece_rate" name="default_piece_rate" 
+                                       value="{{ company.default_piece_rate | round(2) if company.default_piece_rate else '' }}" step="0.01" min="0" placeholder="0.00">
+                            </div>
+                            <small class="text-muted">For piece work employees only</small>
+                        </div>
+                    </div>
+
+                    <!-- Work Schedule & Multipliers -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-muted mb-3">
+                                <i class="fas fa-clock me-2"></i>Work Schedule & Multipliers
+                            </h6>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="default_ordinary_hours_per_day" class="form-label">Ordinary Hours per Day</label>
+                            <input type="number" class="form-control" id="default_ordinary_hours_per_day" name="default_ordinary_hours_per_day" 
+                                   value="{{ company.default_ordinary_hours_per_day or 8 }}" min="0.01" max="24" step="0.01">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="default_work_days_per_month" class="form-label">Work Days per Month</label>
+                            <input type="number" class="form-control" id="default_work_days_per_month" name="default_work_days_per_month" 
+                                   value="{{ company.default_work_days_per_month or 22 }}" min="0.01" max="31" step="0.01">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="overtime_multiplier" class="form-label">Overtime Multiplier</label>
+                            <input type="number" class="form-control" id="overtime_multiplier" name="overtime_multiplier" 
+                                   value="{{ company.overtime_multiplier or 1.50 }}" step="0.01" min="1.00" max="5.0">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="sunday_multiplier" class="form-label">Sunday Multiplier</label>
+                            <input type="number" class="form-control" id="sunday_multiplier" name="sunday_multiplier" 
+                                   value="{{ company.sunday_multiplier or 2.00 }}" step="0.01" min="1.00" max="5.0">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="public_holiday_multiplier" class="form-label">Holiday Multiplier</label>
+                            <input type="number" class="form-control" id="public_holiday_multiplier" name="public_holiday_multiplier" 
+                                   value="{{ company.public_holiday_multiplier or 2.50 }}" step="0.01" min="1.00" max="5.0">
+                        </div>
+                    </div>
+
+                    <!-- Statutory Rate Configuration -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-muted mb-3">
+                                <i class="fas fa-university me-2"></i>Statutory Rate Configuration
+                            </h6>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="uif_percent" class="form-label">UIF Percentage</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="uif_percent" name="uif_percent" 
+                                       value="{{ company.uif_percent or 1.00 }}" step="0.01" min="0" max="100">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="sdl_percent" class="form-label">SDL Percentage</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="sdl_percent" name="sdl_percent" 
+                                       value="{{ company.sdl_percent or 1.00 }}" step="0.01" min="0" max="100">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="uif_monthly_ceiling" class="form-label">UIF Monthly Ceiling</label>
+                            <div class="input-group">
+                                <span class="input-group-text">R</span>
+                                <input type="number" class="form-control" id="uif_monthly_ceiling" name="uif_monthly_ceiling" 
+                                       value="{{ company.uif_monthly_ceiling or 17712 }}" step="1" min="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Statutory Defaults -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-muted mb-3">
+                                <i class="fas fa-check-circle me-2"></i>Statutory Defaults
+                            </h6>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="default_uif" name="default_uif" 
+                                       {{ 'checked' if company.default_uif else '' }}>
+                                <label class="form-check-label" for="default_uif">
+                                    UIF Contributing by Default
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="default_sdl" name="default_sdl" 
+                                       {{ 'checked' if company.default_sdl else '' }}>
+                                <label class="form-check-label" for="default_sdl">
+                                    SDL Contributing by Default
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="default_paye_exempt" name="default_paye_exempt" 
+                                       {{ 'checked' if company.default_paye_exempt else '' }}>
+                                <label class="form-check-label" for="default_paye_exempt">
+                                    PAYE Exempt by Default
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Leave Defaults -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-muted mb-3">
+                                <i class="fas fa-calendar-alt me-2"></i>Leave Defaults
+                            </h6>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="default_annual_leave_days" class="form-label">Annual Leave Days</label>
+                            <input type="number" class="form-control" id="default_annual_leave_days" name="default_annual_leave_days" 
+                                   value="{{ company.default_annual_leave_days or 15 }}" min="0" max="365" step="1">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="default_sick_leave_days" class="form-label">Sick Leave Days</label>
+                            <input type="number" class="form-control" id="default_sick_leave_days" name="default_sick_leave_days" 
+                                   value="{{ company.default_sick_leave_days or 10 }}" min="0" max="365" step="1">
+                        </div>
+                    </div>
+
+                    <!-- Pay Date Configuration -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-muted mb-3">
+                                <i class="fas fa-calendar-check me-2"></i>Pay Date Configuration
+                            </h6>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="default_pay_date" class="form-label">Default Pay Date</label>
+                            <select class="form-select" id="default_pay_date" name="default_pay_date">
+                                <option value="end_of_month" {{ 'selected' if company.default_pay_date == 'end_of_month' else '' }}>End of Month</option>
+                                <option value="start_of_month" {{ 'selected' if company.default_pay_date == 'start_of_month' else '' }}>Start of Month</option>
+                                <option value="custom" {{ 'selected' if company.default_pay_date == 'custom' else '' }}>Custom Date</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6" id="custom_pay_date_field" style="display: {{ 'block' if company.default_pay_date == 'custom' else 'none' }};">
+                            <label for="default_pay_day" class="form-label">Custom Pay Day (1-31)</label>
+                            <input type="number" class="form-control" id="default_pay_day" name="default_pay_day" 
+                                   value="{{ company.default_pay_day or '' }}" min="1" max="31" step="1">
+                            <div class="form-text text-muted">Day of the month to process payroll</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Save Defaults
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Toggle custom pay date field
+document.getElementById('default_pay_date').addEventListener('change', function() {
+    const customField = document.getElementById('custom_pay_date_field');
+    if (this.value === 'custom') {
+        customField.style.display = 'block';
+    } else {
+        customField.style.display = 'none';
+    }
+});
+</script>
+
+{% endblock %}

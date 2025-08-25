@@ -1,0 +1,263 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-shield-alt me-2"></i>Global SARS Configuration</h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Admin</a></li>
+                        <li class="breadcrumb-item active">SARS Settings</li>
+                    </ol>
+                </nav>
+            </div>
+
+            <div class="alert alert-warning" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>System-Wide Configuration:</strong> Changes made here will affect all companies using global SARS defaults. Company-specific overrides will remain unchanged.
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-cogs me-2"></i>
+                        Edit Global SARS Defaults
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="row">
+                            <!-- Tax Rates Section -->
+                            <div class="col-12">
+                                <h6 class="text-muted mb-3">Tax Rates & Contribution Caps</h6>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="uif_percent" class="form-label">UIF Rate (%)</label>
+                                    <input type="number" 
+                                           id="uif_percent"
+                                           name="uif_percent" 
+                                           step="0.01" 
+                                           value="{{ "{:.2f}".format(config.uif_percent * 100) }}" 
+                                           class="form-control"
+                                           required>
+                                    <div class="form-text">Current SARS UIF contribution rate</div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="sdl_percent" class="form-label">SDL Rate (%)</label>
+                                    <input type="number" 
+                                           id="sdl_percent"
+                                           name="sdl_percent" 
+                                           step="0.01" 
+                                           value="{{ "{:.2f}".format(config.sdl_percent * 100) }}" 
+                                           class="form-control"
+                                           required>
+                                    <div class="form-text">Skills Development Levy rate</div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="uif_salary_cap" class="form-label">UIF Salary Cap (R)</label>
+                                    <input type="number" 
+                                           id="uif_salary_cap"
+                                           name="uif_salary_cap" 
+                                           step="0.01" 
+                                           value="{{ "{:.2f}".format(config.uif_salary_cap) }}" 
+                                           class="form-control"
+                                           required>
+                                    <div class="form-text">Monthly salary cap for UIF calculation</div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="uif_monthly_cap" class="form-label">UIF Monthly Cap (R)</label>
+                                    <input type="number" 
+                                           id="uif_monthly_cap"
+                                           name="uif_monthly_cap" 
+                                           step="0.01" 
+                                           value="{{ "{:.2f}".format(config.uif_monthly_cap) }}" 
+                                           class="form-control"
+                                           required>
+                                    <div class="form-text">Maximum UIF deduction per month</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="row">
+                            <!-- Tax Year Configuration -->
+                            <div class="col-12">
+                                <h6 class="text-muted mb-3">Tax Year Configuration</h6>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="tax_year_start_day" class="form-label">Tax Year Start Day</label>
+                                    <select id="tax_year_start_day" name="tax_year_start_day" class="form-select" required>
+                                        {% for day in range(1, 32) %}
+                                        <option value="{{ day }}" {{ 'selected' if day == config.tax_year_start_day else '' }}>{{ day }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="tax_year_start_month" class="form-label">Tax Year Start Month</label>
+                                    <select id="tax_year_start_month" name="tax_year_start_month" class="form-select" required>
+                                        <option value="1" {{ 'selected' if config.tax_year_start_month == 1 else '' }}>January</option>
+                                        <option value="2" {{ 'selected' if config.tax_year_start_month == 2 else '' }}>February</option>
+                                        <option value="3" {{ 'selected' if config.tax_year_start_month == 3 else '' }}>March</option>
+                                        <option value="4" {{ 'selected' if config.tax_year_start_month == 4 else '' }}>April</option>
+                                        <option value="5" {{ 'selected' if config.tax_year_start_month == 5 else '' }}>May</option>
+                                        <option value="6" {{ 'selected' if config.tax_year_start_month == 6 else '' }}>June</option>
+                                        <option value="7" {{ 'selected' if config.tax_year_start_month == 7 else '' }}>July</option>
+                                        <option value="8" {{ 'selected' if config.tax_year_start_month == 8 else '' }}>August</option>
+                                        <option value="9" {{ 'selected' if config.tax_year_start_month == 9 else '' }}>September</option>
+                                        <option value="10" {{ 'selected' if config.tax_year_start_month == 10 else '' }}>October</option>
+                                        <option value="11" {{ 'selected' if config.tax_year_start_month == 11 else '' }}>November</option>
+                                        <option value="12" {{ 'selected' if config.tax_year_start_month == 12 else '' }}>December</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="tax_authority_name" class="form-label">Tax Authority Name</label>
+                                    <input type="text" 
+                                           id="tax_authority_name"
+                                           name="tax_authority_name" 
+                                           value="{{ config.tax_authority_name }}" 
+                                           class="form-control"
+                                           required>
+                                    <div class="form-text">Official name of tax authority</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="row">
+                            <!-- Medical Aid Credits -->
+                            <div class="col-12">
+                                <h6 class="text-muted mb-3">Medical Aid Tax Credits</h6>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="medical_primary_credit" class="form-label">Primary Member Credit (R)</label>
+                                    <input type="number" 
+                                           id="medical_primary_credit"
+                                           name="medical_primary_credit" 
+                                           step="0.01" 
+                                           value="{{ "{:.2f}".format(config.medical_primary_credit) }}" 
+                                           class="form-control"
+                                           required>
+                                    <div class="form-text">Monthly tax credit for primary member</div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="medical_dependant_credit" class="form-label">Dependant Credit (R)</label>
+                                    <input type="number" 
+                                           id="medical_dependant_credit"
+                                           name="medical_dependant_credit" 
+                                           step="0.01" 
+                                           value="{{ "{:.2f}".format(config.medical_dependant_credit) }}" 
+                                           class="form-control"
+                                           required>
+                                    <div class="form-text">Monthly tax credit per dependant</div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="currency_symbol" class="form-label">Currency Symbol</label>
+                                    <input type="text" 
+                                           id="currency_symbol"
+                                           name="currency_symbol" 
+                                           value="{{ config.currency_symbol }}" 
+                                           class="form-control"
+                                           maxlength="5"
+                                           required>
+                                    <div class="form-text">Currency symbol for display</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="row">
+                            <div class="col-12">
+                                <h6 class="text-muted mb-3">Preview Calculations</h6>
+                                <div class="alert alert-light" role="alert">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <small class="text-muted">For a monthly salary of R20,000:</small><br>
+                                            <small><strong>UIF:</strong> <span id="preview-uif">R{{ "{:,.2f}".format(20000 * config.uif_percent if (20000 * config.uif_percent) <= config.uif_monthly_cap else config.uif_monthly_cap) }}</span></small><br>
+                                            <small><strong>SDL:</strong> <span id="preview-sdl">R{{ "{:,.2f}".format(20000 * config.sdl_percent) }}</span></small>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <small class="text-muted">Medical aid credit for 2 dependants:</small><br>
+                                            <small><strong>Total Credit:</strong> <span id="preview-medical">R{{ "{:,.0f}".format((config.medical_primary_credit * 2) + config.medical_dependant_credit) }}</span></small><br>
+                                            <small class="text-muted">(Primary × 2 + 1 dependant credit)</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Admin Dashboard
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Save SARS Configuration
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Real-time calculation preview (optional enhancement)
+document.addEventListener('DOMContentLoaded', function() {
+    const inputs = ['uif_percent', 'sdl_percent', 'uif_monthly_cap', 'medical_primary_credit', 'medical_dependant_credit'];
+    
+    inputs.forEach(inputId => {
+        document.getElementById(inputId).addEventListener('input', updatePreview);
+    });
+    
+    function updatePreview() {
+        const uifRate = parseFloat(document.getElementById('uif_percent').value) / 100;
+        const sdlRate = parseFloat(document.getElementById('sdl_percent').value) / 100;
+        const uifCap = parseFloat(document.getElementById('uif_monthly_cap').value);
+        const medPrimary = parseFloat(document.getElementById('medical_primary_credit').value);
+        const medDependant = parseFloat(document.getElementById('medical_dependant_credit').value);
+        
+        const salary = 20000;
+        const uifCalc = Math.min(salary * uifRate, uifCap);
+        const sdlCalc = salary * sdlRate;
+        const medicalCalc = (medPrimary * 2) + medDependant;
+        
+        document.getElementById('preview-uif').textContent = `R${uifCalc.toFixed(2)}`;
+        document.getElementById('preview-sdl').textContent = `R${sdlCalc.toFixed(2)}`;
+        document.getElementById('preview-medical').textContent = `R${medicalCalc.toFixed(0)}`;
+    }
+});
+</script>
+{% endblock %}

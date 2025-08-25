@@ -1,0 +1,84 @@
+# Prompt to Codex (Replit AI Assistant):
+
+Please perform a complete audit of the current Flask payroll management application. The goal is to regenerate and update the `technical_overview.md` file based on the actual codebase state. This overview should reflect all core features, active modules, routes, templates, and database models.
+
+Please include the following in your output:
+
+---
+
+### 🔧 1. Application Structure
+- List all blueprints and their route prefixes (e.g., /auth, /payroll, /employees)
+- Highlight key template files per section
+- Describe key JavaScript files and their usage
+
+---
+
+### 🧩 2. Core Functional Modules
+For each module (e.g., Authentication, Payroll, Employee Management, Company Settings, Reporting), describe:
+- Current features implemented
+- Routes available (GET/POST)
+- Major forms/modals involved
+- Backend logic flow
+- Any known placeholder or non-functional UI
+
+---
+
+### 🗃️ 3. Database Models
+- List all SQLAlchemy models
+- Show fields, relationships, and constraints
+- Identify deprecated or redundant fields (e.g., legacy medical aid defaults now handled via recurring deductions)
+
+---
+
+### 📄 4. Report and Payslip Engine
+- Explain how payslips are generated (WeasyPrint, Jinja2 template logic)
+- What payroll reports exist, how they are triggered and rendered
+- Known limitations (e.g., PDF layout issues, hardcoded multipliers, missing filters)
+
+---
+
+### 📥 5. Import/Export Features
+- Status of employee import from XLSX (upload modal, template, parsing, preview, confirmation)
+- Export features: employee lists, payroll reports, submission packs
+- Known issues: format bugs, validation gaps
+
+---
+
+### 🧮 6. Payroll Entry Processing
+- Explain how payroll entries are created, verified, and (optionally) finalized
+- Status of modal logic, tooltips, deductions integration
+- Status of recurring deduction defaults (employee- and company-level)
+- Identified bugs: edit modal not loading correctly, calculated medical aid handling
+
+---
+
+### 📦 7. File and Data Validation
+- What helpers exist (normalize_phone, parse_date, validate_id_number, etc.)
+- How validation works for imports and manual entry
+- What needs stricter error handling (e.g., importing employees with missing address)
+
+---
+
+### 🧑‍💼 8. User Roles & Multi-Tenant Handling
+- How authentication works
+- Support for multi-company access (selected_company_id)
+- Areas where permission checks are missing or need strengthening
+
+---
+
+### 📅 9. Feature Gaps & Placeholders
+- Identify features that are visible but non-functional (e.g., Payroll Settings page, Export buttons with alerts)
+- Outdated routes (e.g., /payroll/settings)
+- Redundant or legacy fields still in use
+
+---
+
+### 🚧 10. Development Lifecycle Status
+- What features are production-ready
+- What features are in active development
+- What’s partially implemented and needs finishing
+- What upcoming modules are planned (e.g., Compliance Calendar)
+
+---
+
+The final output should help guide further development, cleanup, and future planning. Format as Markdown suitable for use in a `technical_overview.md` file. Please make the output detailed, yet structured and readable.

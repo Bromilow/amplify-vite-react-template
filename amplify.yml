@@ -1,32 +1,35 @@
 version: 1
-backend:
-  phases:
-    preBuild:
-      commands:
-        # Ensure correct Node.js version
-        - nvm install 20
-        - nvm use 20
-        - node -v
-        - npm install -g aws-cdk@2.148.0   # match your aws-cdk-lib version
-    build:
-      commands:
-        - npm ci --cache .npm --prefer-offline
-        - npx ampx pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
-
 frontend:
   phases:
     preBuild:
       commands:
-        - nvm use 20
-        - node -v
+        - echo "Installing Python dependencies..."
+        - python3 -m pip install --upgrade pip
+        - python3 -m pip install -r requirements.txt
     build:
       commands:
-        - npm run build
+        - echo "Building Flask application..."
+        - python3 -c "from app import create_app; app = create_app(); print('App initialized successfully')"
   artifacts:
-    baseDirectory: dist
+    baseDirectory: /
     files:
       - '**/*'
   cache:
     paths:
-      - .npm/**/*
       - node_modules/**/*
+      - .venv/**/*
+      - __pycache__/**/*
+backend:
+  phases:
+    build:
+      commands:
+        - echo "No backend build required for Flask app"
+  artifacts:
+    baseDirectory: /
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/*
+      - .venv/**/*
+      - __pycache__/**/*

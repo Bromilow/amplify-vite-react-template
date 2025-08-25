@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit' if rule else 'New' }} Compliance Rule{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2><i class="fas fa-{{ 'edit' if rule else 'plus' }} me-2"></i>{{ 'Edit' if rule else 'New' }} Compliance Rule</h2>
+                    <p class="text-muted mb-0">{{ 'Update existing' if rule else 'Create new' }} system-wide SARS compliance reminder rule</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('admin_compliance.compliance_rules') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Rules
+                    </a>
+                </div>
+            </div>
+
+            <!-- Form Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clipboard-list me-2"></i>Rule Configuration
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <!-- Basic Information -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-muted border-bottom pb-2 mb-3">Basic Information</h6>
+                            </div>
+                            <div class="col-md-8">
+                                <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="title" name="title" 
+                                       value="{{ form_data.get('title', '') }}" required
+                                       placeholder="e.g., EMP201 Monthly Return">
+                                <div class="form-text">Clear, descriptive name for the compliance requirement</div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="category" class="form-label">Category <span class="text-danger">*</span></label>
+                                <select class="form-select" id="category" name="category" required>
+                                    <option value="">Select Category</option>
+                                    <option value="tax" {{ 'selected' if form_data.get('category') == 'tax' else '' }}>Tax</option>
+                                    <option value="payroll" {{ 'selected' if form_data.get('category') == 'payroll' else '' }}>Payroll</option>
+                                    <option value="employment" {{ 'selected' if form_data.get('category') == 'employment' else '' }}>Employment</option>
+                                    <option value="custom" {{ 'selected' if form_data.get('category') == 'custom' else '' }}>Custom</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea class="form-control" id="description" name="description" rows="2"
+                                          placeholder="Optional detailed description of the compliance requirement">{{ form_data.get('description', '') }}</textarea>
+                            </div>
+                        </div>
+
+                        <!-- Frequency and Due Date -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-muted border-bottom pb-2 mb-3">Frequency and Due Date</h6>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="frequency" class="form-label">Frequency <span class="text-danger">*</span></label>
+                                <select class="form-select" id="frequency" name="frequency" required onchange="updateDueDateFields()">
+                                    <option value="">Select Frequency</option>
+                                    <option value="monthly" {{ 'selected' if form_data.get('frequency') == 'monthly' else '' }}>Monthly</option>
+                                    <option value="annual" {{ 'selected' if form_data.get('frequency') == 'annual' else '' }}>Annual</option>
+                                    <option value="biannual" {{ 'selected' if form_data.get('frequency') == 'biannual' else '' }}>Biannual</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="due_day" class="form-label">Due Day <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="due_day" name="due_day" 
+                                       value="{{ form_data.get('due_day', '') }}" 
+                                       min="1" max="31" required
+                                       placeholder="e.g., 7">
+                                <div class="form-text">Day of the month (1-31)</div>
+                            </div>
+                            <div class="col-md-4" id="due_month_field" style="display: none;">
+                                <label for="due_month" class="form-label">Due Month</label>
+                                <select class="form-select" id="due_month" name="due_month">
+                                    <option value="">Select Month</option>
+                                    <option value="1" {{ 'selected' if form_data.get('due_month') == '1' else '' }}>January</option>
+                                    <option value="2" {{ 'selected' if form_data.get('due_month') == '2' else '' }}>February</option>
+                                    <option value="3" {{ 'selected' if form_data.get('due_month') == '3' else '' }}>March</option>
+                                    <option value="4" {{ 'selected' if form_data.get('due_month') == '4' else '' }}>April</option>
+                                    <option value="5" {{ 'selected' if form_data.get('due_month') == '5' else '' }}>May</option>
+                                    <option value="6" {{ 'selected' if form_data.get('due_month') == '6' else '' }}>June</option>
+                                    <option value="7" {{ 'selected' if form_data.get('due_month') == '7' else '' }}>July</option>
+                                    <option value="8" {{ 'selected' if form_data.get('due_month') == '8' else '' }}>August</option>
+                                    <option value="9" {{ 'selected' if form_data.get('due_month') == '9' else '' }}>September</option>
+                                    <option value="10" {{ 'selected' if form_data.get('due_month') == '10' else '' }}>October</option>
+                                    <option value="11" {{ 'selected' if form_data.get('due_month') == '11' else '' }}>November</option>
+                                    <option value="12" {{ 'selected' if form_data.get('due_month') == '12' else '' }}>December</option>
+                                </select>
+                                <div class="form-text">Required for annual/biannual rules</div>
+                            </div>
+                        </div>
+
+                        <!-- Scope and Reminders -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-muted border-bottom pb-2 mb-3">Scope and Reminders</h6>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="applies_to" class="form-label">Applies To <span class="text-danger">*</span></label>
+                                <select class="form-select" id="applies_to" name="applies_to" required>
+                                    <option value="">Select Scope</option>
+                                    <option value="company" {{ 'selected' if form_data.get('applies_to') == 'company' else '' }}>Company Level</option>
+                                    <option value="employee" {{ 'selected' if form_data.get('applies_to') == 'employee' else '' }}>Employee Level</option>
+                                    <option value="accountant" {{ 'selected' if form_data.get('applies_to') == 'accountant' else '' }}>Accountant Level</option>
+                                </select>
+                                <div class="form-text">Who this compliance rule applies to</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="reminder_days" class="form-label">Reminder Days</label>
+                                <input type="text" class="form-control" id="reminder_days" name="reminder_days" 
+                                       value="{{ form_data.get('reminder_days', '') }}"
+                                       placeholder="e.g., 30,14,7,1">
+                                <div class="form-text">Days before due date to send reminders (comma-separated)</div>
+                            </div>
+                        </div>
+
+                        <!-- Status -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-muted border-bottom pb-2 mb-3">Status</h6>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+                                           {{ 'checked' if form_data.get('is_active') else '' }}>
+                                    <label class="form-check-label" for="is_active">
+                                        <strong>Active Rule</strong>
+                                    </label>
+                                    <div class="form-text">Only active rules generate calendar events and notifications</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between pt-3 border-top">
+                            <a href="{{ url_for('admin_compliance.compliance_rules') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-{{ 'save' if rule else 'plus' }} me-1"></i>{{ 'Update' if rule else 'Create' }} Rule
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Help Card -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-question-circle me-2"></i>Field Guidelines</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Frequency Types:</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>Monthly:</strong> Repeats every month on the specified day</li>
+                                <li><strong>Annual:</strong> Once per year on specified date</li>
+                                <li><strong>Biannual:</strong> Twice per year (6 months apart)</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Scope Definitions:</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>Company:</strong> Applies to entire company</li>
+                                <li><strong>Employee:</strong> Per-employee requirement</li>
+                                <li><strong>Accountant:</strong> Accountant responsibility</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateDueDateFields() {
+    const frequency = document.getElementById('frequency').value;
+    const dueDateField = document.getElementById('due_month_field');
+    const dueDateSelect = document.getElementById('due_month');
+    
+    if (frequency === 'annual' || frequency === 'biannual') {
+        dueDateField.style.display = 'block';
+        dueDateSelect.required = true;
+    } else {
+        dueDateField.style.display = 'none';
+        dueDateSelect.required = false;
+        dueDateSelect.value = '';
+    }
+}
+
+// Initialize form on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateDueDateFields();
+});
+</script>
+{% endblock %}

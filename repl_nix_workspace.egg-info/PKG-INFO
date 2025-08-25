@@ -1,0 +1,26 @@
+Metadata-Version: 2.4
+Name: repl-nix-workspace
+Version: 0.1.0
+Summary: Add your description here
+Requires-Python: >=3.11
+Requires-Dist: email-validator>=2.2.0
+Requires-Dist: flask-dance>=7.1.0
+Requires-Dist: flask>=3.1.1
+Requires-Dist: flask-sqlalchemy>=3.1.1
+Requires-Dist: gunicorn>=23.0.0
+Requires-Dist: psycopg2-binary>=2.9.10
+Requires-Dist: weasyprint>=65.1
+Requires-Dist: flask-login>=0.6.3
+Requires-Dist: oauthlib>=3.2.2
+Requires-Dist: pyjwt>=2.10.1
+Requires-Dist: pandas>=2.3.0
+Requires-Dist: XlsxWriter>=3.2.5
+Requires-Dist: openpyxl>=3.1.5
+Requires-Dist: flask-wtf>=1.2.2
+Requires-Dist: python-dateutil>=2.9.0.post0
+Requires-Dist: flask-migrate>=4.1.0
+Requires-Dist: requests>=2.32.4
+Requires-Dist: schedule>=1.2.2
+Requires-Dist: flask-caching>=2.3.1
+Requires-Dist: python-docx>=1.2.0
+Requires-Dist: docx2pdf>=0.1.8

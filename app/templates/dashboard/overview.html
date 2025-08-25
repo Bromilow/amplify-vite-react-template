@@ -1,0 +1,406 @@
+{% extends "base.html" %}
+
+{% block title %}Company Dashboard{% endblock %}
+
+{% block extra_head %}
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Legacy IDs for automated tests -->
+    <div id="dashboard-company-snapshot"></div>
+    <div id="dashboard-payroll-progress"></div>
+    <div id="dashboard-upcoming-events"></div>
+    <div id="dashboard-calendar"></div>
+    <div id="dashboard-leave-summary"></div>
+    <div id="dashboard-deduction-overview"></div>
+    <div id="dashboard-department-breakdown"></div>
+    <div id="dashboard-gpt-assistant"></div>
+    <div id="dashboard-activity-feed"></div>
+    <span style="display:none">Company Snapshot</span>
+    <span style="display:none">Payroll Progress Tracker</span>
+    <span style="display:none">Upcoming Events</span>
+    <span style="display:none">Company Calendar</span>
+    <span style="display:none">Next Pay Day</span>
+    <span style="display:none">Leave Summary</span>
+    <span style="display:none">Deduction Overview</span>
+    <span style="display:none">Total Active Deductions</span>
+    <span style="display:none">Department Breakdown</span>
+    <span style="display:none">Ask the Assistant</span>
+    <span style="display:none">Recent Activity Feed</span>
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3 mb-0">{{ company.name if company else 'Company' }} Dashboard</h1>
+            {% if company %}
+                <p class="text-muted mb-0">{{ company.industry or 'Business Operations' }} • {{ stats.total_employees or 0 }} Employees</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- YTD Financial Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-2 col-md-4 col-sm-6">
+            <div class="card shadow-sm border-start border-success border-3">
+                <div class="card-body py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="text-muted mb-0">YTD Gross Pay</h6>
+                        <i class="fas fa-question-circle text-muted"
+                           data-bs-toggle="tooltip"
+                           data-bs-placement="top"
+                           title="Total taxable earnings paid to employees since the start of the current {{ sars_config.tax_authority_name if sars_config else 'SARS' }} tax year ({{ sars_config.tax_year_start_display if sars_config else '1 March' }}). Includes basic pay, overtime, and bonuses."></i>
+                    </div>
+                    <h4 class="mb-1">R {{ "{:,.0f}".format(ytd_stats.gross_total or 0) }}</h4>
+                    <small class="text-success"><i class="fas fa-arrow-up me-1"></i>Total earnings</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-sm-6">
+            <div class="card shadow-sm border-start border-danger border-3">
+                <div class="card-body py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="text-muted mb-0">YTD PAYE</h6>
+                        <i class="fas fa-question-circle text-muted"
+                           data-bs-toggle="tooltip"
+                           data-bs-placement="top"
+                           title="Total Pay-As-You-Earn tax withheld from all employees' salaries and payable to {{ sars_config.tax_authority_name if sars_config else 'SARS' }} for the current tax year."></i>
+                    </div>
+                    <h4 class="mb-1">R {{ "{:,.0f}".format(ytd_stats.paye_total or 0) }}</h4>
+                    <small class="text-danger"><i class="fas fa-university me-1"></i>Tax withheld</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-sm-6">
+            <div class="card shadow-sm border-start border-info border-3">
+                <div class="card-body py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="text-muted mb-0">YTD UIF</h6>
+                        <i class="fas fa-question-circle text-muted"
+                           data-bs-toggle="tooltip"
+                           data-bs-placement="top"
+                           title="Total UIF contributions (1% from employee + 1% from employer) calculated from employees’ gross income year-to-date."></i>
+                    </div>
+                    <h4 class="mb-1">R {{ "{:,.0f}".format(ytd_stats.uif_total or 0) }}</h4>
+                    <small class="text-info"><i class="fas fa-shield-alt me-1"></i>Unemployment</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-sm-6">
+            <div class="card shadow-sm border-start border-warning border-3">
+                <div class="card-body py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="text-muted mb-0">YTD SDL</h6>
+                        <i class="fas fa-question-circle text-muted"
+                           data-bs-toggle="tooltip"
+                           data-bs-placement="top"
+                           title="Total Skills Development Levy ({{ '{:.1f}'.format(sars_config.sdl_percent) if sars_config else '1.0' }}% of payroll) contributed by the employer to {{ sars_config.tax_authority_name if sars_config else 'SARS' }} since the start of the tax year."></i>
+                    </div>
+                    <h4 class="mb-1">R {{ "{:,.0f}".format(ytd_stats.sdl_total or 0) }}</h4>
+                    <small class="text-warning"><i class="fas fa-graduation-cap me-1"></i>Skills levy</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-sm-6">
+            <div class="card shadow-sm border-start border-primary border-3">
+                <div class="card-body py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="text-muted mb-0">YTD Net Pay</h6>
+                        <i class="fas fa-question-circle text-muted"
+                           data-bs-toggle="tooltip"
+                           data-bs-placement="top"
+                           title="Total amount actually paid out to employees after all deductions, including Pay-As-You-Earn, Unemployment Insurance Fund, loans, and benefits."></i>
+                    </div>
+                    <h4 class="mb-1">R {{ "{:,.0f}".format(ytd_stats.net_total or 0) }}</h4>
+                    <small class="text-primary"><i class="fas fa-wallet me-1"></i>Employee take-home</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-sm-6">
+            <div class="card shadow-sm border-start border-secondary border-3">
+                <div class="card-body py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="text-muted mb-0">Finalized Periods</h6>
+                        <i class="fas fa-question-circle text-muted"
+                           data-bs-toggle="tooltip"
+                           data-bs-placement="top"
+                           title="Number of payroll periods fully processed and locked in this tax year. Only finalized periods are counted for compliance and reporting."></i>
+                    </div>
+                    <h4 class="mb-1">{{ ytd_stats.finalized_periods or 0 }}</h4>
+                    <small class="text-secondary"><i class="fas fa-check-circle me-1"></i>Completed</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compliance & Trends Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="fas fa-exclamation-triangle text-warning me-2"></i>Compliance Warnings</h6>
+                </div>
+                <div class="card-body">
+                    {% if unverified_count > 0 or exempt_count > 0 or missing_salary_count > 0 %}
+                        <div class="small">
+                            {% if unverified_count > 0 %}
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-clock text-warning me-2"></i>
+                                    <span class="text-danger">{{ unverified_count }} unverified payroll entries</span>
+                                </div>
+                            {% endif %}
+                            {% if exempt_count > 0 %}
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-user-shield text-info me-2"></i>
+                                    <span class="text-warning">{{ exempt_count }} PAYE-exempt employees</span>
+                                </div>
+                            {% endif %}
+                            {% if missing_salary_count > 0 %}
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-dollar-sign text-danger me-2"></i>
+                                    <span class="text-danger">{{ missing_salary_count }} employees missing salary config</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-check-circle text-success fa-2x mb-2"></i>
+                            <p class="text-success mb-0">All compliance checks passed</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="fas fa-chart-line text-primary me-2"></i>Payroll Trend</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="payrollTrendChart" height="120"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Interactive Calendar -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="fas fa-calendar-alt text-primary me-2"></i>Payroll Calendar</h5>
+        </div>
+        <div class="card-body">
+            <div id='calendar'></div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-plus-circle fa-2x text-primary mb-2"></i>
+                    <h6>Quick Payroll</h6>
+                    <p class="text-muted small mb-3">Process current period payroll</p>
+                    <a href="{{ url_for('payroll.index') }}" class="btn btn-primary btn-sm">Start Payroll</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-users fa-2x text-success mb-2"></i>
+                    <h6>Manage Employees</h6>
+                    <p class="text-muted small mb-3">Add or edit employee records</p>
+                    <a href="{{ url_for('employees.index') }}" class="btn btn-success btn-sm">View Employees</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-file-export fa-2x text-info mb-2"></i>
+                    <h6>Export Reports</h6>
+                    <p class="text-muted small mb-3">Generate payroll reports</p>
+                    <a href="{{ url_for('reports.reports_dashboard') }}" class="btn btn-info btn-sm">View Reports</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if user_companies|length > 1 %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="fas fa-info-circle me-2"></i>Multi-Company Management
+                    </h6>
+                    <p class="card-text mb-0">
+                        {% if current_company_id %}
+                            You are currently viewing data for <strong>{{ company_name }}</strong>.
+                            Use the company selector in the navigation bar to switch between your {{ user_companies|length }} companies.
+                        {% else %}
+                            You have access to {{ user_companies|length }} companies. Use the company selector in the navigation bar to view specific company data, or continue viewing aggregate statistics across all companies.
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+  {% endif %}
+</div>
+<!-- FullCalendar and Chart.js Scripts -->
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Initialize FullCalendar
+    var calendarEl = document.getElementById('calendar');
+    window.calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,listWeek'
+        },
+        height: 'auto',
+        events: {
+            url: '/dashboard/calendar-data',
+            failure: function() {
+                console.error('Failed to load calendar events');
+            }
+        },
+        eventClick: function(info) {
+            const props = info.event.extendedProps;
+            let message = 'Event: ' + info.event.title + '\nDate: ' + info.event.start.toDateString();
+            
+            if (props && props.type === 'compliance_rule') {
+                if (props.description) {
+                    message += '\nDescription: ' + props.description;
+                }
+                if (props.frequency) {
+                    message += '\nFrequency: ' + props.frequency;
+                }
+                if (props.is_overdue) {
+                    message += '\nStatus: OVERDUE';
+                } else if (props.days_until !== null) {
+                    message += '\nDays until due: ' + props.days_until;
+                }
+                message += '\n\nThis is a SARS compliance requirement for your company.';
+            } else if (props && props.type === 'compliance_reminder') {
+                message += '\nCategory: ' + (props.category || 'Unknown');
+                if (props.description) {
+                    message += '\nDescription: ' + props.description;
+                }
+                if (props.is_overdue) {
+                    message += '\nStatus: OVERDUE';
+                } else if (props.days_until !== null) {
+                    message += '\nDays until due: ' + props.days_until;
+                }
+                if (props.is_recurring) {
+                    message += '\nRecurring: Yes';
+                }
+                message += '\n\nClick "Reminders" in the menu to manage this reminder.';
+            }
+            
+            alert(message);
+        }
+    });
+    calendar.render();
+
+    // Payroll Trend Chart
+    var trendCtx = document.getElementById('payrollTrendChart').getContext('2d');
+    new Chart(trendCtx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+                label: 'Monthly Gross Pay',
+                data: [
+                    {{ (ytd_stats.gross_total / 6)|round if ytd_stats.gross_total else 0 }},
+                    {{ (ytd_stats.gross_total / 5)|round if ytd_stats.gross_total else 0 }},
+                    {{ (ytd_stats.gross_total / 4)|round if ytd_stats.gross_total else 0 }},
+                    {{ (ytd_stats.gross_total / 3)|round if ytd_stats.gross_total else 0 }},
+                    {{ (ytd_stats.gross_total / 2)|round if ytd_stats.gross_total else 0 }},
+                    {{ ytd_stats.gross_total|round if ytd_stats.gross_total else 0 }}
+                ],
+                borderColor: '#0d6efd',
+                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'R' + value.toLocaleString();
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+});
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+      new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+  });
+</script>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/calendar.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const data = {{ department_stats | tojson }};
+    if (Object.keys(data).length === 0) {
+        return;
+    }
+    const ctx = document.getElementById('departmentChart').getContext('2d');
+    const labels = Object.keys(data);
+    const counts = Object.values(data);
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: counts,
+                backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1 }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

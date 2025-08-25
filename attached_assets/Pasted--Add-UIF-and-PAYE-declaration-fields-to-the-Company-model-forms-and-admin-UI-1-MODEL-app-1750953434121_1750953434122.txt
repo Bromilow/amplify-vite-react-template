@@ -1,0 +1,51 @@
+# ✅ Add UIF and PAYE declaration fields to the Company model, forms, and admin UI
+
+# 1. MODEL (app/models/company.py):
+# Add the following fields to the Company model:
+uif_reference_number = db.Column(db.String(10))  # format: '1234567/8'
+paye_reference_number = db.Column(db.String(10)) # format: '7123456789'
+employer_first_name = db.Column(db.String(50))
+employer_last_name = db.Column(db.String(50))
+employer_id_number = db.Column(db.String(13))    # South African ID
+
+# 2. MIGRATION:
+# Create a new Alembic migration to add these five fields to the companies table.
+
+# 3. FORMS (app/forms/company_forms.py):
+# In CompanySettingsForm or relevant form:
+uif_reference_number = StringField("UIF Employer Reference Number", validators=[Optional(), Length(max=10)])
+paye_reference_number = StringField("PAYE Reference Number", validators=[Optional(), Length(min=10, max=10)])
+employer_first_name = StringField("Employer First Name", validators=[Optional()])
+employer_last_name = StringField("Employer Last Name", validators=[Optional()])
+employer_id_number = StringField("Employer ID Number", validators=[Optional(), Length(min=13, max=13)])
+
+# 4. TEMPLATE (app/templates/companies/settings.html or company_edit_modal.html):
+# Under "Company Information" section, add a subheader:
+<h5 class="mt-4">Employer Declaration Details</h5>
+<div class="form-group">
+  {{ form.uif_reference_number.label }} {{ form.uif_reference_number(class="form-control") }}
+</div>
+<div class="form-group">
+  {{ form.paye_reference_number.label }} {{ form.paye_reference_number(class="form-control") }}
+</div>
+<div class="form-group">
+  {{ form.employer_first_name.label }} {{ form.employer_first_name(class="form-control") }}
+</div>
+<div class="form-group">
+  {{ form.employer_last_name.label }} {{ form.employer_last_name(class="form-control") }}
+</div>
+<div class="form-group">
+  {{ form.employer_id_number.label }} {{ form.employer_id_number(class="form-control") }}
+</div>
+
+# 5. SERIALIZATION:
+# Update company.to_dict() and update_from_form() methods to include new fields.
+
+# 6. VALIDATION:
+# Add inline tooltips:
+# - UIF Ref format: “1234567/8” (8 digits, slash after 7th)
+# - PAYE Ref: Must start with 7, total 10 digits
+
+# 7. BONUS (OPTIONAL):
+# Highlight missing fields in admin dashboard if any of these are unset, especially for companies that require UIF documents.
+

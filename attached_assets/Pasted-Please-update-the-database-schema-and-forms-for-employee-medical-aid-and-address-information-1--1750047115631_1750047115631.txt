@@ -1,0 +1,46 @@
+Please update the database schema and forms for employee medical aid and address information.
+
+1. ✅ **Database Schema Update**:
+Add the following fields to the `Employee` model and corresponding PostgreSQL table:
+
+- `medical_aid_member`: Boolean (default=False)
+- `medical_aid_scheme`: String(100), nullable=True
+- `medical_aid_number`: String(50), nullable=True  # Membership/Card number
+- `medical_aid_principal_member`: Boolean (default=True)
+- `medical_aid_employee`: Numeric(10,2), nullable=True
+- `medical_aid_employer`: Numeric(10,2), nullable=True
+- `medical_aid_dependants`: Integer, nullable=True
+- `medical_aid_fringe_benefit`: Numeric(10,2), nullable=True
+- `physical_address`: Text, nullable=True
+
+Make sure these fields are added with appropriate defaults where necessary and are backward-compatible.
+
+2. ✅ **Form Update – Add & Edit Employee**:
+Update both the `Add Employee` and `Edit Employee` forms to include the following:
+
+### Medical Aid Information (new section)
+- Checkbox: **"Is Medical Aid Member?"** (linked to `medical_aid_member`)
+- Text: **Medical Scheme Name**
+- Text: **Medical Aid Number / Membership Number**
+- Toggle/Dropdown: **"Is Principal Member?"** (Yes/No)
+- Input (currency): **Employee Contribution (R)**
+- Input (currency): **Employer Contribution (R)**
+- Input (number): **Number of Dependants**
+- Input (currency): **Taxable Fringe Benefit (R)**
+
+Only show the additional medical aid fields if `medical_aid_member` is checked (JS toggle visibility).
+
+### Address Information
+- Input (textarea): **Physical Address** (linked to `physical_address`)
+
+3. ✅ **Display in View Page**
+- Ensure all new fields are included in the Employee View page in appropriate cards:
+  - **Medical Aid Information** card
+  - **Address Information** card (reuse or replace existing one)
+
+4. ✅ **Validation**
+- Medical Aid Number is optional, but if entered, validate length (4–50 chars).
+- Number of Dependants must be 0 or more.
+- Fringe Benefit is optional; default to 0 if not provided.
+
+Make sure the database is migrated correctly, forms are tested, and all new data is persisted and displayed consistently.

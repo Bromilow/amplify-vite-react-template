@@ -1,0 +1,50 @@
+# Fix and enhance the payroll modal (e.g. templates/payroll/new_entry_modal.html or similar)
+# Objectives:
+# 1. Prepopulate fields from the Employee model (allowances, union fee, medical aid contributions)
+# 2. Add conditional display for Medical Aid and Union fields
+# 3. Dynamically calculate:
+#    - Medical Aid Tax Credit (2024/2025 SARS values)
+#    - Fringe Benefit from Employer Medical Aid Contribution
+#    - Adjusted PAYE after credit
+#    - Real-time Net Pay
+
+# 1. Autofill logic (Jinja2):
+# Inside the payroll modal form, update fields like this:
+<input type="number" name="allowances" value="{{ employee.allowances or 0 }}" ... />
+<input type="number" name="union_fee" value="{% if employee.union_member %}100{% else %}0{% endif %}" ... />
+<input type="number" name="medical_aid_employee" value="{{ employee.medical_aid_employee or 0 }}" ... />
+<input type="number" name="medical_aid_employer" value="{{ employee.medical_aid_employer or 0 }}" ... />
+<input type="number" name="medical_aid_dependants" value="{{ employee.medical_aid_dependants or 0 }}" ... />
+
+# 2. Conditional visibility (JS):
+# Add JavaScript to hide/show medical aid fields based on employee.medical_aid_member
+if (!{{ employee.medical_aid_member | tojson }}) {
+    document.querySelectorAll('.medical-aid-fields').forEach(el => el.style.display = 'none');
+}
+
+# 3. Real-time preview calculations (JS):
+# Inside your script block:
+function calculatePayroll() {
+    const salary = parseFloat(document.getElementById('base_salary').value || 0);
+    const allowances = parseFloat(document.getElementById('allowances').value || 0);
+    const unionFee = parseFloat(document.getElementById('union_fee').value || 0);
+    const deductions = parseFloat(document.getElementById('other_deductions').value || 0);
+    const uif = Math.min(0.01 * salary, 148.72);
+    const sdl = 0.01 * salary;
+    const employerContribution = parseFloat(document.getElementById('medical_aid_employer').value || 0);
+    const numDependants = parseInt(document.getElementById('medical_aid_dependants').value || 0);
+    const fringeBenefit = employerContribution;
+    const medicalAidCredit = 364 + (numDependants * 246); // 2024/25 SARS credit
+
+    let paye = 0.18 * salary; // Simplified example
+    paye = Math.max(paye - medicalAidCredit, 0);
+
+    const totalDeductions = paye + uif + sdl + unionFee + deductions;
+    const netPay = salary + allowances - totalDeductions;
+
+    document.getElementById('preview-gross').innerText = `R ${salary.toFixed(2)}`;
+    document.getElementById('preview-paye').innerText = `R ${paye.toFixed(2)}`;
+    document.getElementById('preview-uif').innerText = `R ${uif.toFixed(2)}`;
+    document.getElementById('preview-sdl').innerText = `R ${sdl.toFixed(2)}`;
+    document.getElementById('preview-net').innerText = `R ${netPay.toFixed(2)}`;
+}

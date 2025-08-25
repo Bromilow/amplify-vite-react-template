@@ -1,0 +1,82 @@
+We are experiencing a persistent issue where the salary input in the "Add Employee" form is not auto-filling with the correct default value based on the selected salary type on page load.
+
+Please apply the following debugging updates to both the HTML template and JavaScript:
+
+1. Template Debugging – Add Output of Defaults in HTML
+In the Add Employee form template:
+
+Add HTML comments to print company defaults for debugging:
+<!-- DEBUG: Company Default Salary Type = {{ company.default_salary_type }} -->
+<!-- DEBUG: Company Default Monthly Salary = {{ company.default_salary }} -->
+<!-- DEBUG: Company Default Hourly Rate = {{ company.default_hourly_rate }} -->
+
+Ensure the <input id="salary"> field includes these data-* attributes:
+
+<input type="number"
+       class="form-control"
+       id="salary"
+       name="salary"
+       value="{{ form_data.salary if form_data else '' }}"
+       data-monthly-default="{{ company.default_salary if company else '' }}"
+       data-hourly-default="{{ company.default_hourly_rate if company else '' }}"
+       step="0.01"
+       min="0"
+       required>
+
+
+JavaScript Debugging – Add Logging for Diagnosis
+Update the script inside DOMContentLoaded with the following:
+document.addEventListener('DOMContentLoaded', function () {
+    const salaryTypeSelect = document.getElementById('salary_type');
+    const salaryInput = document.getElementById('salary');
+    const salaryLabel = document.getElementById('salary_label');
+    const salaryUnit = document.getElementById('salary_unit');
+    const salaryHelp = document.getElementById('salary_help');
+
+    console.log("DOM loaded. Initial values:");
+    console.log("Selected salary type:", salaryTypeSelect?.value);
+    console.log("Hourly default:", salaryInput?.dataset.hourlyDefault);
+    console.log("Monthly default:", salaryInput?.dataset.monthlyDefault);
+    console.log("Salary field current value:", salaryInput?.value);
+
+    function updateSalaryLabels() {
+        if (!salaryTypeSelect || !salaryInput || !salaryLabel || !salaryUnit || !salaryHelp) return;
+
+        const salaryType = salaryTypeSelect.value;
+        console.log("updateSalaryLabels triggered. Salary type:", salaryType);
+
+        if (salaryType === 'hourly') {
+            salaryLabel.textContent = 'Hourly Rate';
+            salaryUnit.textContent = '/hour';
+            salaryHelp.textContent = 'Enter the hourly rate in South African Rand';
+
+            if (!salaryInput.value && salaryInput.dataset.hourlyDefault) {
+                console.log("Auto-filling hourly default:", salaryInput.dataset.hourlyDefault);
+                salaryInput.value = salaryInput.dataset.hourlyDefault;
+            }
+        } else if (salaryType === 'monthly') {
+            salaryLabel.textContent = 'Monthly Salary';
+            salaryUnit.textContent = '/month';
+            salaryHelp.textContent = 'Enter the monthly salary amount in South African Rand';
+
+            if (!salaryInput.value && salaryInput.dataset.monthlyDefault) {
+                console.log("Auto-filling monthly default:", salaryInput.dataset.monthlyDefault);
+                salaryInput.value = salaryInput.dataset.monthlyDefault;
+            }
+        } else {
+            salaryLabel.textContent = 'Salary Amount';
+            salaryUnit.textContent = '';
+            salaryHelp.textContent = 'Enter the salary amount in South African Rand';
+        }
+    }
+
+    salaryTypeSelect?.addEventListener('change', () => {
+        console.log("Salary type changed. Clearing salary field.");
+        salaryInput.value = '';
+        updateSalaryLabels();
+    });
+
+    updateSalaryLabels(); // Run once on page load
+});
+
+

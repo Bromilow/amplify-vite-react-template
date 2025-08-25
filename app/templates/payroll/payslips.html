@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Generate Payslips{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="fas fa-file-pdf me-2"></i>Generate Payslips</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('payroll.index') }}">Payroll</a></li>
+                    <li class="breadcrumb-item active">Payslips</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Payroll Period</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <p><strong>Period Start:</strong> {{ period_start.strftime('%d %B %Y') }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p><strong>Period End:</strong> {{ period_end.strftime('%d %B %Y') }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p><strong>Payslips Available:</strong> {{ payroll_entries|length }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-users me-2"></i>Employee Payslips</h5>
+                    {% if payroll_entries %}
+                        <button class="btn btn-success" onclick="downloadAllPayslips()">
+                            <i class="fas fa-download me-1"></i>Download All Payslips
+                        </button>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if payroll_entries %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Employee</th>
+                                        <th>Department</th>
+                                        <th>Gross Pay</th>
+                                        <th>Deductions</th>
+                                        <th>Net Pay</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for entry in payroll_entries %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar me-3">
+                                                        <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                            <span class="text-white fw-bold">{{ entry.employee.first_name[0] }}{{ entry.employee.last_name[0] }}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <div class="fw-bold">{{ entry.employee.full_name }}</div>
+                                                        <small>
+                                                            <a href="{{ url_for('employees.view', employee_id=entry.employee.id) }}" class="text-decoration-none text-primary" title="View Employee Profile">
+                                                                {{ entry.employee.employee_id }}
+                                                            </a>
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>{{ entry.employee.department }}</td>
+                                            <td><strong>R {{ "{:,.2f}".format(entry.gross_pay) }}</strong></td>
+                                            <td>R {{ "{:,.2f}".format(entry.total_deductions) }}</td>
+                                            <td><strong class="text-success">R {{ "{:,.2f}".format(entry.net_pay) }}</strong></td>
+                                            <td>
+                                                <a href="{{ url_for('payroll.generate_payslip', employee_id=entry.employee.id) }}" 
+                                                   class="btn btn-sm btn-outline-primary" target="_blank">
+                                                    <i class="fas fa-file-pdf me-1"></i>View Payslip
+                                                </a>
+                                                <button class="btn btn-sm btn-outline-success" 
+                                                        onclick="downloadPayslip({{ entry.employee.id }})">
+                                                    <i class="fas fa-download me-1"></i>Download
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-file-pdf fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Payslips Available</h5>
+                            <p class="text-muted">Payroll needs to be processed before payslips can be generated.</p>
+                            <a href="{{ url_for('payroll.new') }}" class="btn btn-primary">
+                                <i class="fas fa-calculator me-1"></i>Process Payroll
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="{{ url_for('payroll.index') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Back to Payroll
+                        </a>
+                        {% if payroll_entries %}
+                            <div class="text-muted small">
+                                Total payslips: {{ payroll_entries|length }} | 
+                                Total net pay: R {{ "{:,.2f}".format(payroll_entries|sum(attribute='net_pay')) }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function downloadPayslip(employeeId) {
+    const urlTemplate = "{{ url_for('payroll.generate_payslip', employee_id=0) }}";
+    const url = urlTemplate.replace(/0$/, employeeId);
+    window.open(url, '_blank');
+}
+
+function downloadAllPayslips() {
+    {% for entry in payroll_entries %}
+        setTimeout(() => {
+            downloadPayslip({{ entry.employee.id }});
+        }, {{ loop.index0 * 500 }}); // Stagger downloads by 500ms
+    {% endfor %}
+}
+</script>
+{% endblock %}

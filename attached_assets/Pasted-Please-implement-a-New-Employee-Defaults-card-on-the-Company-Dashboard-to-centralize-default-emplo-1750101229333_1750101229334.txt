@@ -1,0 +1,76 @@
+Please implement a “New Employee Defaults” card on the Company Dashboard to centralize default employee settings per company.
+
+---
+
+1. 🏷️ Add a new card to the company dashboard UI:
+- Title: `🧩 New Employee Defaults`
+- Display as a Bootstrap card or collapsible panel
+- Include an `✏️ Edit Defaults` button that opens a modal form
+
+---
+
+2. ✏️ The Edit Modal should allow updating the following default fields:
+
+📦 **Payroll & Salary Defaults**
+- Default Salary Type (dropdown: 'monthly', 'hourly')
+- Default Hourly Rate (numeric)
+- Default Bonus Type (e.g., No Bonus, Performance, Annual)
+- Overtime Multiplier (numeric)
+- Sunday Multiplier (numeric)
+- Public Holiday Multiplier (numeric)
+
+🩺 **Medical Aid Defaults**
+- Default Medical Aid Scheme (text)
+- Default Employer Contribution (R/month)
+- Default Employee Contribution (R/month)
+
+🧾 **Statutory Defaults**
+- UIF Contributing (Yes/No toggle)
+- SDL Contributing (Yes/No toggle)
+- PAYE Exempt (Yes/No toggle)
+
+🏖️ **Leave Defaults**
+- Annual Leave Days (integer)
+- Sick Leave Days (optional)
+
+🤝 **Union Defaults**
+- Default Union Member (Yes/No toggle)
+- Default Union Name (text)
+- Union Fee Type (Fixed / %)
+- Union Fee Value (numeric)
+
+---
+
+3. 🧩 When creating a new employee:
+- Pre-fill the Add Employee form using the current company’s default values for:
+  - Salary type, hourly rate, bonus, leave days
+  - Medical aid fields
+  - Statutory deduction toggles
+  - Union membership settings
+
+All values should remain editable per employee.
+
+---
+
+4. ✅ Database Model Update Required:
+
+Please update the `Company` model to include any missing fields:
+```python
+default_salary_type = db.Column(db.String(10))
+default_hourly_rate = db.Column(db.Numeric(8, 2))
+default_bonus_type = db.Column(db.String(50))
+overtime_multiplier = db.Column(db.Numeric(3, 2), default=1.5)
+sunday_multiplier = db.Column(db.Numeric(3, 2), default=2.0)
+public_holiday_multiplier = db.Column(db.Numeric(3, 2), default=2.5)
+default_annual_leave_days = db.Column(db.Integer, default=15)
+default_sick_leave_days = db.Column(db.Integer, default=10)
+default_medical_aid_scheme = db.Column(db.String(100))
+default_medical_aid_employer = db.Column(db.Numeric(10, 2), default=0)
+default_medical_aid_employee = db.Column(db.Numeric(10, 2), default=0)
+default_uif = db.Column(db.Boolean, default=True)
+default_sdl = db.Column(db.Boolean, default=True)
+default_paye_exempt = db.Column(db.Boolean, default=False)
+default_union_member = db.Column(db.Boolean, default=False)
+default_union_name = db.Column(db.String(100))
+default_union_fee_type = db.Column(db.String(10))  # 'fixed' or 'percent'
+default_union_fee_value = db.Column(db.Numeric(8, 2), default=0)

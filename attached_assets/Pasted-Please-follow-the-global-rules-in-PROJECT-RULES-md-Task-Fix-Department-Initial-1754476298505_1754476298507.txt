@@ -1,0 +1,53 @@
+Please follow the global rules in `PROJECT_RULES.md`.
+
+---
+
+### 🛠️ Task: Fix Department Initialization, Filtering, and UI Layout
+
+---
+
+### 1. 🚨 Functional Fixes
+
+#### a. Default Department Initialization
+- On creation of a new company:
+  - Automatically initialize it with a predefined set of default departments:  
+    `["Engineering", "Research", "QA", "Human Resources", "Consulting", "Sales", "Staff", "Finance", "Development"]`
+  - These should be stored in the `departments` table with `is_default=True` and linked to that company’s ID.
+
+#### b. Company-Specific Filtering
+- Update the **Add Employee** and **Edit Employee** forms so that:
+  - The Department dropdown only shows departments that belong to the **current company**.
+  - Exclude departments belonging to other companies.
+  - This applies to both frontend population logic and backend query logic.
+
+---
+
+### 2. 🎨 UI Fixes
+
+#### Department Management Card (`departments_management_card.html`)
+- Redesign the card layout:
+  - Move "Total Departments", "Default Departments", "Custom Departments" labels to a single row across the **top** of the card
+  - Below that, display the departments in a **table-style layout** or list group
+  - Use consistent Bootstrap spacing and responsive layout (`col-md-4`, `mb-3`, etc.)
+
+---
+
+### 🧠 Knock-on Effects to Check
+
+- Ensure that creating a company via the admin or registration flow now also adds departments
+- Verify that employees created with custom departments still function properly
+- Check department-related dropdowns in:
+  - Add Employee form
+  - Edit Employee modal
+  - Employee table column (if department is shown)
+
+---
+
+### 📄 Documentation Update
+
+Update the following files with timestamped entries:
+
+- `PROJECT_ISSUES.md`: Log this bug and resolution
+- `PRODUCTION_ROADMAP.md`: Mark the “Company Department Management” feature as functional
+- `FEATURES_AND_GAPS.md`: Indicate that department scoping is now company-specific
+

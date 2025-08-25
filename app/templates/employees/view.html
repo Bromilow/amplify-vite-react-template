@@ -1,0 +1,1244 @@
+{% extends "base.html" %}
+
+{% block title %}{{ employee.full_name }} - Employee Details{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Flexbox card heights - cards will automatically match */
+    #personal-info-card, #payroll-history-card {
+        height: 100%;
+    }
+    
+    /* Custom scrollable container for payroll table */
+    .payroll-table-container {
+        overflow-y: auto;
+        border-radius: 0.375rem;
+        min-height: 200px;
+    }
+    
+    /* Custom scrollbar styling for both light and dark modes */
+    .payroll-table-container::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .payroll-table-container::-webkit-scrollbar-track {
+        background: var(--bs-gray-200);
+        border-radius: 4px;
+    }
+    
+    .payroll-table-container::-webkit-scrollbar-thumb {
+        background: var(--bs-gray-400);
+        border-radius: 4px;
+    }
+    
+    .payroll-table-container::-webkit-scrollbar-thumb:hover {
+        background: var(--bs-gray-500);
+    }
+    
+    /* Dark mode scrollbar adjustments */
+    [data-bs-theme="dark"] .payroll-table-container::-webkit-scrollbar-track {
+        background: var(--bs-gray-800);
+    }
+    
+    [data-bs-theme="dark"] .payroll-table-container::-webkit-scrollbar-thumb {
+        background: var(--bs-gray-600);
+    }
+    
+    [data-bs-theme="dark"] .payroll-table-container::-webkit-scrollbar-thumb:hover {
+        background: var(--bs-gray-500);
+    }
+    
+    /* Ensure sticky header works properly */
+    .sticky-top {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('employees.index') }}">Employees</a></li>
+                    <li class="breadcrumb-item active">{{ employee.full_name }}</li>
+                </ol>
+            </nav>
+            <h4 class="mb-1">
+                <i class="fas fa-user me-2"></i>
+                {{ employee.full_name }}
+                {% if employee.employment_type %}
+                    <span class="badge bg-primary text-white ms-2">
+                        {{ employee.employment_type }}
+                    </span>
+                {% endif %}
+                {% if employee.employment_status %}
+                    {% set status = employee.employment_status.lower() %}
+                    {% set status_class =
+                        'bg-success' if status == 'active' else
+                        'bg-warning' if status == 'suspended' else
+                        'bg-danger' if status == 'terminated' else
+                        'bg-secondary' %}
+                    <span class="badge {{ status_class }} ms-2">
+                        {{ employee.employment_status }}
+                    </span>
+                {% endif %}
+            </h4>
+            <p class="text-muted">Employee ID:
+                <a href="{{ url_for('employees.view', employee_id=employee.id) }}" class="text-decoration-none text-primary" title="View Employee Profile">
+                    {{ employee.employee_id }}
+                </a>
+            </p>
+        </div>
+        <div class="col-auto">
+            <div class="d-flex flex-column align-items-end">
+                <div class="btn-group mb-2" role="group">
+                    {% if employee.employment_status != 'Terminated' %}
+                        <button type="button" class="btn btn-primary edit-employee-btn" data-employee-id="{{ employee.id }}">
+                            <i class="fas fa-edit me-2"></i>
+                            Edit Employee
+                        </button>
+                    {% else %}
+                        <button type="button" class="btn btn-secondary" disabled title="Cannot edit terminated employee">
+                            <i class="fas fa-lock me-2"></i>
+                            Employee Terminated
+                        </button>
+                    {% endif %}
+                    <button class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        {% if employee.employment_status == 'Terminated' %}
+                        <li>
+                            <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#reinstateEmployeeModal">
+                                <i class="fas fa-undo me-2 text-success"></i>Reinstate Employee
+                            </button>
+                        </li>
+                        {% else %}
+                        <li>
+                            <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#terminateEmployeeModal">
+                                <i class="fas fa-user-times me-2"></i>Terminate Employee
+                            </button>
+                        </li>
+                        {% endif %}
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form method="POST" action="{{ url_for('employees.delete', employee_id=employee.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete {{ employee.full_name }}? This action cannot be undone.');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="dropdown-item text-danger border-0 bg-transparent w-100 text-start">
+                                    <i class="fas fa-trash me-2"></i>Delete Employee
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+                <a href="{{ url_for('employees.index') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Back to Employees
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Record Information Bar -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card">
+                <div class="card-body py-2">
+                    <div class="row text-center">
+                        <div class="col-md-6">
+                            <small class="text-muted">Created</small>
+                            <div class="fw-bold">{{ employee.created_at.strftime('%B %d, %Y at %I:%M %p') if employee.created_at else 'N/A' }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted">Last Updated</small>
+                            <div class="fw-bold">{{ employee.updated_at.strftime('%B %d, %Y at %I:%M %p') if employee.updated_at else 'N/A' }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Two Column Layout -->
+    <div class="row d-flex align-items-stretch">
+        <!-- Left Column: Personal Information -->
+        <div class="col-md-6 d-flex">
+            <!-- Personal Information -->
+            <div class="card mb-4 flex-fill" id="personal-info-card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-user me-2"></i>
+                        Personal Information
+                    </h5>
+                </div>
+                <div class="card-body px-3 py-2">
+                    <div class="row g-3">
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label text-muted small">First Name</label>
+                            <p class="fw-bold mb-1">{{ employee.first_name }}</p>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label text-muted small">Last Name</label>
+                            <p class="fw-bold mb-1">{{ employee.last_name }}</p>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            {% if employee.identification_type == 'passport' %}
+                                <label class="form-label text-muted small">Passport Number</label>
+                                <p class="fw-bold mb-1">{{ employee.passport_number }}</p>
+                            {% else %}
+                                <label class="form-label text-muted small">ID Number</label>
+                                <p class="fw-bold mb-1">{{ employee.id_number }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label text-muted small">Tax Number</label>
+                            <p class="fw-bold mb-1">
+                                {% if employee.tax_number %}
+                                    {{ employee.tax_number }}
+                                {% else %}
+                                    <span class="text-muted">Not provided</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label text-muted small">Cell Number</label>
+                            <p class="fw-bold mb-1">
+                                {% if employee.cell_number %}
+                                    <a href="tel:{{ employee.cell_number }}" class="text-decoration-none">
+                                        {{ employee.cell_number }}
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted">Not provided</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label text-muted small">Email</label>
+                            <p class="fw-bold mb-1">
+                                {% if employee.email %}
+                                    <a href="mailto:{{ employee.email }}" class="text-decoration-none">
+                                        {{ employee.email }}
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted">Not provided</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label text-muted small">Date of Birth</label>
+                            <p class="fw-bold mb-1">
+                                {% if employee.date_of_birth %}
+                                    {{ employee.date_of_birth.strftime('%d %B %Y') }}
+                                {% else %}
+                                    <span class="text-muted">Not provided</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label text-muted small">Gender</label>
+                            <p class="fw-bold mb-1">
+                                {% if employee.gender %}
+                                    <span class="badge bg-info">{{ employee.gender }}</span>
+                                {% else %}
+                                    <span class="text-muted">Not provided</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label text-muted small">Marital Status</label>
+                            <p class="fw-bold mb-1">
+                                {% if employee.marital_status %}
+                                    <span class="badge bg-secondary">{{ employee.marital_status }}</span>
+                                {% else %}
+                                    <span class="text-muted">Not provided</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-12 mb-0">
+                            <label class="form-label text-muted small">Physical Address</label>
+                            <p class="fw-bold mb-0">
+                                {% if employee.physical_address %}
+                                    {{ employee.physical_address }}
+                                {% else %}
+                                    <span class="text-muted">Not provided</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Column: Employee Records (matching height of Personal Information) -->
+        <div class="col-md-6 d-flex">
+            <!-- Employee Records -->
+            <div class="card mb-4 flex-fill d-flex flex-column" id="employee-records-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-folder-open me-2"></i>
+                        Employee Records
+                    </h5>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" 
+                                type="button" 
+                                id="recordViewDropdown" 
+                                data-bs-toggle="dropdown" 
+                                aria-expanded="false">
+                            <span id="selectedView">Payroll History</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="recordViewDropdown">
+                            <li><a class="dropdown-item" href="#" onclick="switchRecordView('payroll')">Payroll History</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="switchRecordView('ui19')">UI19 Termination Records</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body py-2 px-0 flex-grow-1 d-flex flex-column">
+                    <!-- Payroll History View -->
+                    <div id="payrollView" class="record-view">
+                        {% if employee.payroll_entries %}
+                            <div class="table-responsive payroll-table-container flex-grow-1">
+                                <table class="table table-hover table-sm mb-0">
+                                    <thead class="table-dark sticky-top">
+                                        <tr>
+                                            <th class="px-3">Pay Period</th>
+                                            <th class="text-end">Gross Pay</th>
+                                            <th class="text-end">Net Pay</th>
+                                            <th class="text-center">Status</th>
+                                            <th class="text-center px-3">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for entry in employee.payroll_entries %}
+                                        <tr>
+                                            <td class="px-3">
+                                                <div class="fw-bold">{{ entry.pay_period_end.strftime('%B %Y') }}</div>
+                                                <small class="text-muted">{{ entry.pay_period_start.strftime('%d %b') }} - {{ entry.pay_period_end.strftime('%d %b') }}</small>
+                                            </td>
+                                            <td class="text-end">
+                                                <span class="fw-bold">R{{ "{:,.2f}".format(entry.gross_pay) }}</span>
+                                            </td>
+                                            <td class="text-end">
+                                                <span class="fw-bold text-success">R{{ "{:,.2f}".format(entry.net_pay) }}</span>
+                                            </td>
+                                            <td class="text-center">
+                                                {% if entry.is_verified %}
+                                                    <span class="badge bg-success">Generated</span>
+                                                {% else %}
+                                                    <span class="badge bg-warning">Pending</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-center px-3">
+                                                <div class="btn-group btn-group-sm">
+                                                    <button class="btn btn-outline-primary btn-sm" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#payrollModal{{ entry.id }}"
+                                                            title="View Details">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    {% if entry.is_verified %}
+                                                        <a href="{{ url_for('payroll.generate_payslip', employee_id=employee.id) }}?entry_id={{ entry.id }}" 
+                                                           class="btn btn-outline-success btn-sm"
+                                                           target="_blank"
+                                                           title="Download Payslip">
+                                                            <i class="fas fa-download"></i>
+                                                        </a>
+                                                    {% else %}
+                                                        <a href="{{ url_for('payroll.generate_payslip', employee_id=employee.id) }}?entry_id={{ entry.id }}" 
+                                                           class="btn btn-outline-warning btn-sm"
+                                                           target="_blank"
+                                                           title="Generate Payslip">
+                                                            <i class="fas fa-file-pdf"></i>
+                                                        </a>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4 px-3">
+                                <i class="fas fa-calculator fa-3x text-muted mb-3"></i>
+                                <h6 class="text-muted">No payroll records found for this employee yet.</h6>
+                                <p class="text-muted mb-3">Get started by creating the first payroll entry.</p>
+                                <a href="{{ url_for('employees.payroll_new', employee_id=employee.id) }}" class="btn btn-primary">
+                                    <i class="fas fa-plus me-2"></i>
+                                    Create First Payroll Entry
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- UI19 Termination Records View -->
+                    <div id="ui19View" class="record-view" style="display: none;">
+                        {% if ui19_records %}
+                            <div class="table-responsive payroll-table-container flex-grow-1">
+                                <table class="table table-hover table-sm mb-0">
+                                    <thead class="table-dark sticky-top">
+                                        <tr>
+                                            <th class="px-3">Start Date</th>
+                                            <th class="px-3">End Date</th>
+                                            <th class="px-3">Termination Reason</th>
+                                            <th class="text-center">Status</th>
+                                            <th class="text-center">Generated By</th>
+                                            <th class="text-center px-3">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for record in ui19_records %}
+                                        <tr>
+                                            <td class="px-3">
+                                                <div class="fw-bold">{{ record.start_date.strftime('%d %b %Y') if record.start_date else 'N/A' }}</div>
+                                            </td>
+                                            <td class="px-3">
+                                                <div class="fw-bold">{{ record.end_date.strftime('%d %b %Y') if record.end_date else 'N/A' }}</div>
+                                            </td>
+                                            <td class="px-3">
+                                                <span class="text-danger">{{ record.termination_reason }}</span>
+                                            </td>
+                                            <td class="text-center">
+                                                {% if record.status == 'Generated' %}
+                                                    <span class="badge bg-success">{{ record.status }}</span>
+                                                {% elif record.status == 'Submitted' %}
+                                                    <span class="badge bg-primary">{{ record.status }}</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">{{ record.status }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-center">
+                                                <small class="text-muted">{{ record.created_by_user.username if record.created_by_user else 'System' }}</small>
+                                                <br><small class="text-muted">{{ record.created_at.strftime('%d %b %Y') if record.created_at else '' }}</small>
+                                            </td>
+                                            <td class="text-center px-3">
+                                                <div class="btn-group btn-group-sm">
+                                                    <button class="btn btn-outline-primary btn-sm" 
+                                                            title="View UI19 Details"
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#ui19DetailModal{{ record.id }}">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    <a href="{{ url_for('employees.generate_uif_doc', employee_id=employee.id) }}" 
+                                                       class="btn btn-outline-success btn-sm"
+                                                       title="Download UI19 Declaration PDF">
+                                                        <i class="fas fa-download"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4 px-3">
+                                <i class="fas fa-file-contract fa-3x text-muted mb-3"></i>
+                                <h6 class="text-muted">No termination records found.</h6>
+                                <p class="text-muted mb-3">UI19 termination records will appear here when employment ends.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Additional Information Row -->
+    <div class="row">
+        <!-- Left Column: Employment, Compensation, Banking -->
+        <div class="col-md-6">
+            
+            <!-- Employment Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-briefcase me-2"></i>
+                        Employment Information
+                    </h5>
+                </div>
+                <div class="card-body px-3 py-2">
+                    <div class="row g-3">
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label text-muted small">Department</label>
+                            <p class="fw-bold mb-1">
+                                <span class="badge bg-secondary">{{ employee.department }}</span>
+                            </p>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label text-muted small">Job Title</label>
+                            <p class="fw-bold mb-1">
+                                {% if employee.job_title %}
+                                    {{ employee.job_title }}
+                                {% else %}
+                                    <span class="text-muted">Not provided</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label text-muted small">Start Date</label>
+                            <p class="fw-bold mb-1">{{ employee.start_date.strftime('%d %B %Y') if employee.start_date else 'N/A' }}</p>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label text-muted small">Reporting Manager</label>
+                            <p class="fw-bold mb-1">
+                                {% if employee.reporting_manager %}
+                                    {{ employee.reporting_manager }}
+                                {% else %}
+                                    <span class="text-muted">Not provided</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small">Employment Type</label>
+                            <p class="fw-bold mb-0">
+                                {% if employee.employment_type %}
+                                    <span class="badge bg-primary">
+                                        {{ employee.employment_type.title() }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">Not specified</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6 mb-0">
+                            <label class="form-label text-muted small">Employment Status</label>
+                            <p class="fw-bold mb-0">
+                                {% if employee.employment_status %}
+                                    <span class="badge {% if employee.employment_status.lower() == 'active' %}bg-success{% elif employee.employment_status.lower() == 'terminated' %}bg-danger{% elif employee.employment_status.lower() == 'suspended' %}bg-warning{% else %}bg-info{% endif %}">
+                                        {{ employee.employment_status.title() }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">Not specified</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Compensation -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-money-bill me-2"></i>
+                        Compensation
+                    </h5>
+                </div>
+                <div class="card-body px-3 py-2">
+                    {% if employee.salary %}
+                        <div class="row g-3">
+                            {% if employee.salary_type == 'hourly' %}
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label text-muted small">Hourly Rate</label>
+                                    <p class="h5 text-success mb-1">R{{ "%.2f"|format(employee.salary|float) }}/hr</p>
+                                </div>
+                            {% elif employee.salary_type == 'monthly' %}
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label text-muted small">Monthly Salary</label>
+                                    <p class="h5 text-success mb-1">R{{ "{:,.2f}".format(employee.salary|float) }}</p>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label text-muted small">Annual Salary</label>
+                                    <p class="fw-bold mb-1">R{{ "{:,.2f}".format(employee.salary|float * 12) }}</p>
+                                </div>
+                            {% elif employee.salary_type == 'piece' %}
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label text-muted small">Piece Rate</label>
+                                    <p class="h5 text-success mb-1">R{{ "%.4f"|format(employee.salary|float) }}/piece</p>
+                                </div>
+                            {% endif %}
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label text-muted small">Salary Type</label>
+                                <p class="fw-bold mb-1">
+                                    <span class="badge bg-info">{{ employee.salary_type.title() }}</span>
+                                </p>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label text-muted small">Allowances</label>
+                                <p class="fw-bold mb-1">
+                                    {% if employee.allowances and employee.allowances > 0 %}
+                                        R{{ "{:,.2f}".format(employee.allowances|float) }}/month
+                                    {% else %}
+                                        <span class="text-muted">None</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div class="col-12 mb-0">
+                                <label class="form-label text-muted small">Bonus Type</label>
+                                <p class="fw-bold mb-0">
+                                    {% if employee.bonus_type %}
+                                        <span class="badge bg-warning text-dark">{{ employee.bonus_type }}</span>
+                                    {% else %}
+                                        <span class="text-muted">No Bonus</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-money-bill fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">No compensation information</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Banking Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-university me-2"></i>
+                        Banking Information
+                    </h5>
+                </div>
+                <div class="card-body px-3 py-2">
+                    {% if employee.bank_name and employee.account_number %}
+                        <div class="row g-3">
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label text-muted small">Bank Name</label>
+                                <p class="fw-bold mb-1">{{ employee.bank_name }}</p>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label text-muted small">Account Number</label>
+                                <p class="fw-bold mb-1">{{ employee.account_number }}</p>
+                            </div>
+                            <div class="col-12 mb-0">
+                                <label class="form-label text-muted small">Account Type</label>
+                                <p class="fw-bold mb-0">
+                                    {% if employee.account_type %}
+                                        <span class="badge bg-info">{{ employee.account_type }}</span>
+                                    {% else %}
+                                        <span class="text-muted">Not specified</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-university fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">No banking information provided</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Statutory Deductions Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-calculator me-2"></i>
+                        Statutory Deductions
+                    </h5>
+                </div>
+                <div class="card-body px-3 py-2">
+                    <div class="row g-3">
+                        <div class="col-12 mb-2">
+                            <label class="form-label text-muted small">UIF Contributing</label>
+                            <p class="fw-bold mb-1">
+                                <span class="badge {% if employee.uif_contributing %}bg-success{% else %}bg-secondary{% endif %}">
+                                    {% if employee.uif_contributing %}Yes{% else %}No{% endif %}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-12 mb-2">
+                            <label class="form-label text-muted small">SDL Contributing</label>
+                            <p class="fw-bold mb-1">
+                                <span class="badge {% if employee.sdl_contributing %}bg-success{% else %}bg-secondary{% endif %}">
+                                    {% if employee.sdl_contributing %}Yes{% else %}No{% endif %}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-12 mb-0">
+                            <label class="form-label text-muted small">PAYE Exempt</label>
+                            <p class="fw-bold mb-0">
+                                <span class="badge {% if employee.paye_exempt %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                                    {% if employee.paye_exempt %}Exempt{% else %}Not Exempt{% endif %}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Column: Statutory & Benefits, Employee Deductions -->
+        <div class="col-md-6">
+            
+            <!-- Statutory & Benefits Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        Statutory & Benefits Information
+                    </h5>
+                </div>
+                <div class="card-body px-3 py-2">
+                    <div class="row g-3">
+                        <!-- Statutory Deductions -->
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label text-muted small">UIF Contributing</label>
+                            <p class="fw-bold mb-1">
+                                <span class="badge {% if employee.uif_contributing %}bg-success{% else %}bg-secondary{% endif %}">
+                                    {% if employee.uif_contributing %}Yes{% else %}No{% endif %}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label text-muted small">SDL Contributing</label>
+                            <p class="fw-bold mb-1">
+                                <span class="badge {% if employee.sdl_contributing %}bg-success{% else %}bg-secondary{% endif %}">
+                                    {% if employee.sdl_contributing %}Yes{% else %}No{% endif %}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label text-muted small">PAYE Exempt</label>
+                            <p class="fw-bold mb-1">
+                                <span class="badge {% if employee.paye_exempt %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                                    {% if employee.paye_exempt %}Exempt{% else %}Not Exempt{% endif %}
+                                </span>
+                            </p>
+                        </div>
+                        
+                        <!-- Union Membership -->
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label text-muted small">Union Membership</label>
+                            <p class="fw-bold mb-1">
+                                {% if employee.union_member %}
+                                    <span class="badge bg-warning text-dark">Member</span>
+                                {% else %}
+                                    <span class="badge bg-light text-dark">Not a Member</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        
+                        {% if employee.union_member and employee.union_name %}
+                        <div class="col-12 mb-2">
+                            <label class="form-label text-muted small">Union Name</label>
+                            <p class="fw-bold mb-1">{{ employee.union_name }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Medical Aid Information -->
+                        <div class="col-12 d-flex justify-content-end">
+                            <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editMedicalAidModal">
+                                <i class="fas fa-edit me-1"></i>Edit
+                            </button>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label text-muted small">Medical Aid Member</label>
+                            <p class="fw-bold mb-1">
+                                {% if employee.medical_aid_member %}
+                                    <span class="badge bg-info">Member</span>
+                                {% else %}
+                                    <span class="badge bg-light text-dark">Not a Member</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        
+                        {% if employee.medical_aid_member %}
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label text-muted small">Member Type</label>
+                            <p class="fw-bold mb-1">
+                                <span class="badge {% if employee.medical_aid_principal_member %}bg-primary{% else %}bg-secondary{% endif %}">
+                                    {% if employee.medical_aid_principal_member %}Principal{% else %}Dependant{% endif %}
+                                </span>
+                            </p>
+                        </div>
+                        
+                        {% if employee.medical_aid_scheme %}
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label text-muted small">Medical Aid Scheme</label>
+                            <p class="fw-bold mb-1">{{ employee.medical_aid_scheme }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        {% if employee.medical_aid_number %}
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label text-muted small">Medical Aid Number</label>
+                            <p class="fw-bold mb-1">{{ employee.medical_aid_number }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="col-12 mb-0">
+                            <label class="form-label text-muted small">Dependants</label>
+                            <p class="fw-bold mb-0">{{ employee.medical_aid_dependants or 0 }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Medical Aid Information -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-notes-medical me-2"></i>
+                        Medical Aid Information
+                    </h5>
+                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editMedicalAidModal">
+                        <i class="fas fa-edit me-1"></i>
+                        Edit Medical Aid Info
+                    </button>
+                </div>
+                <div class="card-body px-3 py-2">
+                    {% if medical_aid_conflict %}
+                    <div class="alert alert-danger">
+                        ⚠️ This employee has more than one active Medical Aid deduction. Only one is allowed.
+                    </div>
+                    {% endif %}
+                    {% if employee_medical_aid_info or medical_aid_deduction_amount %}
+                    <div class="row g-3">
+                        {% if employee_medical_aid_info %}
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label text-muted small">Scheme</label>
+                            <p class="fw-bold mb-1">{{ employee_medical_aid_info.scheme_name or 'N/A' }}</p>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label text-muted small">Membership No</label>
+                            <p class="fw-bold mb-1">{{ employee_medical_aid_info.membership_number or 'N/A' }}</p>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label text-muted small">Number of Dependants</label>
+                            <p class="fw-bold mb-1">{{ employee_medical_aid_info.number_of_dependants or 0 }}</p>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label text-muted small">Main Member</label>
+                            <p class="fw-bold mb-1">
+                                {% if employee_medical_aid_info.main_member %}
+                                    <span class="badge bg-success">Yes</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">No</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label text-muted small">Linked Beneficiary</label>
+                            <p class="fw-bold mb-1">
+                                {% if employee_medical_aid_info.linked_beneficiary %}
+                                    {{ employee_medical_aid_info.linked_beneficiary.name }}
+                                {% else %}
+                                    Not linked
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-12 mb-0">
+                            <label class="form-label text-muted small">Notes</label>
+                            <p class="fw-bold mb-0">{{ employee_medical_aid_info.notes or '' }}</p>
+                        </div>
+                        {% endif %}
+                        {% if medical_aid_deduction_amount %}
+                        <div class="col-12">
+                            <label class="form-label text-muted small">Deduction Amount</label>
+                            <p class="fw-bold mb-0">R{{ "{:,.2f}".format(medical_aid_deduction_amount|float) }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% elif medical_aid_config_missing %}
+                    <p class="text-warning mb-0">Medical Aid Info not yet configured for this deduction</p>
+                    {% else %}
+                    <p class="text-muted mb-0">Medical Aid information not yet configured.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Employee Deductions -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-money-bill-wave me-2"></i>
+                        Employee Deductions
+                    </h5>
+                    {% if session.get('current_company_id') %}
+                        <a href="{{ url_for('company.employee_deductions', company_id=session.get('current_company_id'), employee_id=employee.id) }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-cog me-1"></i>
+                            Manage Deductions
+                        </a>
+                    {% else %}
+                        <button class="btn btn-secondary btn-sm disabled" disabled>
+                            <i class="fas fa-cog me-1"></i>
+                            Manage Deductions
+                        </button>
+                    {% endif %}
+                </div>
+                <div class="card-body px-3 py-2">
+                    {% set recurring_deductions = employee.recurring_deductions.filter_by(is_active=True).all() %}
+                    {% if recurring_deductions %}
+                        <div class="row g-3">
+                            {% for deduction in recurring_deductions %}
+                            <div class="col-12 mb-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <label class="form-label text-muted small mb-0">{{ deduction.beneficiary.name }}</label>
+                                        <p class="fw-bold mb-0">
+                                            <span class="badge bg-info">{{ deduction.beneficiary.type }}</span>
+                                        </p>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="fw-bold">
+                                            {% if deduction.amount_type|lower == 'calculated' and deduction.beneficiary.type == 'Medical Aid' %}
+                                                R{{ "{:,.2f}".format(medical_aid_deduction_amount|float) }}
+                                            {% elif deduction.amount_type|lower == 'percentage' %}
+                                                {{ deduction.value or 0 }}%
+                                            {% else %}
+                                                R{{ "{:,.2f}".format((deduction.value or 0)|float) }}
+                                            {% endif %}
+                                        </span>
+                                        {% if deduction.amount_type|lower == 'percentage' %}
+                                            <br><small class="text-muted">of gross salary</small>
+                                        {% else %}
+                                            <br><small class="text-muted">per month</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-money-bill-wave fa-2x text-muted mb-2"></i>
+                            <p class="text-muted mb-2">No recurring deductions configured</p>
+                            <small class="text-muted">Medical aid, union fees, and other deductions can be managed via the button above.</small>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card mb-4" id="ytdSummaryCard">
+              <div class="card-header">
+                <h5 class="card-title mb-0">
+                  <i class="fas fa-chart-line me-2"></i> YTD Payroll Summary
+                </h5>
+              </div>
+              <div class="card-body px-3 py-2">
+                <div id="ytdSummaryContent">Loading...</div>
+              </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Payroll Detail Modals -->
+{% if employee.payroll_entries %}
+    {% for entry in employee.payroll_entries %}
+    <div class="modal fade" id="payrollModal{{ entry.id }}" tabindex="-1" aria-labelledby="payrollModalLabel{{ entry.id }}" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="payrollModalLabel{{ entry.id }}">
+                        <i class="fas fa-receipt me-2"></i>
+                        Payroll Details - {{ entry.pay_period_end.strftime('%B %Y') }}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <!-- Pay Period -->
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">Pay Period</h6>
+                                    <p class="card-text fw-bold">{{ entry.pay_period_start.strftime('%d %B %Y') }} - {{ entry.pay_period_end.strftime('%d %B %Y') }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Hours Worked -->
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">Hours Worked</h6>
+                                    <p class="card-text">
+                                        <strong>Regular:</strong> {{ entry.ordinary_hours }}h<br>
+                                        <strong>Overtime:</strong> {{ entry.overtime_hours }}h<br>
+                                        <strong>Sunday:</strong> {{ entry.sunday_hours }}h<br>
+                                        <strong>Public Holiday:</strong> {{ entry.public_holiday_hours }}h
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Earnings -->
+                        <div class="col-md-6">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <h6 class="card-title">Earnings</h6>
+                                    <p class="card-text">
+                                        <strong>Hourly Rate:</strong> R{{ "{:,.2f}".format(entry.hourly_rate) }}<br>
+                                        <strong>Allowances:</strong> R{{ "{:,.2f}".format(entry.allowances) }}<br>
+                                        <strong>Gross Pay:</strong> R{{ "{:,.2f}".format(entry.gross_pay) }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Deductions -->
+                        <div class="col-md-6">
+                            <div class="card bg-warning text-dark">
+                                <div class="card-body">
+                                    <h6 class="card-title">Deductions</h6>
+                                    <p class="card-text">
+                                        <strong>PAYE:</strong> R{{ "{:,.2f}".format(entry.paye) }}<br>
+                                        <strong>UIF:</strong> R{{ "{:,.2f}".format(entry.uif) }}<br>
+                                        <strong>SDL:</strong> R{{ "{:,.2f}".format(entry.sdl) }}<br>
+                                        <strong>Union Fee:</strong> R{{ "{:,.2f}".format(entry.union_fee) }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Medical Aid -->
+                        {% if entry.medical_aid_tax_credit or entry.fringe_benefit_medical %}
+                        <div class="col-12">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <h6 class="card-title">Medical Aid</h6>
+                                    <p class="card-text">
+                                        <strong>Tax Credit:</strong> R{{ "{:,.2f}".format(entry.medical_aid_tax_credit or 0) }}<br>
+                                        <strong>Fringe Benefit:</strong> R{{ "{:,.2f}".format(entry.fringe_benefit_medical or 0) }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Net Pay -->
+                        <div class="col-12">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">Net Pay</h5>
+                                    <h3 class="card-text">R{{ "{:,.2f}".format(entry.net_pay) }}</h3>
+                                    {% if entry.is_verified %}
+                                        <span class="badge bg-success">Verified</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Pending Verification</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <a href="{{ url_for('payroll.generate_payslip', employee_id=employee.id) }}?entry_id={{ entry.id }}" 
+                       class="btn btn-success" 
+                       target="_blank">
+                        <i class="fas fa-file-pdf me-2"></i>
+                        Generate Payslip
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endfor %}
+{% endif %}
+
+<!-- Terminate Employee Modal -->
+<div class="modal fade" id="terminateEmployeeModal" tabindex="-1" aria-labelledby="terminateEmployeeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="terminateEmployeeModalLabel">
+                    <i class="fas fa-user-times me-2"></i>
+                    Terminate Employee - {{ employee.full_name }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="terminateEmployeeForm" method="POST" action="{{ url_for('employees.terminate', employee_id=employee.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Warning:</strong> This action will terminate the employee's contract and generate UI19 documentation. This cannot be undone.
+                    </div>
+                    
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label for="terminationReason" class="form-label">Termination Reason <span class="text-danger">*</span></label>
+                            <select class="form-select" id="terminationReason" name="termination_reason" required>
+                                <option value="">Select reason...</option>
+                                <option value="Dismissal">Dismissal</option>
+                                <option value="Resignation">Resignation</option>
+                                <option value="Contract Expired">Contract Expired</option>
+                                <option value="Death">Death</option>
+                                <option value="Retirement">Retirement</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label for="terminationDate" class="form-label">Termination Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="terminationDate" name="termination_date" 
+                                   value="{{ (today or '') }}" required>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label for="terminationNotes" class="form-label">Notes/Comments</label>
+                            <textarea class="form-control" id="terminationNotes" name="termination_notes" 
+                                      rows="3" placeholder="Optional additional information..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-user-times me-2"></i>Confirm Termination
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Reinstate Employee Modal -->
+<div class="modal fade" id="reinstateEmployeeModal" tabindex="-1" aria-labelledby="reinstateEmployeeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reinstateEmployeeModalLabel">
+                    <i class="fas fa-undo me-2"></i>
+                    Reinstate Employee - {{ employee.full_name }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="reinstateEmployeeForm" method="POST" action="{{ url_for('employees.reinstate', employee_id=employee.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Reinstate Employee:</strong> This action will restore the employee to active status. All fields can be updated during reinstatement.
+                    </div>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="reinstateStartDate" class="form-label">Start Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="reinstateStartDate" name="start_date" 
+                                   value="{{ today.strftime('%Y-%m-%d') if today else '' }}" required>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="reinstateEmploymentType" class="form-label">Employment Type <span class="text-danger">*</span></label>
+                            <select class="form-select" id="reinstateEmploymentType" name="employment_type" required>
+                                <option value="">Select type...</option>
+                                <option value="Full-Time" {% if employee.employment_type == 'Full-Time' %}selected{% endif %}>Full-Time</option>
+                                <option value="Part-Time" {% if employee.employment_type == 'Part-Time' %}selected{% endif %}>Part-Time</option>
+                                <option value="Contract" {% if employee.employment_type == 'Contract' %}selected{% endif %}>Contract</option>
+                                <option value="Temporary" {% if employee.employment_type == 'Temporary' %}selected{% endif %}>Temporary</option>
+                                <option value="Seasonal" {% if employee.employment_type == 'Seasonal' %}selected{% endif %}>Seasonal</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="reinstateDepartment" class="form-label">Department <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="reinstateDepartment" name="department" 
+                                   value="{{ employee.department or '' }}" required>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="reinstateJobTitle" class="form-label">Job Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="reinstateJobTitle" name="job_title" 
+                                   value="{{ employee.job_title or '' }}" required>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label for="reinstateNotes" class="form-label">Reinstatement Notes</label>
+                            <textarea class="form-control" id="reinstateNotes" name="reinstatement_notes" 
+                                      rows="3" placeholder="Optional notes about reinstatement..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-undo me-2"></i>Confirm Reinstatement
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Medical Aid Modal -->
+{% include 'employees/_medical_aid_modal.html' %}
+
+<!-- Include shared Edit Employee Modal (single instance) -->
+{% include 'employees/_edit_modal.html' %}
+
+<!-- Include shared employee modal JavaScript -->
+<script src="{{ url_for('static', filename='js/employee_modal.js') }}"></script>
+
+<style>
+/* Fix z-index layering issue for Employee Records dropdown */
+.card .dropdown-menu {
+    z-index: 1051 !important;
+    position: absolute !important;
+}
+
+/* Ensure table headers don't interfere with dropdown positioning */
+.card .table thead {
+    position: relative;
+    z-index: 1;
+}
+</style>
+
+<script>
+// Employee Records View Switching
+function switchRecordView(viewType) {
+    const payrollView = document.getElementById('payrollView');
+    const ui19View = document.getElementById('ui19View');
+    const selectedViewText = document.getElementById('selectedView');
+    
+    // Hide all views
+    payrollView.style.display = 'none';
+    ui19View.style.display = 'none';
+    
+    // Show selected view and update dropdown text
+    if (viewType === 'payroll') {
+        payrollView.style.display = 'block';
+        selectedViewText.textContent = 'Payroll History';
+    } else if (viewType === 'ui19') {
+        ui19View.style.display = 'block';
+        selectedViewText.textContent = 'UI19 Termination Records';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const employeeId = {{ employee.id }};
+  fetch(`/employees/api/employees/${employeeId}/payroll-ytd`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.error) {
+        document.getElementById('ytdSummaryContent').innerHTML = `<p class="text-danger">${data.error}</p>`;
+        return;
+      }
+
+      document.getElementById('ytdSummaryContent').innerHTML = `
+        <p><strong>Gross Pay:</strong> R ${data.gross_pay_ytd.toFixed(2)}</p>
+        <p><strong>Taxable Income:</strong> R ${data.taxable_income_ytd.toFixed(2)}</p>
+        <p><strong>PAYE:</strong> <span class="badge bg-danger">R ${data.paye_ytd.toFixed(2)}</span></p>
+        <p><strong>UIF:</strong> R ${data.uif_ytd.toFixed(2)}</p>
+        <p><strong>SDL:</strong> R ${data.sdl_ytd.toFixed(2)}</p>
+        <p><strong>Bonus:</strong> R ${data.bonus_ytd.toFixed(2)}</p>
+        <p><strong>Allowances:</strong> R ${data.allowances_ytd.toFixed(2)}</p>
+        <hr>
+        <p><strong>Net Pay:</strong> <span class="badge bg-success">R ${data.net_pay_ytd.toFixed(2)}</span></p>
+      `;
+    })
+    .catch(err => {
+      document.getElementById('ytdSummaryContent').innerHTML = `<p class="text-warning">Unable to load YTD data.</p>`;
+      console.error(err);
+    });
+});
+</script>
+
+{% endblock %}

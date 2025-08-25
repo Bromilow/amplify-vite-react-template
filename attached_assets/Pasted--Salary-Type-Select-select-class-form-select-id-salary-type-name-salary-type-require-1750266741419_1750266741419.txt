@@ -1,0 +1,89 @@
+<!-- Salary Type Select -->
+<select class="form-select" id="salary_type" name="salary_type" required>
+  <option value="">Choose salary type...</option>
+  <option value="monthly"
+    {% if form_data and form_data.salary_type == 'monthly' %}selected{% elif not form_data and company and company.default_salary_type == 'monthly' %}selected{% endif %}>
+    Monthly
+  </option>
+  <option value="hourly"
+    {% if form_data and form_data.salary_type == 'hourly' %}selected{% elif not form_data and company and company.default_salary_type == 'hourly' %}selected{% endif %}>
+    Hourly
+  </option>
+</select>
+
+<!-- Salary Label -->
+<label id="salary_label" for="salary">Salary Amount</label>
+
+<!-- Salary Input -->
+<div class="input-group">
+  <span class="input-group-text">R</span>
+  <input type="number" 
+         class="form-control" 
+         id="salary" 
+         name="salary"
+         value="{{ form_data.salary if form_data else '' }}"
+         data-monthly-default="{{ company.default_salary if company and company.default_salary_type == 'monthly' else '' }}"
+         data-hourly-default="{{ company.default_hourly_rate if company and company.default_hourly_rate else '' }}"
+         step="0.01" min="0" required>
+  <span class="input-group-text" id="salary_unit">/month</span>
+</div>
+<small id="salary_help" class="form-text text-muted">Enter the salary amount in South African Rand</small>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const salaryTypeSelect = document.getElementById('salary_type');
+  const salaryInput = document.getElementById('salary');
+  const salaryLabel = document.getElementById('salary_label');
+  const salaryUnit = document.getElementById('salary_unit');
+  const salaryHelp = document.getElementById('salary_help');
+
+  function updateSalaryLabels() {
+    if (!salaryTypeSelect || !salaryInput || !salaryLabel || !salaryUnit || !salaryHelp) return;
+
+    const salaryType = salaryTypeSelect.value;
+
+    if (salaryType === 'hourly') {
+      salaryLabel.textContent = 'Hourly Rate';
+      salaryUnit.textContent = '/hour';
+      salaryHelp.textContent = 'Enter the hourly rate in South African Rand';
+
+      if (!salaryInput.value && salaryInput.dataset.hourlyDefault) {
+        salaryInput.value = salaryInput.dataset.hourlyDefault;
+      }
+
+    } else if (salaryType === 'monthly') {
+      salaryLabel.textContent = 'Monthly Salary';
+      salaryUnit.textContent = '/month';
+      salaryHelp.textContent = 'Enter the monthly salary amount in South African Rand';
+
+      if (!salaryInput.value && salaryInput.dataset.monthlyDefault) {
+        salaryInput.value = salaryInput.dataset.monthlyDefault;
+      }
+
+    } else {
+      salaryLabel.textContent = 'Salary Amount';
+      salaryUnit.textContent = '';
+      salaryHelp.textContent = 'Enter the salary amount in South African Rand';
+    }
+  }
+
+  // Trigger update on load
+  updateSalaryLabels();
+
+  // Update on change
+  salaryTypeSelect.addEventListener('change', function () {
+    // Always clear input before setting new default
+    salaryInput.value = '';
+    updateSalaryLabels();
+  });
+});
+</script>
+
+
+✅ Fix Summary
+updateSalaryLabels() is guaranteed to run on DOMContentLoaded after the DOM is ready.
+
+The salary input is updated both on initial page load and on dropdown change.
+
+Clears stale values on change to avoid mismatched input and label.

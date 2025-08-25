@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Review Imported Employees{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4">Review Imported Employees</h2>
+  <form method="post" action="{{ url_for('employees.import_confirm') }}" id="reviewForm">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="apply_defaults" value="{{ apply_defaults|int }}">
+    {% for row in rows %}
+    <div class="card mb-3" data-index="{{ loop.index0 }}">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Employee {{ loop.index }}</span>
+        <span class="status-badge badge bg-secondary" id="status-{{ loop.index0 }}">⏳ Not Reviewed</span>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <strong>{{ row.data.first_name }} {{ row.data.last_name }}</strong><br>
+            ID: {{ row.data.id_number }}<br>
+            Cell: {{ row.data.cell_number }}
+          </div>
+          <div class="col-md-6">
+            Department: {{ row.data.department }}<br>
+            Start Date: {{ row.data.start_date }}<br>
+            Salary Type: {{ row.data.salary_type }}
+          </div>
+        </div>
+        <div class="mt-3 d-flex gap-2">
+          <button type="button" class="btn btn-outline-secondary btn-sm edit-row" data-index="{{ loop.index0 }}">Review &amp; Edit</button>
+          <button type="button" class="btn btn-outline-success btn-sm confirm-row" data-index="{{ loop.index0 }}">Confirm</button>
+          <button type="button" class="btn btn-outline-warning btn-sm skip-row" data-index="{{ loop.index0 }}">Skip</button>
+          <button type="button" class="btn btn-outline-danger btn-sm delete-row" data-index="{{ loop.index0 }}">Delete</button>
+        </div>
+        <input type="hidden" name="status_{{ loop.index0 }}" value="pending" id="input-status-{{ loop.index0 }}">
+        {% for field in field_order %}
+        <input type="hidden" name="rows-{{ loop.index0 }}-{{ field }}" value="{{ row.data[field] or '' }}" id="row-{{ loop.index0 }}-{{ field }}">
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+    <button type="submit" class="btn btn-primary" id="importAllBtn" disabled>Import All</button>
+  </form>
+</div>
+
+{% include 'employees/_import_edit_modal.html' %}
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/import_review.js') }}"></script>
+{% endblock %}
+{% endblock %}

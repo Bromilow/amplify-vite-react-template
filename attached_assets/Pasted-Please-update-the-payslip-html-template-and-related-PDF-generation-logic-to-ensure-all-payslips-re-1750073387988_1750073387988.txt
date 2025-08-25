@@ -1,0 +1,96 @@
+Please update the `payslip.html` template and related PDF generation logic to ensure all payslips reflect actual payroll data for the selected employee, pay period, and company. The goal is to align the payslip output with the data shown in the payroll processing modal.
+
+---
+
+1. 📥 DATA SOURCE:  
+Ensure all payslip fields are populated dynamically from the `PayrollEntry`, `Employee`, and `Company` models:
+- Use `entry`, `employee`, and `company` passed from the backend
+- Do not use any hardcoded values (e.g., fixed salary, fixed deductions)
+
+---
+
+2. 📊 EARNINGS SECTION:
+Display all earnings in detail:
+- Basic Salary (hourly × ordinary hours)
+- Overtime Pay (overtime_hours × hourly_rate × company.overtime_multiplier)
+- Sunday Hours Pay (sunday_hours × hourly_rate × company.sunday_multiplier)
+- Public Holiday Pay (public_holiday_hours × hourly_rate × company.public_holiday_multiplier)
+- Allowances (`entry.allowances`)
+- Fringe Benefit – Employer Medical Aid (`entry.fringe_benefit_medical`)
+- Show subtotals and ensure the full **Gross Pay** is displayed as:
+  ```python
+  gross_pay = sum of all earnings incl. fringe benefit
+
+3. 💸 DEDUCTIONS SECTION:
+Accurately reflect all deductions from the entry:
+
+PAYE (entry.paye)
+
+UIF (based on capped ceiling — e.g., max R177.12 or as set by company.uif_monthly_ceiling)
+
+SDL (1% of gross, or from company.sdl_percent)
+
+Medical Aid – Employee portion (entry.medical_aid_employee)
+
+Union Fee (entry.union_fee)
+
+Other Deductions (entry.deductions_other)
+
+Total Deductions = sum of above
+
+4. 🧾 TAX CREDIT & FRINGE BENEFIT:
+
+Show Medical Aid Tax Credit (entry.medical_aid_tax_credit)
+
+Show Fringe Benefit (entry.fringe_benefit_medical) under earnings and label it as “Taxable Fringe Benefit”
+
+Ensure these affect PAYE and gross calculations accordingly
+
+5. 🧾 EMPLOYEE INFORMATION:
+Display:
+
+Full name
+
+Employee ID
+
+ID number
+
+Tax number
+
+Department and Job Title
+
+Bank name (and optionally masked account number)
+
+Medical Aid Number (if provided)
+
+6. 🏢 COMPANY INFORMATION:
+Show accurate company data at the top of the payslip:
+
+Company Name (company.name)
+
+Address (company.address)
+
+Registration Number (company.registration_number)
+
+Phone (company.phone)
+
+Email (company.email)
+
+Do not use dummy values like “Your Company (Pty) Ltd”.
+
+7. 📅 PAY PERIOD & FILE NAME:
+
+Show correct pay period (start and end)
+
+Ensure filename format is:
+payslip_<employee_full_name>_<MonthYear>.pdf
+
+8. 📐 FORMATTING:
+
+Ensure layout fits a single A4 page
+
+Format currency as R{{ "{:,.2f}".format(value) }}
+
+Add a BCEA compliance footer and indicate the payslip is computer-generated
+
+This update will ensure payslips reflect actual payroll outcomes, tax rules, and per-company settings correctly.

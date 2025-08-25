@@ -1,0 +1,83 @@
+Please follow the global rules in `PROJECT_RULES.md`
+
+---
+
+### 🧩 Context
+
+Currently, the "Department" dropdown in the Add/Edit Employee forms is populated by a hardcoded global list, and any custom departments added via the "Other" option become globally available — even across companies. This breaks multi-tenancy rules.
+
+---
+
+### 🛠️ Objective
+
+Convert the Department system into a **company-scoped feature** with proper CRUD functionality, ensuring that:
+
+- Each company has its own list of departments
+- Add/Edit Employee forms only show that company's departments
+- Admins can manage their company’s departments in the **Company Settings** panel
+
+---
+
+### 📌 Task Instructions
+
+#### 1. 🔧 Database Changes
+- Create a new table: `CompanyDepartment`
+  ```python
+  class CompanyDepartment(db.Model):
+      id = db.Column(db.Integer, primary_key=True)
+      company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False)
+      name = db.Column(db.String(100), nullable=False)
+      is_default = db.Column(db.Boolean, default=False)
+      created_at = db.Column(db.DateTime, default=datetime.utcnow)
+On new company creation, seed the following defaults (per-company):
+
+Engineering, Research, QA, Human Resources, Consulting, Sales, Staff, Finance, Development, Other
+
+2. 🖥️ UI – Company Settings > New Card: "Company Departments"
+Add a new card titled Company Departments
+
+Allow user to:
+
+View all current departments
+
+Add a new department
+
+Edit a department name
+
+Delete a department (with warning if it's in use by employees)
+
+3. 👤 Employee Add/Edit Forms
+Replace hardcoded dropdown with one that loads departments from CompanyDepartment scoped to the current company
+
+Preserve "Other" option, but any new entry should:
+
+Be added to that company’s department list
+
+Not affect other companies
+
+4. 🧠 Knock-on Effects
+Ensure Edit Employee modal and Employee Defaults (if applicable) also pull from CompanyDepartment
+
+Validate uniqueness of department names per company
+
+Audit existing employees: migrate their department values to entries in CompanyDepartment where applicable
+
+Handle deletion of departments that are currently in use (e.g. prevent or prompt re-assignment)
+
+✅ Output
+A new company_departments table with proper seeding logic
+
+New UI panel in Company Settings: “Company Departments” with full CRUD
+
+Add/Edit Employee forms display company-specific departments only
+
+Any "Other" values added via the form become part of that company’s department list
+
+No department value leaks across companies
+
+🕓 Timestamp all changes in:
+FEATURES_AND_GAPS.md
+
+PROJECT_ISSUES.md
+
+PRODUCTION_ROADMAP.md once implementation is complete

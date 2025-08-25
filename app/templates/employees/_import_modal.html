@@ -1,0 +1,41 @@
+<!-- Import Employees Modal -->
+<div class="modal fade" id="importEmployeesModal" tabindex="-1" aria-labelledby="importEmployeesModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importEmployeesModalLabel">Import Employees from File</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">Download the template below, fill in employee details, and upload the completed file.</p>
+                <a href="{{ url_for('employees.download_import_template') }}" class="btn btn-outline-primary mb-4">📥 Download Import Template (.xlsx)</a>
+                <form id="importForm" method="post" action="{{ url_for('employees.import_employees') }}" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <div class="border border-secondary border-dashed rounded text-center p-5" id="importDropZone">
+                            <p class="mb-1">Drag and drop file here</p>
+                            <p class="small text-muted">or</p>
+                            <label class="btn btn-secondary mt-2 mb-0">
+                                Browse your computer
+                                <input type="file" accept=".xlsx" class="d-none" id="importEmployeesFile" name="file">
+                            </label>
+                            <p id="selectedFileName" class="mt-3 text-success d-none"></p>
+                        </div>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="applyCompanyDefaults" name="apply_defaults" value="1">
+                        <label class="form-check-label" for="applyCompanyDefaults">Apply company defaults to missing fields</label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="applyDefaultDeductions" name="apply_deductions" value="1">
+                        <label class="form-check-label" for="applyDefaultDeductions">Apply company default deductions</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="importUploadBtn" class="btn btn-primary" disabled>Upload File</button>
+            </div>
+        </div>
+    </div>
+</div>

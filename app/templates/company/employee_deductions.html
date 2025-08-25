@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2><i class="fas fa-user me-2"></i>{{ employee.full_name }} - Recurring Deductions</h2>
+                    <p class="text-muted mb-0">Manage ongoing payroll deductions for
+                        <a href="{{ url_for('employees.view', employee_id=employee.id) }}" class="text-decoration-none text-primary" title="View Employee Profile">
+                            {{ employee.employee_id }}
+                        </a>
+                    </p>
+                </div>
+                <div>
+                    <a href="{{ url_for('employees.view', employee_id=employee.id) }}" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Employee
+                    </a>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#deductionModal">
+                        <i class="fas fa-plus me-2"></i>Add Deduction
+                    </button>
+                </div>
+            </div>
+
+            <!-- Employee Summary Card -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <h6 class="text-muted mb-2">Employee Details</h6>
+                            <p class="mb-1"><strong>ID:</strong>
+                                <a href="{{ url_for('employees.view', employee_id=employee.id) }}" class="text-decoration-none text-primary" title="View Employee Profile">
+                                    {{ employee.employee_id }}
+                                </a>
+                            </p>
+                            <p class="mb-1"><strong>Department:</strong> {{ employee.department }}</p>
+                            <p class="mb-0"><strong>Job Title:</strong> {{ employee.job_title }}</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h6 class="text-muted mb-2">Salary Information</h6>
+                            <p class="mb-1"><strong>Type:</strong> {{ employee.salary_type.title() }}</p>
+                            <p class="mb-1"><strong>Amount:</strong> R{{ "{:,.2f}".format(employee.salary) }}</p>
+                            {% if employee.salary_type == 'monthly' %}
+                                <p class="mb-0"><strong>Annual:</strong> R{{ "{:,.2f}".format(employee.annual_salary) }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <h6 class="text-muted mb-2">Active Deductions</h6>
+                            <p class="mb-1"><strong>Total:</strong> {{ deductions|selectattr('is_active')|list|length }}</p>
+                            <p class="mb-1"><strong>Fixed:</strong> {{ deductions|selectattr('is_active')|selectattr('amount_type', 'equalto', 'Fixed')|list|length }}</p>
+                            <p class="mb-0"><strong>Percentage:</strong> {{ deductions|selectattr('is_active')|selectattr('amount_type', 'equalto', 'Percentage')|list|length }}</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h6 class="text-muted mb-2">Monthly Impact</h6>
+                            <p class="mb-1"><strong>Fixed:</strong> R{{ "{:,.2f}".format(fixed_total) }}</p>
+                            <p class="mb-1"><strong>Percentage:</strong> {{ "{:.1f}".format(percentage_total) }}%</p>
+                            <p class="mb-0"><strong>Est. Total:</strong> R{{ "{:,.2f}".format(est_total_deductions) }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recurring Deductions Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-money-bill-wave me-2"></i>Recurring Deductions
+                        <span class="badge bg-secondary ms-2">{{ deductions|length }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if deductions %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th><i class="fas fa-handshake me-1"></i>Beneficiary</th>
+                                    <th><i class="fas fa-tag me-1"></i>Type</th>
+                                    <th><i class="fas fa-calculator me-1"></i>Amount Type</th>
+                                    <th><i class="fas fa-money-bill me-1"></i>Value</th>
+                                    <th><i class="fas fa-calendar me-1"></i>Monthly Amount</th>
+                                    <th>EFT Export</th>
+                                    <th><i class="fas fa-toggle-on me-1"></i>Status</th>
+                                    <th><i class="fas fa-sticky-note me-1"></i>Notes</th>
+                                    <th><i class="fas fa-cogs me-1"></i>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for deduction in deductions %}
+                                <tr class="{{ 'table-light' if not deduction.is_active else '' }}">
+                                    <td>
+                                        <strong>{{ deduction.beneficiary.name }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ deduction.beneficiary.type }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ deduction.beneficiary.type }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'primary' if deduction.amount_type == 'Fixed' else 'warning' }}">
+                                            {{ deduction.amount_type }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if deduction.amount_type == 'Fixed' %}
+                                            <strong>R{{ "{:,.2f}".format(deduction.value) }}</strong>
+                                        {% else %}
+                                            <strong>{{ "{:.2f}".format(deduction.value) }}%</strong>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if deduction.amount_type == 'Fixed' %}
+                                            R{{ "{:,.2f}".format(deduction.value) }}
+                                        {% else %}
+                                            R{{ "{:,.2f}".format(deduction.calculate_deduction_amount(employee.monthly_salary)) }}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {{ 'Yes' if deduction.beneficiary.include_in_eft_export else 'No' }}
+                                        <i class="fas fa-info-circle text-muted" data-bs-toggle="tooltip" title="This beneficiary is configured for EFT file exports. Control this setting in the Beneficiaries tab."></i>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if deduction.is_active else 'secondary' }}">
+                                            {{ 'Active' if deduction.is_active else 'Inactive' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if deduction.notes %}
+                                            <span class="text-truncate d-inline-block" style="max-width: 150px;" title="{{ deduction.notes }}">
+                                                {{ deduction.notes }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button class="btn btn-outline-primary" 
+                                                    onclick="editDeduction({{ deduction.to_dict()|tojson }})"
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#deductionModal">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-outline-danger" 
+                                                    onclick="deleteDeduction({{ deduction.id }}, '{{ deduction.beneficiary.name }}')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-money-bill-wave fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Recurring Deductions</h5>
+                        <p class="text-muted">Add the first recurring deduction for {{ employee.full_name }}.</p>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#deductionModal">
+                            <i class="fas fa-plus me-2"></i>Add First Deduction
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Deduction Modal -->
+<div class="modal fade" id="deductionModal" tabindex="-1" aria-labelledby="deductionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="deductionForm" method="POST" action="/company/{{ current_company_id }}/employee/{{ employee.id }}/deductions/add">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deductionModalLabel">
+                        <i class="fas fa-plus me-2"></i>Add Recurring Deduction
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Beneficiary Selection -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="text-muted mb-3">
+                                <i class="fas fa-handshake me-2"></i>Beneficiary Information
+                            </h6>
+                        </div>
+                        <div class="col-12">
+                            <label for="beneficiary_id" class="form-label">Beneficiary <span class="text-danger">*</span></label>
+                            <select class="form-select" id="beneficiary_id" name="beneficiary_id" required>
+                                <option value="">Select Beneficiary</option>
+                                {% for beneficiary in beneficiaries %}
+                                <option value="{{ beneficiary.id }}">{{ beneficiary.name }} ({{ beneficiary.type }})</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Choose the third-party recipient for this deduction</div>
+                        </div>
+                    </div>
+
+                    <!-- Deduction Configuration -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="text-muted mb-3">
+                                <i class="fas fa-calculator me-2"></i>Deduction Configuration
+                            </h6>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="amount_type" class="form-label">Amount Type <span class="text-danger">*</span></label>
+                            <select class="form-select" id="amount_type" name="amount_type" required onchange="updateAmountLabel()">
+                                <option value="Fixed">Fixed Amount</option>
+                                <option value="Percentage">Percentage of Salary</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="value" class="form-label">
+                                <span id="value_label">Amount</span> <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text" id="value_prefix">R</span>
+                                <input type="number" class="form-control" id="value" name="value" 
+                                       step="0.01" min="0" required>
+                                <span class="input-group-text" id="value_suffix" style="display: none;">%</span>
+                            </div>
+                            <div class="form-text" id="value_help">Enter the fixed amount to deduct</div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label for="notes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="2" 
+                                      placeholder="Optional notes about this deduction"></textarea>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Status</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="is_active" 
+                                       name="is_active" value="1" checked>
+                                <label class="form-check-label" for="is_active">
+                                    Active Deduction
+                                </label>
+                                <div class="form-text">Enable/disable this deduction</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Save Deduction
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2 text-warning"></i>Confirm Delete
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the recurring deduction for <strong id="deleteDeductionName"></strong>?</p>
+                <p class="text-muted small">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let editingDeductionId = null;
+
+function updateAmountLabel() {
+    const amountType = document.getElementById('amount_type').value;
+    const valueLabel = document.getElementById('value_label');
+    const valuePrefix = document.getElementById('value_prefix');
+    const valueSuffix = document.getElementById('value_suffix');
+    const valueHelp = document.getElementById('value_help');
+    
+    if (amountType === 'Percentage') {
+        valueLabel.textContent = 'Percentage';
+        valuePrefix.style.display = 'none';
+        valueSuffix.style.display = 'inline-flex';
+        valueHelp.textContent = 'Enter the percentage of salary to deduct';
+    } else {
+        valueLabel.textContent = 'Amount';
+        valuePrefix.style.display = 'inline-flex';
+        valueSuffix.style.display = 'none';
+        valueHelp.textContent = 'Enter the fixed amount to deduct';
+    }
+}
+
+function editDeduction(deduction) {
+    editingDeductionId = deduction.id;
+    
+    // Update modal title
+    document.getElementById('deductionModalLabel').innerHTML = '<i class="fas fa-edit me-2"></i>Edit Recurring Deduction';
+    
+    // Populate form fields
+    document.getElementById('beneficiary_id').value = deduction.beneficiary_id || '';
+    document.getElementById('amount_type').value = deduction.amount_type || 'Fixed';
+    document.getElementById('value').value = deduction.value || '';
+    document.getElementById('notes').value = deduction.notes || '';
+    document.getElementById('is_active').checked = deduction.is_active || false;
+    
+    // Update amount type display
+    updateAmountLabel();
+    
+    // Update form action
+    document.getElementById('deductionForm').action = `/company/{{ current_company_id }}/employee/{{ employee.id }}/deductions/${deduction.id}/edit`;
+}
+
+function deleteDeduction(deductionId, beneficiaryName) {
+    document.getElementById('deleteDeductionName').textContent = beneficiaryName;
+    document.getElementById('deleteForm').action = `/company/{{ current_company_id }}/employee/{{ employee.id }}/deductions/${deductionId}/delete`;
+    
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+}
+
+// Reset modal when it's hidden
+document.getElementById('deductionModal').addEventListener('hidden.bs.modal', function () {
+    editingDeductionId = null;
+    document.getElementById('deductionModalLabel').innerHTML = '<i class="fas fa-plus me-2"></i>Add Recurring Deduction';
+    document.getElementById('deductionForm').action = '/company/{{ current_company_id }}/employee/{{ employee.id }}/deductions/add';
+    document.getElementById('deductionForm').reset();
+    document.getElementById('is_active').checked = true;
+    updateAmountLabel();
+});
+
+// Initialize amount type display
+document.addEventListener('DOMContentLoaded', function() {
+    updateAmountLabel();
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,56 @@
+🎯 Goal: Display a read-only SARS Configuration section using the values from SARSService.get(company_id), with lock icons and tooltips to clarify that values are system-controlled.
+
+🛠 1. Template File:
+Edit templates/company/settings.html
+(Or wherever the main company settings form is rendered.)
+
+🔧 Insert This New Card Below Employee Defaults:
+<div class="card mt-4">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span>SARS Configuration</span>
+    <i class="fas fa-lock text-muted" title="These settings are managed by your system administrator."></i>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <label><strong>UIF Rate</strong></label><br>
+        {{ (sars.uif_percent * 100)|round(2) }}%
+      </div>
+      <div class="col-md-6">
+        <label><strong>UIF Salary Cap</strong></label><br>
+        R {{ "{:,.2f}".format(sars.uif_monthly_cap) }}
+      </div>
+      <div class="col-md-6 mt-3">
+        <label><strong>SDL Rate</strong></label><br>
+        {{ (sars.sdl_percent * 100)|round(2) }}%
+      </div>
+      <div class="col-md-6 mt-3">
+        <label><strong>Tax Year Start</strong></label><br>
+        {{ sars.tax_year_start_day }} {{ sars.tax_year_start_month|month_name }}
+      </div>
+      <div class="col-md-6 mt-3">
+        <label><strong>Medical Aid Credit</strong></label><br>
+        R {{ sars.medical_primary_credit }} (primary), R {{ sars.medical_dependant_credit }} (dependant)
+      </div>
+      <div class="col-md-6 mt-3">
+        <label><strong>Tax Authority Name</strong></label><br>
+        {{ sars.tax_authority_name }}
+      </div>
+    </div>
+  </div>
+</div>
+🧠 2. Template Context (View Function)
+In the route that renders company settings, inject this:
+
+from app.services.sars_service import get_sars_config
+
+sars = get_sars_config(company_id)
+return render_template('company/settings.html', ..., sars=sars)
+Ensure company_id is pulled from session['selected_company_id'] or current_user.company_id.
+
+✅ Output
+A clean, read-only SARS configuration block appears under Company Settings
+
+Admin-only settings are now visible to company users without allowing changes
+
+All values are dynamic and source-controlled via SARSService

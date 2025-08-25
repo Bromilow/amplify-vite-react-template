@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Create Company - Payroll Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-building me-2"></i>Create Your Company
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-4">Set up your company to start managing payroll and employees.</p>
+                    
+                    <form method="POST" id="companyForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-3">
+                            <label for="company_name" class="form-label">Company Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="company_name" name="company_name" required>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="industry" class="form-label">Industry</label>
+                                <select class="form-select" id="industry" name="industry">
+                                    <option value="">Select industry...</option>
+                                    <option value="Manufacturing">Manufacturing</option>
+                                    <option value="Retail">Retail</option>
+                                    <option value="Technology">Technology</option>
+                                    <option value="Healthcare">Healthcare</option>
+                                    <option value="Finance">Finance</option>
+                                    <option value="Construction">Construction</option>
+                                    <option value="Education">Education</option>
+                                    <option value="Hospitality">Hospitality</option>
+                                    <option value="Transportation">Transportation</option>
+                                    <option value="Professional Services">Professional Services</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="registration_number" class="form-label">Company Registration Number</label>
+                                <input type="text" class="form-control" id="registration_number" name="registration_number" placeholder="e.g., 2023/123456/07">
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="company_email" class="form-label">Company Email</label>
+                                <input type="email" class="form-control" id="company_email" name="company_email">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="company_phone" class="form-label">Company Phone</label>
+                                <input type="tel" class="form-control" id="company_phone" name="company_phone" placeholder="e.g., +27 11 123 4567">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="company_address" class="form-label">Company Address</label>
+                            <textarea class="form-control" id="company_address" name="company_address" rows="3" placeholder="Full business address"></textarea>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="tax_year_end" class="form-label">Tax Year End</label>
+                            <select class="form-select" id="tax_year_end" name="tax_year_end">
+                                <option value="February" selected>February (SA Standard)</option>
+                                <option value="March">March</option>
+                                <option value="April">April</option>
+                                <option value="May">May</option>
+                                <option value="June">June</option>
+                                <option value="July">July</option>
+                                <option value="August">August</option>
+                                <option value="September">September</option>
+                                <option value="October">October</option>
+                                <option value="November">November</option>
+                                <option value="December">December</option>
+                                <option value="January">January</option>
+                            </select>
+                            <div class="form-text">Most South African businesses use February as tax year end.</div>
+                        </div>
+
+
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-building me-2"></i>Create Company
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6 class="card-title"><i class="fas fa-info-circle me-2"></i>Next Steps</h6>
+                            <p class="card-text mb-0">After creating your company, you'll be able to:</p>
+                            <ul class="mb-0 mt-2">
+                                <li>Add employees to your company</li>
+                                <li>Process payroll and generate payslips</li>
+                                <li>Generate reports and manage compliance</li>
+                                <li>Configure payroll settings for your business</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const companyForm = document.getElementById('companyForm');
+    const companyNameInput = document.getElementById('company_name');
+    
+    // Form submission validation
+    companyForm.addEventListener('submit', function(e) {
+        // Validate company name
+        if (!companyNameInput.value.trim()) {
+            e.preventDefault();
+            alert('Company name is required.');
+            companyNameInput.focus();
+            return false;
+        }
+        
+        // Show loading state
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating Company...';
+        
+        return true;
+    });
+    
+    // Auto-focus company name input
+    companyNameInput.focus();
+});
+</script>
+{% endblock %}

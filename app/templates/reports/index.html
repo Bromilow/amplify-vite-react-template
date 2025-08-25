@@ -1,0 +1,537 @@
+{% extends 'base.html' %}
+
+{% block title %}Company Reports & Exports{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h3 class="mb-4">Company Reports &amp; Exports</h3>
+
+  <form method="get" class="row g-3 align-items-end mb-4">
+    <div class="col-md-3">
+      <label for="reportSelect" class="form-label">Report Type</label>
+      <select name="report" id="reportSelect" class="form-select">
+        <option value="">Select...</option>
+        <option value="payroll_summary" {% if selected_report == 'payroll_summary' %}selected{% endif %}>Payroll Summary</option>
+        <option value="payslip_download" {% if selected_report == 'payslip_download' %}selected{% endif %}>Payslip Download</option>
+        <option value="eft_file" {% if selected_report == 'eft_file' %}selected{% endif %}>EFT File</option>
+        <option value="leave_summary" {% if selected_report == 'leave_summary' %}selected{% endif %}>Leave Summary</option>
+        <option value="recurring_deductions" {% if selected_report == 'recurring_deductions' %}selected{% endif %}>Recurring Deductions</option>
+        <option value="employee_status" {% if selected_report == 'employee_status' %}selected{% endif %}>Employee Status</option>
+        <option value="beneficiary_payments" {% if selected_report == 'beneficiary_payments' %}selected{% endif %}>Beneficiary Payments</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label for="periodSelect" class="form-label">Period</label>
+      <select name="period" id="periodSelect" class="form-select">
+        <option value="">Select...</option>
+        {% for period in available_periods %}
+        <option value="{{ period }}" {% if period == current_period %}selected{% endif %}>{{ period }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label for="employeeSelect" class="form-label">Employee (optional)</label>
+      <select name="employee" id="employeeSelect" class="form-select">
+        <option value="">All Employees</option>
+        {% for emp in employees %}
+        <option value="{{ emp.id }}" {% if emp.id|string == selected_employee|string %}selected{% endif %}>{{ emp.first_name }} {{ emp.last_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-primary w-100">Generate Report</button>
+    </div>
+  </form>
+
+  {% if selected_report and current_period %}
+  <div class="row gy-4 flex-column">
+    <!-- Payroll Summary -->
+    <div class="col">
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <h4>Payroll Summary</h4>
+            <button class="btn btn-outline-primary" onclick="exportPayrollCSV()">
+              <i class="fas fa-download me-1"></i>Export CSV
+            </button>
+          </div>
+          <p class="text-muted">Summary of all finalized payroll entries for the selected period.</p>
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Employee ID</th>
+                  <th>Employee Name</th>
+                  <th>Gross Pay</th>
+                  <th>PAYE</th>
+                  <th>UIF</th>
+                  <th>SDL</th>
+                  <th>Other Deductions</th>
+                  <th>Net Pay</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% if payroll_entries %}
+                  {% for entry in payroll_entries %}
+                  <tr>
+                    <td>{{ entry.employee.employee_id }}</td>
+                    <td>{{ entry.employee.first_name }} {{ entry.employee.last_name }}</td>
+                    <td>R{{ "{:,.2f}".format(entry.gross_pay) }}</td>
+                    <td>R{{ "{:,.2f}".format(entry.paye) }}</td>
+                    <td>R{{ "{:,.2f}".format(entry.uif) }}</td>
+                    <td>R{{ "{:,.2f}".format(entry.sdl) }}</td>
+                    <td>R{{ "{:,.2f}".format((entry.deductions_other or 0) + (entry.union_fee or 0)) }}</td>
+                    <td>R{{ "{:,.2f}".format(entry.net_pay) }}</td>
+                    <td>
+                      <span class="badge bg-success">
+                        {% if entry.is_finalized %}Finalized{% else %}Verified{% endif %}
+                      </span>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr>
+                    <td colspan="9" class="text-center text-muted py-4">
+                      No payroll entries found for the selected period.
+                    </td>
+                  </tr>
+                {% endif %}
+              </tbody>
+              {% if payroll_entries %}
+              <tfoot>
+                <tr class="table-active fw-bold">
+                  <td colspan="2">TOTALS</td>
+                  <td>R{{ "{:,.2f}".format(payroll_entries|sum(attribute='gross_pay')) }}</td>
+                  <td>R{{ "{:,.2f}".format(payroll_entries|sum(attribute='paye')) }}</td>
+                  <td>R{{ "{:,.2f}".format(payroll_entries|sum(attribute='uif')) }}</td>
+                  <td>R{{ "{:,.2f}".format(payroll_entries|sum(attribute='sdl')) }}</td>
+                  <td>R{{ "{:,.2f}".format(payroll_entries|map(attribute='deductions_other')|select|sum + payroll_entries|map(attribute='union_fee')|select|sum) }}</td>
+                  <td>R{{ "{:,.2f}".format(payroll_entries|sum(attribute='net_pay')) }}</td>
+                  <td>{{ payroll_entries|length }} entries</td>
+                </tr>
+              </tfoot>
+              {% endif %}
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payslip Download -->
+    <div class="col">
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <h4>Payslip Download</h4>
+            <button class="btn btn-outline-secondary" onclick="downloadSelectedPayslips()" id="downloadPayslipsBtn" disabled>
+              <i class="fas fa-file-pdf me-1"></i>Download Selected
+            </button>
+          </div>
+          <p class="text-muted">Generate and download payslips for employees with verified payroll entries.</p>
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>
+                    <input type="checkbox" id="selectAllPayslips" onchange="toggleAllPayslips()">
+                  </th>
+                  <th>Employee</th>
+                  <th>Period</th>
+                  <th>Net Pay</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% if payroll_entries %}
+                  {% for entry in payroll_entries %}
+                  <tr>
+                    <td>
+                      <input type="checkbox" class="payslip-checkbox" value="{{ entry.id }}" onchange="updateDownloadButton()">
+                    </td>
+                    <td>{{ entry.employee.first_name }} {{ entry.employee.last_name }}</td>
+                    <td>{{ entry.month_year or entry.pay_period_start.strftime('%Y-%m') }}</td>
+                    <td>R{{ "{:,.2f}".format(entry.net_pay) }}</td>
+                    <td>
+                      <a href="{{ url_for('payroll.generate_payslip', employee_id=entry.employee_id) }}"
+                         class="btn btn-sm btn-outline-primary" target="_blank">
+                        <i class="fas fa-eye me-1"></i>View
+                      </a>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr>
+                    <td colspan="5" class="text-center text-muted py-4">
+                      No payroll entries available for payslip generation.
+                    </td>
+                  </tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EFT File Generator -->
+    <div class="col">
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <h4>EFT File Generator</h4>
+            <button class="btn btn-outline-success" onclick="generateEFTFile()" {% if not payroll_entries %}disabled{% endif %}>
+              <i class="fas fa-file-export me-1"></i>Generate File
+            </button>
+          </div>
+          <p class="text-muted">Create EFT files for bulk employee salary payments.</p>
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Bank</th>
+                  <th>Account Number</th>
+                  <th>Net Pay</th>
+                  <th>Reference</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% if payroll_entries %}
+                  {% for entry in payroll_entries %}
+                  {% if entry.employee.bank_name and entry.employee.account_number %}
+                  <tr>
+                    <td>{{ entry.employee.first_name }} {{ entry.employee.last_name }}</td>
+                    <td>{{ entry.employee.bank_name }}</td>
+                    <td>****{{ entry.employee.account_number[-4:] if entry.employee.account_number|length > 4 else entry.employee.account_number }}</td>
+                    <td>R{{ "{:,.2f}".format(entry.net_pay) }}</td>
+                    <td>SAL-{{ entry.employee.employee_id }}-{{ entry.month_year or entry.pay_period_start.strftime('%Y%m') }}</td>
+                  </tr>
+                  {% endif %}
+                  {% endfor %}
+                {% else %}
+                  <tr>
+                    <td colspan="5" class="text-center text-muted py-4">
+                      No EFT-eligible employees found for the selected period.
+                    </td>
+                  </tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Employee Leave Summary -->
+    <div class="col">
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <h4>Employee Leave Summary</h4>
+            <button class="btn btn-outline-primary" onclick="exportLeaveCSV()">
+              <i class="fas fa-download me-1"></i>Export CSV
+            </button>
+          </div>
+          <p class="text-muted">Overview of employee leave balances based on company defaults.</p>
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Employee ID</th>
+                  <th>Employee Name</th>
+                  <th>Annual Leave Days</th>
+                  <th>Sick Leave Days</th>
+                  <th>Hire Date</th>
+                  <th>Service Period</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% if employees %}
+                  {% for employee in employees %}
+                  <tr>
+                    <td>{{ employee.employee_id }}</td>
+                    <td>{{ employee.first_name }} {{ employee.last_name }}</td>
+                    <td>{{ employee.annual_leave_days or company.default_annual_leave_days or 15 }} days</td>
+                    <td>{{ employee.sick_leave_days or company.default_sick_leave_days or 10 }} days</td>
+                    <td>{{ employee.start_date.strftime('%Y-%m-%d') if employee.start_date else 'N/A' }}</td>
+                    <td>
+                      {% if employee.start_date %}
+                        {% set service_days = (date.today() - employee.start_date).days %}
+                        {% if service_days < 365 %}
+                          {{ service_days }} days
+                        {% else %}
+                          {{ "%.1f"|format(service_days / 365) }} years
+                        {% endif %}
+                      {% else %}
+                        N/A
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr>
+                    <td colspan="6" class="text-center text-muted py-4">
+                      No active employees found.
+                    </td>
+                  </tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recurring Deductions Summary -->
+    <div class="col">
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <h4>Recurring Deductions Summary</h4>
+            <button class="btn btn-outline-primary" onclick="exportDeductionsCSV()">
+              <i class="fas fa-download me-1"></i>Export CSV
+            </button>
+          </div>
+          <p class="text-muted">Active recurring deductions configured for employees.</p>
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Beneficiary</th>
+                  <th>Deduction Type</th>
+                  <th>Amount Type</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% set ns = namespace(has_deductions=false) %}
+                {% for employee in employees %}
+                  {% for deduction in employee.recurring_deductions %}
+                    {% if deduction.is_active %}
+                      {% set ns.has_deductions = true %}
+                      <tr>
+                        <td>{{ employee.first_name }} {{ employee.last_name }}</td>
+                        <td>{{ deduction.beneficiary.name if deduction.beneficiary else 'N/A' }}</td>
+                        <td>{{ deduction.beneficiary.type if deduction.beneficiary else 'Other' }}</td>
+                        <td>
+                          <span class="badge bg-secondary">
+                            {{ deduction.amount_type.title() }}
+                          </span>
+                        </td>
+                        <td>
+                          {% if deduction.amount_type == 'fixed' %}
+                            R{{ "{:,.2f}".format(deduction.value or 0) }}
+                          {% elif deduction.amount_type == 'percent' %}
+                            {{ deduction.value or 0 }}%
+                          {% else %}
+                            Calculated
+                          {% endif %}
+                        </td>
+                        <td>
+                          <span class="badge bg-success">Active</span>
+                        </td>
+                      </tr>
+                    {% endif %}
+                  {% endfor %}
+                {% endfor %}
+                {% if not ns.has_deductions %}
+                  <tr>
+                    <td colspan="6" class="text-center text-muted py-4">
+                      No active recurring deductions configured.
+                    </td>
+                  </tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Employee Status Summary -->
+    <div class="col">
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <h4>Employee Status Summary</h4>
+            <button class="btn btn-outline-primary" onclick="exportEmployeeStatusCSV()">
+              <i class="fas fa-download me-1"></i>Export CSV
+            </button>
+          </div>
+          <p class="text-muted">Current employee status and UIF-related information.</p>
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Employee ID</th>
+                  <th>Employee Name</th>
+                  <th>Status</th>
+                  <th>UIF Contribution</th>
+                  <th>Hire Date</th>
+                  <th>Employment Type</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for employee in employees %}
+                <tr>
+                  <td>{{ employee.employee_id }}</td>
+                  <td>{{ employee.first_name }} {{ employee.last_name }}</td>
+                  <td>
+                    <span class="badge {% if not employee.end_date %}bg-success{% else %}bg-danger{% endif %}">
+                      {{ 'Active' if not employee.end_date else 'Inactive' }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="badge {% if employee.uif_contributing %}bg-info{% else %}bg-secondary{% endif %}">
+                      {{ 'Contributing' if employee.uif_contributing else 'Exempt' }}
+                    </span>
+                  </td>
+                  <td>{{ employee.start_date.strftime('%Y-%m-%d') if employee.start_date else 'N/A' }}</td>
+                  <td>{{ employee.employment_status or 'Full-time' }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Beneficiary Payment Summary -->
+    <div class="col">
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <h4>Beneficiary Payment Summary</h4>
+            <button class="btn btn-outline-primary" onclick="exportBeneficiaryCSV()">
+              <i class="fas fa-download me-1"></i>Export CSV
+            </button>
+          </div>
+          <p class="text-muted">Total amounts payable to third-party beneficiaries for the selected period.</p>
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Beneficiary Name</th>
+                  <th>Type</th>
+                  <th>Total Amount</th>
+                  <th>Bank Details</th>
+                  <th>EFT Export</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% if beneficiary_totals %}
+                  {% for name, data in beneficiary_totals.items() %}
+                  {% set beneficiary = beneficiaries|selectattr('id', 'equalto', data.beneficiary_id)|first %}
+                  <tr>
+                    <td>{{ name }}</td>
+                    <td>
+                      <span class="badge bg-info">{{ data.type }}</span>
+                    </td>
+                    <td>R{{ "{:,.2f}".format(data.total) }}</td>
+                    <td>
+                      {% if beneficiary and beneficiary.bank_name %}
+                        {{ beneficiary.bank_name }}
+                        {% if beneficiary.account_number %}
+                          - ****{{ beneficiary.account_number[-4:] if beneficiary.account_number|length > 4 else beneficiary.account_number }}
+                        {% endif %}
+                      {% else %}
+                        <span class="text-muted">No banking details</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if beneficiary and beneficiary.include_in_eft_export %}
+                        <span class="badge bg-success">Enabled</span>
+                      {% else %}
+                        <span class="badge bg-secondary">Disabled</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr>
+                    <td colspan="5" class="text-center text-muted py-4">
+                      No beneficiary payments found for the selected period.
+                    </td>
+                  </tr>
+                {% endif %}
+              </tbody>
+              {% if beneficiary_totals %}
+              <tfoot>
+                <tr class="table-active fw-bold">
+                  <td colspan="2">TOTAL</td>
+                  <td>R{{ "{:,.2f}".format(beneficiary_totals.values()|sum(attribute='total')) }}</td>
+                  <td colspan="2">{{ beneficiary_totals|length }} beneficiaries</td>
+                </tr>
+              </tfoot>
+              {% endif %}
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  {% else %}
+    <p>Please select a report type and period to continue.</p>
+  {% endif %}
+</div>
+
+<script>
+
+// Payslip download functionality
+function toggleAllPayslips() {
+    const masterCheckbox = document.getElementById('selectAllPayslips');
+    const checkboxes = document.querySelectorAll('.payslip-checkbox');
+    checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
+    updateDownloadButton();
+}
+
+function updateDownloadButton() {
+    const checkboxes = document.querySelectorAll('.payslip-checkbox:checked');
+    const downloadBtn = document.getElementById('downloadPayslipsBtn');
+    downloadBtn.disabled = checkboxes.length === 0;
+    const icon = '<i class="fas fa-file-pdf me-1"></i>';
+    downloadBtn.innerHTML = checkboxes.length > 0 ? `${icon}Download Selected (${checkboxes.length})` : `${icon}Download Selected`;
+}
+
+function downloadSelectedPayslips() {
+    const checkboxes = document.querySelectorAll('.payslip-checkbox:checked');
+    if (checkboxes.length === 0) return;
+    
+    const ids = Array.from(checkboxes).map(cb => cb.value);
+    const url = `{{ url_for('payroll.download_payslips') }}?ids=${ids.join(',')}`;
+    window.open(url, '_blank');
+}
+
+// Export functions
+function exportPayrollCSV() {
+    window.location.href = `{{ url_for('reports.export_payroll_csv') }}?period=${document.getElementById('periodSelect').value}`;
+}
+
+function exportLeaveCSV() {
+    window.location.href = `{{ url_for('reports.export_leave_csv') }}`;
+}
+
+function exportDeductionsCSV() {
+    window.location.href = `{{ url_for('reports.export_deductions_csv') }}`;
+}
+
+function exportEmployeeStatusCSV() {
+    window.location.href = `{{ url_for('reports.export_employee_status_csv') }}`;
+}
+
+function exportBeneficiaryCSV() {
+    window.location.href = `{{ url_for('reports.export_beneficiary_csv') }}?period=${document.getElementById('periodSelect').value}`;
+}
+
+function generateEFTFile() {
+    const period = document.getElementById('periodSelect').value;
+    const url = `{{ url_for('reports.generate_eft_file') }}?period=${period}`;
+    window.location.href = url;
+}
+</script>
+{% endblock %}

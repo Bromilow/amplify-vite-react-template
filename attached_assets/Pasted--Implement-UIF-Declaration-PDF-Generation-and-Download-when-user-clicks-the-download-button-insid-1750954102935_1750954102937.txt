@@ -1,0 +1,109 @@
+# ✅ Implement UIF Declaration PDF Generation and Download when user clicks the download button inside the UI19 Termination Records tab inside the Employee Records card in Employee View
+
+# 1. SETUP DEPENDENCY:
+# Ensure the app uses `python-docx` for editing DOCX and `docx2pdf` or `pypandoc` to convert DOCX → PDF.
+# If running in an environment without Word (e.g. Linux server), use `docxtpl` to fill and `docx2pdf` to convert.
+# Install:
+# pip install python-docx docx2pdf
+
+# 2. ROUTE (app/routes/employees.py):
+# Create a route: /employees/<int:employee_id>/generate-uif-doc
+
+@app.route('/employees/<int:employee_id>/generate-uif-doc')
+@login_required
+def generate_uif_doc(employee_id):
+    employee = Employee.query.get_or_404(employee_id)
+    company = employee.company
+
+    # Load the system template file
+    template_path = os.path.join(app.config['DOCUMENT_TEMPLATE_FOLDER'], 'Form-UI-19-Declaration.docx')
+    doc = Document(template_path)
+
+    # Helper to set field if exists
+    def fill_field(doc, placeholder, value):
+        for p in doc.paragraphs:
+            if placeholder in p.text:
+                inline = p.runs
+                for i in range(len(inline)):
+                    if placeholder in inline[i].text:
+                        inline[i].text = inline[i].text.replace(placeholder, value or '')
+
+    # === COMPANY FIELDS ===
+    uif_ref = company.uif_reference_number or ''
+    paye_ref = company.paye_reference_number or ''
+    reg_number = company.registration_number or ''
+    contact_email = company.contact_email or ''
+    phone_number = company.phone_number or ''
+    emp_fname = company.employer_first_name or ''
+    emp_lname = company.employer_last_name or ''
+    emp_id = company.employer_id_number or ''
+
+    # === EMPLOYEE FIELDS ===
+    emp_last = employee.last_name or ''
+    emp_initials = employee.first_name[0] if employee.first_name else ''
+    emp_id_no = employee.id_number or ''
+    emp_salary = str(int(float(employee.get_latest_gross_pay() or 0)))
+    emp_salary_cents = "00"  # Optional enhancement: break into cents
+    emp_hours = str(employee.average_monthly_hours or 160)
+
+    start_date = employee.start_date.strftime('%d%m%y') if employee.start_date else ''
+    term_record = employee.get_latest_termination_record()
+    end_date = term_record.termination_date.strftime('%d%m%y') if term_record and term_record.termination_date else ''
+    term_reason = str(term_record.reason_code) if term_record else ''
+    uif_status = term_record.uif_status if term_record else ''
+    uif_reason = term_record.uif_reason_code if term_record else ''
+
+    today = datetime.today().strftime('%d/%m/%Y')
+    month_str = datetime.today().strftime('%B').upper()
+
+    # === MAP FIELDS ===
+    field_map = {
+        # Blocks for UIF ref
+        'E_1': uif_ref[0:1], 'E_2': uif_ref[1:2], 'E_3': uif_ref[2:3], 'E_4': uif_ref[3:4],
+        'E_5': uif_ref[4:5], 'E_6': uif_ref[5:6], 'E_7': uif_ref[6:7], 'E_0': uif_ref[7:8],
+        'E_9': uif_ref[9:10] if len(uif_ref) > 9 else '',
+        'ED_MONTH': month_str,
+        'P_1': paye_ref[0:1], 'P_2': paye_ref[1:2], 'P_3': paye_ref[2:3], 'P_4': paye_ref[3:4], 'P_5': paye_ref[4:5],
+        'P_6': paye_ref[5:6], 'P_7': paye_ref[6:7], 'P_8': paye_ref[7:8], 'P_9': paye_ref[8:9], 'P_10': paye_ref[9:10],
+        'C_1': reg_number[0:1], 'C_2': reg_number[1:2], 'C_3': reg_number[2:3], 'C_4': reg_number[3:4],
+        'C_5': reg_number[4:5], 'C_6': reg_number[5:6], 'C_7': reg_number[6:7], 'C_8': reg_number[7:8],
+        'C_9': reg_number[8:9], 'C_10': reg_number[9:10], 'C_11': reg_number[10:11], 'C_12': reg_number[11:12],
+        'C_13': reg_number[12:13], 'C_14': reg_number[13:14], 'C_15': reg_number[14:15],
+        'COMPANY_EMAIL': contact_email,
+        'COMPANY_PHONE': phone_number,
+        'First_Last_Name': f"{emp_fname} {emp_lname}",
+        'EMP_L_NAME': emp_last,
+        'EMP_I': emp_initials,
+        'I_1': emp_id_no[0:1], 'I_2': emp_id_no[1:2], 'I_3': emp_id_no[2:3], 'I_4': emp_id_no[3:4],
+        'I_5': emp_id_no[4:5], 'I_6': emp_id_no[5:6], 'I_7': emp_id_no[6:7], 'I_8': emp_id_no[7:8],
+        'I_9': emp_id_no[8:9], 'I_10': emp_id_no[9:10], 'I_11': emp_id_no[10:11], 'I_12': emp_id_no[11:12],
+        'I_13': emp_id_no[12:13],
+        'EMP_R': emp_salary,
+        'EMP_C': emp_salary_cents,
+        'EMP_H': emp_hours,
+        'J_1': start_date[0:1], 'J_2': start_date[1:2], 'J_3': start_date[2:3],
+        'J_4': start_date[3:4], 'J_5': start_date[4:5], 'J_6': start_date[5:6],
+        'J_7': end_date[0:1], 'J_8': end_date[1:2], 'J_9': end_date[2:3],
+        'J_10': end_date[3:4], 'J_11': end_date[4:5], 'J_12': end_date[5:6],
+        'J_CODE': term_reason,
+        'J_YN': uif_status,
+        'J_R': uif_reason,
+        'EMP_ID': emp_id,
+        'E_SIG': f"{emp_fname} {emp_lname}",
+        'E_DATE': today
+    }
+
+    # Replace placeholders
+    for key, val in field_map.items():
+        fill_field(doc, key, val)
+
+    # Save filled docx
+    output_docx = f"/tmp/UI19_{employee.id}.docx"
+    output_pdf = f"/tmp/UI19_{employee.id}.pdf"
+    doc.save(output_docx)
+
+    # Convert DOCX → PDF
+    from docx2pdf import convert
+    convert(output_docx, output_pdf)
+
+    return send_file(output_pdf, as_attachment=True, download_name='UI19_Declaration.pdf')

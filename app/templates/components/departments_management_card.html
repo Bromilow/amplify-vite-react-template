@@ -1,0 +1,101 @@
+<!-- Company Departments Management Card -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center bg-light">
+        <h5 class="mb-0">
+            <i class="fas fa-building text-primary me-2"></i>Department Management
+        </h5>
+        <a href="{{ url_for('company.company_departments', company_id=company.id) }}" 
+           class="btn btn-outline-primary btn-sm">
+            <i class="fas fa-cog me-1"></i>Manage Departments
+        </a>
+    </div>
+    <div class="card-body">
+        <!-- Department Summary Row (Top) -->
+        {% set total_departments = company.departments|length if company.departments else 0 %}
+        {% set default_departments = company.departments|selectattr('is_default')|list|length if company.departments else 0 %}
+        {% set custom_departments = total_departments - default_departments %}
+        
+        <div class="row text-center mb-4">
+            <div class="col-md-4 mb-3">
+                <div class="p-3 bg-light rounded">
+                    <h4 class="mb-0 text-primary">{{ total_departments }}</h4>
+                    <small class="text-muted fw-bold">Total Departments</small>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="p-3 bg-light rounded">
+                    <h4 class="mb-0 text-success">{{ default_departments }}</h4>
+                    <small class="text-muted fw-bold">Default Departments</small>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="p-3 bg-light rounded">
+                    <h4 class="mb-0 text-info">{{ custom_departments }}</h4>
+                    <small class="text-muted fw-bold">Custom Departments</small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Departments List (Table-style) -->
+        <h6 class="text-muted mb-3">
+            <i class="fas fa-list me-2"></i>Department List
+        </h6>
+        
+        {% if company.departments %}
+            <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                    <thead>
+                        <tr>
+                            <th>Department Name</th>
+                            <th>Type</th>
+                            <th>Employee Count</th>
+                            <th>Created</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for dept in company.departments|sort(attribute='name') %}
+                        <tr>
+                            <td>
+                                <strong>{{ dept.name }}</strong>
+                            </td>
+                            <td>
+                                {% if dept.is_default %}
+                                    <span class="badge bg-success">Default</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Custom</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="text-muted">{{ dept.employee_count if dept.employee_count else 0 }}</span>
+                            </td>
+                            <td>
+                                <small class="text-muted">{{ dept.created_at.strftime('%Y-%m-%d') if dept.created_at else '-' }}</small>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                No departments found. Click "Manage Departments" to create your first department.
+            </div>
+        {% endif %}
+        
+        <hr class="my-3">
+        
+        <div class="d-flex justify-content-between align-items-center">
+            <small class="text-muted">
+                <i class="fas fa-info-circle me-1"></i>
+                Departments help organize employees and simplify payroll processing.
+            </small>
+            <div>
+                <a href="{{ url_for('company.company_departments', company_id=company.id) }}" 
+                   class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus me-1"></i>Add Department
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

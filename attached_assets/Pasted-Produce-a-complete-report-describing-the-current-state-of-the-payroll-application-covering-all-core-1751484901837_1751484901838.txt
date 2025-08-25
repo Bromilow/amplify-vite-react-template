@@ -1,0 +1,131 @@
+Produce a complete report describing the current state of the payroll application, covering all core modules, workflows, and technical dependencies.
+Do not make any changes—only produce a report.
+
+✅ Tasks:
+Inventory of Features & Modules
+
+List all major modules, routes, and workflows:
+
+Company Management
+
+Employee Management
+
+Payroll Processing
+
+Document Generation
+
+Compliance Calendar
+
+Recurring Deduction Defaults
+
+Global Admin
+
+For each module, describe:
+
+What functionality is implemented
+
+What workflows are partially complete
+
+What features are not implemented or only stubbed
+
+Form & Validation Overview
+
+List all forms (company forms, employee forms, payroll forms, admin forms).
+
+For each form:
+
+Indicate if CSRF protection is active.
+
+Indicate if server-side validation is implemented.
+
+Note any known validation gaps or inconsistencies.
+
+JavaScript Frontend Behavior
+
+List all dynamic JavaScript components and their associated files.
+
+For each component (e.g., deduction logic, modals):
+
+Confirm whether the logic is working end-to-end.
+
+Note any known issues (e.g., scope issues, missing scripts).
+
+List dependencies (e.g., jQuery, Inputmask).
+
+Document Generation Workflows
+
+For each document type (UI19, Payslip, IRP5, EMP501, etc.):
+
+State whether it is implemented.
+
+Note if it uses .docx, .pdf, or hardcoded templates.
+
+Summarize any known problems (e.g., formatting issues, incomplete placeholders).
+
+Compliance Calendar & Notifications
+
+Summarize the current state of:
+
+Compliance rules
+
+Calendar event generation
+
+Notification workflows
+
+Note if the calendar displays correctly in all contexts (portfolio vs. company view).
+
+User Roles & Permissions
+
+List all user roles (Global Admin, Admin, Accountant, etc.).
+
+Summarize what each role can access.
+
+Note any known gaps in role enforcement.
+
+Configuration & Environment
+
+List key configuration files (e.g., config.py, .env).
+
+Confirm whether:
+
+CSRFProtect is initialized globally.
+
+Inputmask/Bootstrap are included in base templates.
+
+All environment variables required for production are documented.
+
+Known Gaps and TODOs
+
+Summarize all known issues, gaps, or inconsistencies identified in recent audits:
+
+CSRF tokens
+
+Dynamic deduction logic
+
+Document formatting
+
+Incomplete workflows
+
+Feature disparity between Replit expectations and actual implementation
+
+Produce a Markdown Report
+
+Save as:
+
+swift
+Copy
+Edit
+/Reports/Full_Application_Status_Report.md
+The report should be well-structured with clear headings, bullet points, and tables where helpful.
+
+✅ Outcome:
+This report will provide any developer with:
+
+A clear snapshot of what has been built.
+
+What works and what doesn’t.
+
+What needs further development or refinement.
+
+✅ Explicit instruction:
+Do not modify any files or code—only generate this report.

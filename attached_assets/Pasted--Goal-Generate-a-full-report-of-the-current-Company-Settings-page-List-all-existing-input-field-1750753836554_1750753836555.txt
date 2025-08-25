@@ -1,0 +1,51 @@
+🛠 Goal: Generate a full report of the current Company Settings page:
+
+List all existing input fields and their bound data model fields
+
+Describe the layout structure (rows, columns, cards, tabs)
+
+Identify where additional fields (e.g. UIF rate, SDL rate, SARS thresholds) can be added cleanly
+
+Output the report to:
+app/Reports/COMPANY_SETTINGS_VIEW.md
+
+🔍 Target Areas:
+/templates/company/settings.html or similar
+
+Any JS/FlaskForm/WTForms logic that maps data
+
+Route/controller that loads and submits company settings
+
+📋 Report Structure:
+# Company Settings View – Field & Layout Report
+
+## 🗂 Existing Fields
+
+| Field Label       | Input Type | Bound Model Field       | Notes              |
+|-------------------|------------|--------------------------|---------------------|
+| Company Name      | text       | company.name             | Required            |
+| Default Currency  | select     | company.default_currency | Dropdown            |
+| SARS Tax Number   | text       | company.tax_id           | Validation applied  |
+| Payroll Frequency | select     | company.payroll_cycle    | Monthly/Biweekly    |
+| ...               | ...        | ...                      | ...                 |
+
+## 🧱 Layout Summary
+
+- 2-column Bootstrap layout
+- Grouped by card headers: "Company Info", "Payroll Settings"
+- Uses tabs: [General], [Banking], [SARS Settings]
+
+## ➕ Recommended Insertion Points for Constants
+
+| Constant Label           | Recommended Location (Card) | Suggested Field Type | Default Value Source |
+|--------------------------|-----------------------------|----------------------|-----------------------|
+| UIF Rate (%)             | Payroll Settings card       | decimal input        | fallback to 0.01     |
+| SDL Rate (%)             | Payroll Settings card       | decimal input        | fallback to 0.01     |
+| SARS Tax Year Start      | SARS Settings tab           | date/month picker    | fallback: 1 March    |
+| Medical Aid Threshold    | SARS Settings tab           | currency input       | fallback: R 3500     |
+✅ Expected Outcome
+Clear understanding of current company settings structure
+
+Identified insertion points for dynamic values (replacing constants)
+
+Ready to expand model + UI for full dynamic config

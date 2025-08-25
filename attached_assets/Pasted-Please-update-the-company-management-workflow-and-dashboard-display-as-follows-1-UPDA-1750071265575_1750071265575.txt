@@ -1,0 +1,62 @@
+Please update the company management workflow and dashboard display as follows:
+
+---
+
+1. 🧾 UPDATE THE "CREATE COMPANY" FORM:
+- In the form where users create a new company, include all of the following fields:
+
+**Company Details:**
+- keep all existing fields
+
+**Payroll Settings Section (new):**
+Add a titled section: **"Payroll Configuration"**, with the following inputs:
+- Default Hourly Rate (decimal)
+- Overtime Multiplier (default 1.50)
+- Sunday Multiplier (default 2.00)
+- Public Holiday Multiplier (default 2.50)
+- UIF Monthly Earnings Ceiling (default 17,712.00)
+- UIF Percent (default 1.00)
+- SDL Percent (default 1.00)
+- Default Pay Date (dropdown or text)
+
+Ensure these are saved in the `Company` model.
+
+---
+
+2. ✏️ ADD "EDIT COMPANY" MODAL ON THE DASHBOARD:
+- On the company dashboard (`/dashboard/overview`), add a button labeled:
+  `✏️ Edit Company`
+- Place this in the top-right corner where the company-specific controls are.
+- When clicked, open a **modal popup** (not a new page), styled like the "Edit Employee" modal.
+
+The modal should:
+- Load all current `Company` details and payroll configuration fields
+- Allow editing any of them
+- Save via AJAX or POST to a dedicated `/dashboard/company/<id>/edit` endpoint
+- Return a success/failure toast or message on save
+
+---
+
+3. 🖥️ DISPLAY COMPANY INFO ON DASHBOARD:
+At the top of the company dashboard:
+- Show a **Company Summary Card** with the following:
+  - Company Name
+  - Industry
+  - Registration Number
+  - Email, Phone, Address
+  - Tax Year End
+  - (Optional) Payroll defaults like Pay Date or Hourly Rate
+
+Ensure this is styled consistently with other dashboard cards and does not disrupt layout.
+
+---
+
+4. 🧩 DATABASE MIGRATION FOR EXISTING COMPANIES:
+For any companies already in the database:
+- Backfill default values where `NULL`
+- Use the following logic:
+  ```python
+  if not company.overtime_multiplier:
+      company.overtime_multiplier = Decimal("1.50")
+  # repeat for other fields
+  db.session.commit()

@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+
+{% block title %}Employees - Payroll Management System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h2">
+                <i class="fas fa-users me-2"></i>
+                Employee Management
+            </h1>
+            <p class="text-muted">Manage your organization's employees</p>
+        </div>
+        <div class="col-auto">
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#importEmployeesModal">
+                    <i class="fas fa-file-import me-2"></i>
+                    Import Employees from File
+                </button>
+                <a href="{{ url_for('employees.new') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>
+                    Add Employee
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Search and Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('employees.index') }}">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label for="search" class="form-label">Search</label>
+                        <input type="text" class="form-control" id="search" name="search" 
+                               value="{{ current_search }}" 
+                               placeholder="Search by name, ID, or email...">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="department" class="form-label">Department</label>
+                        <select class="form-select" id="department" name="department">
+                            <option value="">All Departments</option>
+                            {% for dept in departments %}
+                            <option value="{{ dept }}" {% if dept == current_department %}selected{% endif %}>
+                                {{ dept }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="">All Statuses</option>
+                            {% for stat in statuses %}
+                            <option value="{{ stat }}" {% if stat == current_status %}selected{% endif %}>
+                                {{ stat }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i>
+                            </button>
+                            <a href="{{ url_for('employees.index') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Employee List -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">
+                Employees 
+                <span class="badge bg-secondary">{{ pagination.total }}</span>
+            </h5>
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-outline-secondary btn-sm active">
+                    <i class="fas fa-list"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-th"></i>
+                </button>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            {% if employees %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Employee ID</th>
+                                <th>First Name</th>
+                                <th>Last Name</th>
+                                <th>ID Number</th>
+                                <th>Department</th>
+                                <th>Start Date</th>
+                                <th>Salary</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for employee in employees %}
+                            <tr data-employee-id="{{ employee.id }}">
+                                <td>
+                                    <a href="{{ url_for('employees.view', employee_id=employee.id) }}" class="text-decoration-none text-primary" title="View Employee Profile">
+                                        {{ employee.employee_id }}
+                                    </a>
+                                </td>
+                                <td>{{ employee.first_name }}</td>
+                                <td>{{ employee.last_name }}</td>
+                                <td>{{ employee.id_number }}</td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ employee.department }}</span>
+                                </td>
+                                <td>{{ employee.start_date.strftime('%m/%d/%Y') if employee.start_date else 'N/A' }}</td>
+                                <td>
+                                    {% if employee.salary_type == 'piece' or employee.salary_type == 'piecework' %}
+                                        R{{ "%.2f"|format(employee.salary) }}/piece
+                                    {% elif employee.salary_type == 'hourly' %}
+                                        R{{ "%.2f"|format(employee.salary) }}/hr
+                                    {% elif employee.salary_type == 'daily' %}
+                                        R{{ "%.2f"|format(employee.salary) }}/day
+                                    {% elif employee.salary_type == 'monthly' %}
+                                        R{{ "%.2f"|format(employee.salary) }}/mo
+                                    {% elif employee.salary %}
+                                        R{{ "%.2f"|format(employee.salary) }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('employees.view', employee_id=employee.id) }}" 
+                                           class="btn btn-sm btn-outline-primary"
+                                           title="View Employee">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-secondary edit-employee-btn"
+                                                data-employee-id="{{ employee.id }}"
+                                                title="Edit Employee">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <a href="{{ url_for('payroll.generate_payslip', employee_id=employee.id) }}" 
+                                           class="btn btn-sm btn-outline-success"
+                                           title="Generate Payslip"
+                                           target="_blank">
+                                            <i class="fas fa-file-pdf"></i>
+                                        </a>
+                                        <form method="POST"
+                                              action="{{ url_for('employees.delete', employee_id=employee.id) }}"
+                                              style="display: inline;"
+                                              onsubmit="return confirm('Are you sure you want to delete {{ employee.full_name }}? This action cannot be undone.');">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" 
+                                                    class="btn btn-sm btn-outline-danger"
+                                                    title="Delete Employee">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if pagination.pages > 1 %}
+                <div class="card-footer">
+                    <nav aria-label="Employee pagination">
+                        <ul class="pagination justify-content-center mb-0">
+                            {% if pagination.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('employees.index', page=pagination.prev_num, search=current_search, department=current_department, status=current_status) }}">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for page_num in range(1, pagination.pages + 1) %}
+                                {% if page_num == pagination.page %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page_num }}</span>
+                                </li>
+                                {% elif page_num <= 3 or page_num > pagination.pages - 3 or (page_num >= pagination.page - 1 and page_num <= pagination.page + 1) %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('employees.index', page=page_num, search=current_search, department=current_department, status=current_status) }}">
+                                        {{ page_num }}
+                                    </a>
+                                </li>
+                                {% elif page_num == 4 or page_num == pagination.pages - 3 %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if pagination.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('employees.index', page=pagination.next_num, search=current_search, department=current_department, status=current_status) }}">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    
+                    <div class="text-center mt-2">
+                        <small class="text-muted">
+                            Showing {{ ((pagination.page - 1) * pagination.per_page) + 1 }} to 
+                            {{ pagination.page * pagination.per_page if pagination.page * pagination.per_page < pagination.total else pagination.total }} 
+                            of {{ pagination.total }} employees
+                        </small>
+                    </div>
+                </div>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <h5>No employees found</h5>
+                    <p class="text-muted">
+                        {% if current_search or current_department or current_status %}
+                            Try adjusting your search criteria or 
+                            <a href="{{ url_for('employees.index') }}">clear all filters</a>.
+                        {% else %}
+                            Get started by adding your first employee.
+                        {% endif %}
+                    </p>
+                    <a href="{{ url_for('employees.new') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>
+                        Add First Employee
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Include shared Edit Employee Modal -->
+{% include 'employees/_edit_modal.html' %}
+<!-- Include Import Employees Modal -->
+{% include 'employees/_import_modal.html' %}
+
+<!-- Include shared employee modal JavaScript -->
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/employee_modal.js') }}"></script>
+<script src="{{ url_for('static', filename='js/import_employees.js') }}"></script>
+{% endblock %}
+
+{% endblock %}
+
+{% block extra_head %}
+<style>
+.avatar-sm {
+    width: 32px;
+    height: 32px;
+    font-size: 0.75rem;
+}
+</style>
+{% endblock %}
+
+
+

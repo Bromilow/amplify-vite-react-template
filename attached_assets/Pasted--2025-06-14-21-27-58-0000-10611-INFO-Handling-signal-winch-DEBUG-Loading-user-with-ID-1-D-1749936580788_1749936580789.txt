@@ -1,0 +1,114 @@
+[2025-06-14 21:27:58 +0000] [10611] [INFO] Handling signal: winch
+DEBUG: Loading user with ID: 1
+DEBUG: User loaded: True
+DEBUG: POST request received
+DEBUG: Email: admin@payroll.co.za, Password length: 8
+DEBUG: User found: True
+DEBUG: User active: True
+DEBUG: Password check result: True
+DEBUG: Attempting to log user in
+DEBUG: User logged in, is_authenticated: True
+DEBUG: Session permanent: True
+DEBUG: User companies count: 3
+DEBUG: Multi-company user, companies: ['Acme Consulting (Pty) Ltd', 'TechStart Solutions', 'Green Energy Co']
+DEBUG: Committing session
+DEBUG: Before redirect - user.get_id(): 1
+DEBUG: Before redirect - session data: {'_fresh': True, '_id': 'c902f2b535b8438ba45c931263a237e44d6cf9e0e1f12361a5643799aa827077ab17ef6844219019622e2c778e83533ff47173efa77f077fadc109b0223eb512', '_permanent': True, '_user_id': '1', 'current_company_id': 1, '_remember': 'set', '_flashes': [('success', 'Welcome! You manage 3 companies.')]}
+DEBUG: Redirecting to: /accountant/dashboard
+DEBUG: Loading user with ID: 1
+DEBUG: User loaded: True
+DEBUG: Loading user with ID: 1
+DEBUG: User loaded: True
+DEBUG: Loading user with ID: 1
+DEBUG: User loaded: True
+DEBUG: Overview accessed - current_user.is_authenticated: True
+DEBUG: Overview accessed - current_user.get_id(): 1
+DEBUG: Loading user with ID: 1
+DEBUG: User loaded: True
+DEBUG: Loading user with ID: 1
+DEBUG: User loaded: True
+[2025-06-14 21:29:09 +0000] [10622] [ERROR] Error handling request /payroll/reports
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+psycopg2.ProgrammingError: can't adapt type 'property'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/gunicorn/workers/sync.py", line 134, in handle
+    self.handle_request(listener, req, client, addr)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/gunicorn/workers/sync.py", line 177, in handle_request
+    respiter = self.wsgi(environ, resp.start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/middleware/proxy_fix.py", line 183, in __call__
+    return self.app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/app/routes/payroll.py", line 255, in reports
+    .all()
+     ^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/orm/query.py", line 2704, in all
+    return self._iter().all()  # type: ignore
+           ^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/orm/query.py", line 2857, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2365, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2251, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/orm/context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+             ^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1415, in execute
+    return meth(
+           ^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/sql/elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1637, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1842, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1982, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2351, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.ProgrammingError: (psycopg2.ProgrammingError) can't adapt type 'property'
+[SQL: SELECT date_trunc(%(date_trunc_1)s, payroll_entries.pay_period_start) AS period, count(payroll_entries.id) AS employee_count, sum(%(sum_1)s) AS gross_pay, sum(payroll_entries.paye) AS paye, sum(payroll_entries.uif) AS uif, sum(payroll_entries.sdl) AS sdl, sum(payroll_entries.deductions_other + payroll_entries.union_fee) AS other_deductions, sum(payroll_entries.net_pay) AS net_pay 
+FROM payroll_entries JOIN employees ON employees.id = payroll_entries.employee_id 
+WHERE employees.company_id = %(company_id_1)s AND payroll_entries.pay_period_start < %(pay_period_start_1)s GROUP BY date_trunc(%(date_trunc_2)s, payroll_entries.pay_period_start) ORDER BY date_trunc(%(date_trunc_3)s, payroll_entries.pay_period_start) DESC 
+ LIMIT %(param_1)s]
+[parameters: {'date_trunc_1': 'month', 'sum_1': <property object at 0x7f738e4d4900>, 'company_id_1': 1, 'pay_period_start_1': datetime.date(2025, 6, 1), 'date_trunc_2': 'month', 'date_trunc_3': 'month', 'param_1': 12}]
+(Background on this error at: https://sqlalche.me/e/20/f405)

@@ -1,0 +1,345 @@
+<!-- Payroll Modal -->
+<div class="modal fade" id="payrollModal" tabindex="-1" aria-labelledby="payrollModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="payrollModalLabel">
+                    <i class="fas fa-calculator me-2"></i>
+                    Payroll Entry – <span id="modal-employee-name"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="payroll-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <input type="hidden" id="employee-id" name="employee_id">
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100" id="payroll-config-card"
+                                 data-ot="{{ company.overtime_multiplier }}"
+                                 data-sun="{{ company.sunday_multiplier }}"
+                                 data-hol="{{ company.public_holiday_multiplier }}">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Payroll Configuration</h6>
+                                </div>
+                                <div class="card-body">
+                                    <h6 class="text-muted">Salary Information</h6>
+                                    <dl class="row small mb-2" id="salary-summary">
+                                        <dt class="col-6 text-muted">Salary Type</dt>
+                                        <dd class="col-6" id="config-salary-type"></dd>
+                                        <dt class="col-6 text-muted">Base Rate</dt>
+                                        <dd class="col-6" id="config-base-rate"></dd>
+                                        <dt class="col-6 text-muted">Overtime Eligible</dt>
+                                        <dd class="col-6" id="config-overtime"></dd>
+                                        <div id="overtime-rates" style="display:none;">
+                                            <dt class="col-6 text-muted">Ordinary Hourly Rate</dt>
+                                            <dd class="col-6" id="config-hourly-rate"></dd>
+                                            <dt class="col-6 text-muted">Overtime Rate</dt>
+                                            <dd class="col-6" id="config-overtime-rate"></dd>
+                                            <dt class="col-6 text-muted">Sunday Rate</dt>
+                                            <dd class="col-6" id="config-sunday-rate"></dd>
+                                            <dt class="col-6 text-muted">Holiday Rate</dt>
+                                            <dd class="col-6" id="config-holiday-rate"></dd>
+                                        </div>
+                                    </dl>
+
+                                    <h6 class="text-muted mt-3">Statutory Contributions</h6>
+                                    <div class="ms-2 mb-2 small">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="config-uif" disabled>
+                                            <label class="form-check-label" for="config-uif">UIF Contributing</label>
+                                        </div>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="config-sdl" disabled>
+                                            <label class="form-check-label" for="config-sdl">SDL Contributing</label>
+                                        </div>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="config-paye" disabled>
+                                            <label class="form-check-label" for="config-paye">PAYE Exempt</label>
+                                        </div>
+                                    </div>
+
+                                    <div id="medical-aid-section" class="mb-2" style="display:none;">
+                                        <h6 class="text-muted">Medical Aid</h6>
+                                        <div class="ms-3 small">
+                                            <div><span class="text-muted">Scheme:</span> <span id="config-med-scheme"></span></div>
+                                            <div><span class="text-muted">Contribution Type:</span> <span id="config-med-type"></span></div>
+                                            <div><span class="text-muted">Calculation Method:</span> <span id="config-med-calc"></span></div>
+                                            <div><span class="text-muted">Linked Beneficiary:</span> <span id="config-med-beneficiary"></span></div>
+                                            <div><span class="text-muted">Employer Contribution:</span> <span id="config-med-employer"></span></div>
+                                            <div><span class="text-muted">Employee Contribution:</span> <span id="config-med-employee"></span></div>
+                                            <div><span class="text-muted">Total Medical Aid Deduction:</span> <span id="config-med-total"></span></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="small">
+                                        <strong class="text-muted d-block">Recurring Deductions</strong>
+                                        <ul class="mb-0 ms-3" id="config-recurring-list"></ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+
+                    <!-- Pay Period -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="period_start" class="form-label">Pay Period Start</label>
+                            <input type="date" class="form-control" id="period_start" name="period_start" value="{{ stats.current_period_start.isoformat() }}" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="period_end" class="form-label">Pay Period End</label>
+                            <input type="date" class="form-control" id="period_end" name="period_end" value="{{ stats.current_period_end.isoformat() }}" readonly>
+                        </div>
+                    </div>
+
+                    <!-- Salary Information -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="salary_type" class="form-label">Salary Type</label>
+                            <input type="text" class="form-control" id="salary_type" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="base_salary" class="form-label">Base Salary/Rate</label>
+                            <div class="input-group">
+                                <span class="input-group-text">R</span>
+                                <input type="number" class="form-control" id="base_salary" step="0.01" readonly>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hours Section -->
+                    <h6 class="mb-3"><i class="fas fa-clock me-2"></i>Hours Worked</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-6" id="ordinary_hours_group">
+                            <label for="ordinary_hours" class="form-label" id="ordinary_hours_label">Ordinary Hours</label>
+                            <input type="number" class="form-control calculation-input" id="ordinary_hours" name="ordinary_hours" value="0" step="0.01" min="0">
+                            <div class="form-text" id="monthly_hours_note" style="display:none;">
+                                Monthly employees are paid a fixed base salary
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="overtime_hours" class="form-label">Overtime Hours</label>
+                            <input type="number" class="form-control calculation-input" id="overtime_hours" name="overtime_hours" value="0" step="0.01" min="0">
+                        </div>
+                    </div>
+                    
+                    <!-- Piece Work Section -->
+                    <div id="piece_work_section" style="display:none;">
+                        <h6 class="mb-3"><i class="fas fa-cubes me-2"></i>Piece Work Production</h6>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="pieces_produced" class="form-label">Units Produced</label>
+                                <input type="number" class="form-control calculation-input" id="pieces_produced" name="pieces_produced" value="0" step="1" min="0">
+                                <div class="form-text">Enter the number of units/pieces produced during this pay period</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="piece_rate_display" class="form-label">Piece Rate</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R</span>
+                                    <input type="number" class="form-control" id="piece_rate_display" step="0.0001" min="0" readonly>
+                                </div>
+                                <div class="form-text">Rate per unit (from employee settings)</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="sunday_hours" class="form-label">Sunday Hours</label>
+                            <input type="number" class="form-control calculation-input" id="sunday_hours" name="sunday_hours" value="0" step="0.01" min="0">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="public_holiday_hours" class="form-label">Public Holiday Hours</label>
+                            <input type="number" class="form-control calculation-input" id="public_holiday_hours" name="public_holiday_hours" value="0" step="0.01" min="0">
+                        </div>
+                    </div>
+
+                    <!-- Allowances and Deductions -->
+                    <h6 class="mb-3"><i class="fas fa-plus-circle me-2"></i>Allowances & Deductions</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="allowances" class="form-label">Allowances</label>
+                            <div class="input-group">
+                                <span class="input-group-text">R</span>
+                                <input type="number" class="form-control calculation-input" id="allowances" name="allowances" value="0" step="0.01" min="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-3" id="bonus-row" style="display:none;">
+                        <div class="col-md-6">
+                            <label for="bonus_amount" class="form-label">Bonus Amount</label>
+                            <div class="input-group">
+                                <span class="input-group-text">R</span>
+                                <input type="number" class="form-control calculation-input" id="bonus_amount" name="bonus_amount" value="0" step="0.01" min="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Deductions -->
+                    <h6 class="mb-3"><i class="fas fa-minus-circle me-2"></i>Deductions</h6>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Beneficiary</th>
+                                <th>Type</th>
+                                <th>Amount Type</th>
+                                <th>Amount</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="payrollDeductionsTableBody">
+                        </tbody>
+                    </table>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="add-deduction-btn">
+                            <i class="fas fa-plus me-1"></i>Add Deduction
+                        </button>
+                    </div>
+                    <div class="d-flex justify-content-end align-items-center mb-3">
+                        <div class="text-end">
+                            <strong>Total Deductions:</strong> <span id="preview-recurring-total">R 0.00</span>
+                            &nbsp;&nbsp;
+                            <strong>Net Pay:</strong> <span id="preview-net-pay-summary">R 0.00</span>
+                        </div>
+                    </div>
+
+                    <!-- Real-time Calculation Preview -->
+                    <div class="card bg-light">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-eye me-2"></i>Real-time Preview</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-2">
+                                        <strong>Gross Pay:</strong>
+                                        <span class="text-success" id="preview-gross-pay">R 0.00</span>
+                                        <i class="bi bi-question-circle ms-1" data-bs-toggle="tooltip" title="Total pay before deductions, including salary, overtime, and allowances."></i>
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Medical Aid Tax Credit:</strong>
+                                        <span class="text-success" id="preview-medical-credit">R 0.00</span>
+                                        <i class="bi bi-question-circle ms-1" data-bs-toggle="tooltip" title="This is the tax credit amount based on the number of dependants and {{ sars_config.tax_authority_name if sars_config else 'SARS' }} rules. Only shown if {{ sars_config.tax_authority_name if sars_config else 'SARS' }} calculation is enabled in employee settings."></i>
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Fringe Benefit:</strong>
+                                        <span class="text-warning" id="preview-fringe-benefit">R 0.00</span>
+                                        <i class="bi bi-question-circle ms-1" data-bs-toggle="tooltip" title="This is the taxable value of the employer’s contribution to the employee’s medical aid. Based on either the SARS credit table or manual override."></i>
+                                    </div>
+                                    <div class="mb-2" id="paye-row">
+                                        <strong>PAYE (after credit):</strong>
+                                        <span class="text-danger" id="preview-paye">R 0.00</span>
+                                        <i class="bi bi-question-circle ms-1" data-bs-toggle="tooltip" title="Final Pay-As-You-Earn amount after applying medical aid tax credits and fringe benefits."></i>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-2">
+                                        <strong>UIF:</strong>
+                                        <span class="text-danger" id="preview-uif">R 0.00</span>
+                                        <i class="bi bi-question-circle ms-1" data-bs-toggle="tooltip" title="Unemployment Insurance Fund deduction – {{ '{:.1f}'.format(sars_config.uif_percent) if sars_config else '1.0' }}% of employee salary (up to {{ sars_config.tax_authority_name if sars_config else 'SARS' }} threshold of {{ sars_config.currency_symbol if sars_config else 'R' }}{{ '{:,.0f}'.format(sars_config.uif_salary_cap) if sars_config else '17,712' }})."></i>
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>SDL:</strong>
+                                        <span class="text-danger" id="preview-sdl">R 0.00</span>
+                                        <i class="bi bi-question-circle ms-1" data-bs-toggle="tooltip" title="Skills Development Levy – calculated at {{ '{:.1f}'.format(sars_config.sdl_percent) if sars_config else '1.0' }}% of salary for eligible companies."></i>
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Total Deductions:</strong>
+                                        <span class="text-danger" id="preview-total-deductions">R 0.00</span>
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Net Pay:</strong>
+                                        <span class="text-success fw-bold" id="preview-net-pay">R 0.00</span>
+                                        <i class="bi bi-question-circle ms-1" data-bs-toggle="tooltip" title="Amount paid to employee after all deductions."></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Tax Breakdown -->
+                    <div class="card bg-light mt-3">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <a class="text-decoration-none" data-bs-toggle="collapse" href="#taxBreakdownCollapse" role="button" aria-expanded="false" aria-controls="taxBreakdownCollapse" id="taxBreakdownToggle">Show Tax Breakdown</a>
+                            </h6>
+                        </div>
+                        <div class="collapse" id="taxBreakdownCollapse">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-end align-items-center mb-3">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="taxPdfBtn"><i class="fas fa-download"></i></button>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-sm mb-0" id="taxBreakdownTable">
+                                        <tbody>
+                                            <tr>
+                                                <th>Gross Income <i class="bi bi-question-circle" data-bs-toggle="tooltip" title="Total earnings before any deductions"></i></th>
+                                                <td id="tax-gross-income">R 0.00</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Allowances <i class="bi bi-question-circle" data-bs-toggle="tooltip" title="Additional taxable benefits included in salary"></i></th>
+                                                <td id="tax-allowances">R 0.00</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Fringe Benefit <i class="bi bi-question-circle" data-bs-toggle="tooltip" title="Taxable value of the employer’s medical aid contribution"></i></th>
+                                                <td class="text-danger" id="tax-fringe-benefit">R 0.00</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Taxable Income <i class="bi bi-question-circle" data-bs-toggle="tooltip" title="Gross income plus fringe benefits"></i></th>
+                                                <td id="tax-taxable-income">R 0.00</td>
+                                            </tr>
+                                            <tr>
+                                                <th>PAYE Calculation <i class="bi bi-question-circle" data-bs-toggle="tooltip" title="Based on taxable income, {{ sars_config.tax_authority_name if sars_config else 'SARS' }} brackets, minus applicable rebates and medical tax credits"></i></th>
+                                                <td class="text-danger" id="tax-paye-calc">R 0.00</td>
+                                            </tr>
+                                            <tr>
+                                                <th>UIF <i class="bi bi-question-circle" data-bs-toggle="tooltip" title="Unemployment Insurance Fund"></i></th>
+                                                <td class="text-danger" id="tax-uif">R 0.00</td>
+                                            </tr>
+                                            <tr>
+                                                <th>SDL <i class="bi bi-question-circle" data-bs-toggle="tooltip" title="Skills Development Levy"></i></th>
+                                                <td class="text-danger" id="tax-sdl">R 0.00</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Medical Aid Tax Credit <i class="bi bi-question-circle" data-bs-toggle="tooltip" title="Tax relief for medical aid contributions based on dependants ({{ sars_config.currency_symbol if sars_config else 'R' }}{{ '{:,.0f}'.format(sars_config.medical_primary_credit) if sars_config else '364' }} primary + {{ sars_config.currency_symbol if sars_config else 'R' }}{{ '{:,.0f}'.format(sars_config.medical_dependant_credit) if sars_config else '246' }} per dependant)"></i></th>
+                                                <td class="text-success" id="tax-medical-credit">R 0.00</td>
+                                            </tr>
+                                            <tr>
+                                                <th>PAYE After Credits <i class="bi bi-question-circle" data-bs-toggle="tooltip" title="Pay-As-You-Earn after subtracting medical tax credits"></i></th>
+                                                <td class="text-danger" id="tax-paye-after-credit">R 0.00</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Net Pay <i class="bi bi-question-circle" data-bs-toggle="tooltip" title="Take-home pay after all deductions"></i></th>
+                                                <td id="tax-net-pay">R 0.00</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a data-bs-toggle="collapse" href="#ytdTaxCollapse" role="button" aria-expanded="false" aria-controls="ytdTaxCollapse">
+                            <i class="fas fa-calendar me-2"></i> Show YTD Tax Summary
+                        </a>
+                        <div class="collapse" id="ytdTaxCollapse">
+                            <div class="card card-body mt-2" id="ytdTaxSummaryCard">
+                                <div id="ytdTaxSummaryContent">Loading...</div>
+                                <small class="text-muted">YTD based on finalized payroll entries since {{ sars_config.tax_year_start_display if sars_config else '1 March' }}</small>
+                            </div>
+                        </div>
+                    </div>
+                        </div> <!-- end col-md-8 -->
+                    </div> <!-- end row -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check me-1"></i>Save and Mark as Verified
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

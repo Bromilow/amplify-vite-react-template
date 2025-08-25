@@ -1,0 +1,85 @@
+I need to get a complete technical breakdown of all functionality related to adding and editing employees in the Payroll Management System so a developer can identify and fix any remaining bugs. Please summarize:
+
+✅ Form and UI Overview
+Where is the Add Employee form defined?
+
+Template file path (e.g., templates/employees/new.html)
+
+Section structure: personal, employment, compensation, statutory, medical aid, banking, deductions
+
+Default values: where company defaults are applied
+
+Where is the Edit Employee modal defined?
+
+Shared modal file (e.g., templates/employees/_edit_modal.html)
+
+Is it used by both:
+
+Employee View page
+
+Employees table?
+
+Which JavaScript functions handle:
+
+Modal population (populateEditModal)
+
+Salary type toggling and auto-filling
+
+Recurring deduction table management (add/remove rows, enable/disable rows)
+
+Validation and form submission
+
+✅ Button Bindings
+What buttons exist and where are they wired?
+
+“Add Employee” (from dashboard/empty state and full table)
+
+“Edit Employee” (from View page and Employees table)
+
+“Update Employee” (inside modal)
+
+“Delete Employee”
+
+“Customize Deductions” toggle
+
+✅ Backend Routes and Logic
+What Flask routes are responsible for:
+
+/employees/new → GET/POST for creating new employee
+
+/employees/<id>/edit → POST for saving edits
+
+/employees/<id>/api → GET for loading data into modal
+
+Any other helper endpoints (e.g., /employees/<id>/deductions/api)
+
+Are employee form fields validated before saving?
+
+Which fields are required?
+
+What fields use company defaults if left blank?
+
+Are recurring deductions validated?
+
+How are recurring deductions handled?
+
+What model handles them (EmployeeRecurringDeduction)
+
+When are defaults from CompanyDeductionDefault auto-applied?
+
+Is there any logic to detect or avoid duplicate deductions?
+
+Are changes persisted properly during employee edits?
+
+✅ Known Problems (to include if needed)
+Salary auto-fill doesn’t trigger properly on initial form load
+
+Recurring deductions table sometimes doesn’t reflect changes
+
+Editing employee from table vs view page used different handlers (now fixed)
+
+Flash messages can be duplicated
+
+Some edits fail silently or don’t persist
+
+Validation may reject unchanged ID numbers as duplicates

@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Payroll Management System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h2">
+                <i class="fas fa-tachometer-alt me-2"></i>
+                Dashboard
+            </h1>
+            <p class="text-muted">Overview of your payroll management system</p>
+        </div>
+    </div>
+    
+    <!-- Business Health Metrics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card text-white bg-primary h-100">
+                <div class="card-body">
+                    <div class="card-title">
+                        <i class="fas fa-users me-2"></i>Total Employees
+                    </div>
+                    <h4>{{ stats.total_employees or 0 }}</h4>
+                    <small class="opacity-75">Company workforce</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card text-white bg-success h-100">
+                <div class="card-body">
+                    <div class="card-title">
+                        <i class="fas fa-money-bill-wave me-2"></i>Monthly Payroll Total
+                    </div>
+                    <h4>R {{ "{:,.2f}".format(stats.total_monthly_payroll or 0) }}</h4>
+                    <small class="opacity-75">Current period total</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card text-white bg-warning h-100">
+                <div class="card-body">
+                    <div class="card-title">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Unverified Payroll Entries
+                    </div>
+                    <h4>{{ stats.unverified_entries or 0 }}</h4>
+                    <small class="opacity-75">Require attention</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card text-white bg-info h-100">
+                <div class="card-body">
+                    <div class="card-title">
+                        <i class="fas fa-calendar-check me-2"></i>Next Payroll Due
+                    </div>
+                    <h4>{{ stats.next_payroll_date or "N/A" }}</h4>
+                    <small class="opacity-75">Payment schedule</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leave Summary -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">Leave Summary</div>
+                <div class="card-body">
+                    {% if leave_summary %}
+                        <div class="row text-center mb-3">
+                            <div class="col">
+                                <small class="text-muted">Allocated</small>
+                                <div class="h5">{{ leave_summary.total }}</div>
+                            </div>
+                            <div class="col">
+                                <small class="text-muted">Taken</small>
+                                <div class="h5">{{ leave_summary.taken }}</div>
+                            </div>
+                            <div class="col">
+                                <small class="text-muted">Remaining</small>
+                                <div class="h5">{{ leave_summary.remaining }}</div>
+                            </div>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-success" role="progressbar"
+                                 style="width: {{ (leave_summary.taken / leave_summary.total * 100) if leave_summary.total else 0 }}%;"
+                                 aria-valuenow="{{ leave_summary.taken }}" aria-valuemin="0"
+                                 aria-valuemax="{{ leave_summary.total }}"></div>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">Data unavailable</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bolt me-2"></i>
+                        Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <a href="{{ url_for('employees.index') }}" class="btn btn-outline-primary w-100 py-3">
+                                <i class="fas fa-users fa-2x d-block mb-2"></i>
+                                Manage Employees
+                            </a>
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <a href="{{ url_for('payroll.reports') }}" class="btn btn-outline-info w-100 py-3">
+                                <i class="fas fa-chart-bar fa-2x d-block mb-2"></i>
+                                View Reports
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

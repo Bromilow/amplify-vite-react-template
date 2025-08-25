@@ -1,0 +1,54 @@
+Please implement the following improvements to the navbar and routing:
+
+---
+
+🧭 NAVIGATION CHANGES:
+
+1. **Top Navbar Enhancements**:
+   - Add a company selector dropdown labeled **"Select Company"** on the top-right of the navbar.
+   - This dropdown should:
+     - Only appear for users with access to multiple companies.
+     - Show "Select Company" as the default if no company is selected.
+     - List all companies the user has access to.
+     - On selection, set the selected company in session and redirect to the company dashboard.
+
+2. **Show Company Navigation Bar (Second Navbar) Conditionally**:
+   - Only display the **second navbar** (containing links like Employees, Payroll, Reports, etc.) **if a company is selected in the session**.
+   - This bar should not appear on the Portfolio Dashboard or Login page.
+
+---
+
+💼 SESSION & ROUTING BEHAVIOR:
+
+3. On login:
+   - If the user has only one company, automatically select it and redirect to `/dashboard/`.
+   - If user has multiple companies, redirect to the **Portfolio Dashboard** (`/accountant/dashboard`) with no company pre-selected.
+   - If user selects a company from the dropdown later, store it in session and show the company dashboard and second nav.
+
+4. When switching companies via the dropdown:
+   - Update the session's selected company ID and name.
+   - Redirect to the company dashboard automatically.
+
+---
+
+🧩 TECH DETAILS:
+
+- Store selected company ID in session (e.g., `session['selected_company_id']`)
+- Make sure the `base.html` template:
+  - Always shows the top navbar
+  - Conditionally renders the second navbar only if `selected_company_id` is set in session
+- Add utility method (if not already present) to fetch current company from session in routes/templates
+- Ensure visual design of the dropdown is consistent with Bootstrap style and doesn't clutter the top-right
+
+---
+
+🔁 Optional Enhancements:
+- If a user deselects the company (e.g., selects "Select Company" again), clear the session value and redirect back to Portfolio Dashboard.
+- Show toast message or alert: "Company context cleared."
+
+---
+
+Test case:
+- Login as `admin@payroll.co.za` / `admin123`
+- Verify Portfolio Dashboard loads with no company selected
+- Use dropdown to switch between companies and confirm second nav appears

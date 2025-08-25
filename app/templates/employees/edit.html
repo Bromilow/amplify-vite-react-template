@@ -1,0 +1,596 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Employee - Payroll Management System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('employees.index') }}">Employees</a></li>
+                    <li class="breadcrumb-item active">Edit Employee</li>
+                </ol>
+            </nav>
+            <h1 class="h2">
+                <i class="fas fa-user-edit me-2"></i>
+                Edit Employee: {{ employee.full_name }}
+            </h1>
+            <p class="text-muted">Update employee information in the payroll system</p>
+        </div>
+        <div class="col-auto">
+            <a href="{{ url_for('employees.index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>
+                Back to Employees
+            </a>
+        </div>
+    </div>
+    
+    <!-- Employee Form -->
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-user-circle me-2"></i>
+                        Employee Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('employees.edit', employee_id=employee.id) }}" novalidate>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <!-- Personal Information Section -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-muted mb-3">
+                                    <i class="fas fa-user me-2"></i>
+                                    Personal Information
+                                </h6>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="first_name" class="form-label">First Name <span class="text-danger">*</span></label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="first_name" 
+                                       name="first_name" 
+                                       value="{{ form_data.first_name if form_data else employee.first_name }}"
+                                       required>
+                                <div class="invalid-feedback">
+                                    Please provide a valid first name.
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="last_name" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="last_name" 
+                                       name="last_name" 
+                                       value="{{ form_data.last_name if form_data else employee.last_name }}"
+                                       required>
+                                <div class="invalid-feedback">
+                                    Please provide a valid last name.
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="employee_id" class="form-label">Employee ID <span class="text-danger">*</span></label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="employee_id" 
+                                       name="employee_id" 
+                                       value="{{ form_data.employee_id if form_data else employee.employee_id }}"
+                                       placeholder="e.g., EMP006"
+                                       required>
+                                <div class="form-text">Unique identifier for the employee</div>
+                                <div class="invalid-feedback">
+                                    Please provide a unique employee ID.
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="identification_type" class="form-label">Identification Type <span class="text-danger">*</span></label>
+                                <select class="form-select" 
+                                        id="identification_type" 
+                                        name="identification_type" 
+                                        onchange="toggleIdentificationFields()" 
+                                        required>
+                                    <option value="sa_id" {{ 'selected' if not form_data or (form_data and form_data.identification_type == 'sa_id') or (not form_data and employee.identification_type == 'sa_id') else '' }}>South African ID</option>
+                                    <option value="passport" {{ 'selected' if (form_data and form_data.identification_type == 'passport') or (not form_data and employee.identification_type == 'passport') else '' }}>Passport Number</option>
+                                </select>
+                                <div class="form-text">Select the type of identification document</div>
+                            </div>
+                            <div class="col-md-6 mb-3" id="sa_id_field">
+                                <label for="id_number" class="form-label">South African ID Number <span class="text-danger">*</span></label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="id_number" 
+                                       name="id_number" 
+                                       value="{{ form_data.id_number if form_data else (employee.id_number or '') }}"
+                                       placeholder="e.g., 8311155310095"
+                                       maxlength="13"
+                                       pattern="[0-9]{13}"
+                                       oninput="validateAndExtractFromId()">
+                                <div class="form-text">13-digit SA ID number - Auto-fills date of birth and gender</div>
+                                <div id="id_validation_message" class="text-danger small" style="display: none;"></div>
+                                <div id="id_success_message" class="text-success small" style="display: none;">
+                                    <i class="fas fa-check-circle me-1"></i>Valid SA ID - Fields auto-populated
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3" id="passport_field" style="display: none;">
+                                <label for="passport_number" class="form-label">Passport Number <span class="text-danger">*</span></label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="passport_number" 
+                                       name="passport_number" 
+                                       value="{{ form_data.passport_number if form_data else (employee.passport_number or '') }}"
+                                       placeholder="e.g., A1234567"
+                                       maxlength="20">
+                                <div class="form-text">International passport number</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="tax_number" class="form-label">Tax Number</label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="tax_number" 
+                                       name="tax_number" 
+                                       value="{{ form_data.tax_number if form_data else (employee.tax_number or '') }}"
+                                       placeholder="e.g., TX006789012">
+                                <div class="form-text">Optional tax identification number</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="cell_number" class="form-label">Cell Number <span class="text-danger">*</span></label>
+                                <input type="tel" 
+                                       class="form-control" 
+                                       id="cell_number" 
+                                       name="cell_number" 
+                                       value="{{ form_data.cell_number if form_data else employee.cell_number }}"
+                                       placeholder="e.g., +27721234567"
+                                       required>
+                                <div class="form-text">South African mobile number</div>
+                                <div class="invalid-feedback">
+                                    Please provide a valid cell number.
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email Address</label>
+                                <input type="email" 
+                                       class="form-control" 
+                                       id="email" 
+                                       name="email" 
+                                       value="{{ form_data.email if form_data else (employee.email or '') }}"
+                                       placeholder="e.g., employee@company.co.za">
+                                <div class="form-text">Optional email address</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Employment Information Section -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-muted mb-3">
+                                    <i class="fas fa-briefcase me-2"></i>
+                                    Employment Information
+                                </h6>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="department" class="form-label">Department <span class="text-danger">*</span></label>
+                                <select class="form-select" id="department" name="department" required>
+                                    <option value="">Choose department...</option>
+                                    {% for dept in departments %}
+                                    <option value="{{ dept }}" 
+                                            {% if (form_data and form_data.department == dept) or (not form_data and employee.department == dept) %}selected{% endif %}>
+                                        {{ dept }}
+                                    </option>
+                                    {% endfor %}
+                                    <option value="Other">Other (specify below)</option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select a department.
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3" id="custom_department_group" style="display: none;">
+                                <label for="custom_department" class="form-label">Custom Department</label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="custom_department" 
+                                       placeholder="Enter new department name">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="start_date" class="form-label">Start Date <span class="text-danger">*</span></label>
+                                <input type="date" 
+                                       class="form-control" 
+                                       id="start_date" 
+                                       name="start_date" 
+                                       value="{{ form_data.start_date if form_data else employee.start_date.strftime('%Y-%m-%d') }}"
+                                       required>
+                                <div class="invalid-feedback">
+                                    Please provide a valid start date.
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="employment_type" class="form-label">Employment Type</label>
+                                <select class="form-select" id="employment_type" name="employment_type">
+                                    <option value="">Choose type...</option>
+                                    <option value="Full-Time" {% if (form_data and form_data.employment_type == 'Full-Time') or (not form_data and employee.employment_type == 'Full-Time') %}selected{% endif %}>Full-Time</option>
+                                    <option value="Part-Time" {% if (form_data and form_data.employment_type == 'Part-Time') or (not form_data and employee.employment_type == 'Part-Time') %}selected{% endif %}>Part-Time</option>
+                                    <option value="Contract" {% if (form_data and form_data.employment_type == 'Contract') or (not form_data and employee.employment_type == 'Contract') %}selected{% endif %}>Contract</option>
+                                    <option value="Temp" {% if (form_data and form_data.employment_type == 'Temp') or (not form_data and employee.employment_type == 'Temp') %}selected{% endif %}>Temporary</option>
+                                </select>
+                                <div class="form-text">Optional employment status</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Compensation Information Section -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-muted mb-3">
+                                    <i class="fas fa-dollar-sign me-2"></i>
+                                    Compensation Information
+                                </h6>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="salary_type" class="form-label">Salary Type <span class="text-danger">*</span></label>
+                                <select class="form-select" id="salary_type" name="salary_type" required>
+                                    <option value="">Choose salary type...</option>
+                                    <option value="monthly"
+                                            {% if (form_data and form_data.salary_type == 'monthly') or (not form_data and employee.salary_type == 'monthly') %}selected{% endif %}>Monthly</option>
+                                    <option value="hourly"
+                                            {% if (form_data and form_data.salary_type == 'hourly') or (not form_data and employee.salary_type == 'hourly') %}selected{% endif %}>Hourly</option>
+                                    <option value="daily"
+                                            {% if (form_data and form_data.salary_type == 'daily') or (not form_data and employee.salary_type == 'daily') %}selected{% endif %}>Daily</option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select a salary type.
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="salary" class="form-label">
+                                    <span id="salary_label">
+                                        {% if employee.salary_type == 'hourly' %}Hourly Rate{% elif employee.salary_type == 'daily' %}Daily Rate{% else %}Monthly Salary{% endif %}
+                                    </span> <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R</span>
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="salary" 
+                                           name="salary" 
+                                           value="{{ form_data.salary if form_data else employee.salary }}"
+                                           step="0.01" 
+                                           min="0"
+                                           required>
+                                    <span class="input-group-text" id="salary_unit">
+                                        {% if employee.salary_type == 'hourly' %}/hour{% elif employee.salary_type == 'daily' %}/day{% else %}/month{% endif %}
+                                    </span>
+                                </div>
+                                <div class="form-text" id="salary_help">
+                                    {% if employee.salary_type == 'hourly' %}Enter the hourly rate in South African Rand{% elif employee.salary_type == 'daily' %}Enter the daily rate in South African Rand{% else %}Enter the monthly salary amount in South African Rand{% endif %}
+                                </div>
+                                <div class="invalid-feedback">
+                                    Please provide a valid salary amount.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Banking Information Section -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-muted mb-3">
+                                    <i class="fas fa-university me-2"></i>
+                                    Banking Information
+                                </h6>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="bank_name" class="form-label">Bank Name <span class="text-danger">*</span></label>
+                                <select class="form-select" id="bank_name" name="bank_name" required>
+                                    <option value="">Choose bank...</option>
+                                    <option value="Standard Bank" 
+                                            {% if (form_data and form_data.bank_name == 'Standard Bank') or (not form_data and employee.bank_name == 'Standard Bank') %}selected{% endif %}>Standard Bank</option>
+                                    <option value="FNB" 
+                                            {% if (form_data and form_data.bank_name == 'FNB') or (not form_data and employee.bank_name == 'FNB') %}selected{% endif %}>First National Bank (FNB)</option>
+                                    <option value="ABSA" 
+                                            {% if (form_data and form_data.bank_name == 'ABSA') or (not form_data and employee.bank_name == 'ABSA') %}selected{% endif %}>ABSA</option>
+                                    <option value="Nedbank" 
+                                            {% if (form_data and form_data.bank_name == 'Nedbank') or (not form_data and employee.bank_name == 'Nedbank') %}selected{% endif %}>Nedbank</option>
+                                    <option value="Capitec Bank" 
+                                            {% if (form_data and form_data.bank_name == 'Capitec Bank') or (not form_data and employee.bank_name == 'Capitec Bank') %}selected{% endif %}>Capitec Bank</option>
+                                    <option value="African Bank" 
+                                            {% if (form_data and form_data.bank_name == 'African Bank') or (not form_data and employee.bank_name == 'African Bank') %}selected{% endif %}>African Bank</option>
+                                    <option value="Investec" 
+                                            {% if (form_data and form_data.bank_name == 'Investec') or (not form_data and employee.bank_name == 'Investec') %}selected{% endif %}>Investec</option>
+                                    <option value="Other" 
+                                            {% if (form_data and form_data.bank_name == 'Other') or (not form_data and employee.bank_name == 'Other') %}selected{% endif %}>Other</option>
+                                </select>
+                                <div class="form-text">Select the employee's bank</div>
+                                <div class="invalid-feedback">
+                                    Please select a bank.
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="account_number" class="form-label">Account Number <span class="text-danger">*</span></label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="account_number" 
+                                       name="account_number" 
+                                       value="{{ form_data.account_number if form_data else employee.account_number }}"
+                                       placeholder="e.g., 401234567890"
+                                       required>
+                                <div class="form-text">Bank account number for salary payments</div>
+                                <div class="invalid-feedback">
+                                    Please provide a valid account number.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Medical Aid Information Section -->
+                        <div class="row mb-4">
+                            <div class="col-12 mb-3">
+                                <h6 class="text-primary border-bottom pb-2">
+                                    <i class="fas fa-heartbeat me-2"></i>
+                                    Medical Aid Information
+                                </h6>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="medical_aid_scheme" class="form-label">Medical Aid Scheme</label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="medical_aid_scheme" 
+                                       name="medical_aid_scheme" 
+                                       value="{{ form_data.medical_aid_scheme if form_data else (employee.medical_aid_scheme if employee.medical_aid_scheme else '') }}"
+                                       placeholder="e.g., Discovery Health, Momentum">
+                                <div class="form-text">Name of medical aid scheme (optional)</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="medical_aid_dependants" class="form-label">Number of Dependants</label>
+                                <input type="number" 
+                                       class="form-control" 
+                                       id="medical_aid_dependants" 
+                                       name="medical_aid_dependants" 
+                                       min="0"
+                                       max="20"
+                                       value="{{ form_data.medical_aid_dependants if form_data else (employee.medical_aid_dependants if employee.medical_aid_dependants else '') }}"
+                                       placeholder="0">
+                                <div class="form-text">Includes employee + dependants for tax credit calculation</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="medical_aid_employer" class="form-label">Employer Contribution (R)</label>
+                                <input type="number" 
+                                       class="form-control" 
+                                       id="medical_aid_employer" 
+                                       name="medical_aid_employer" 
+                                       step="0.01"
+                                       min="0"
+                                       value="{{ form_data.medical_aid_employer if form_data else (employee.medical_aid_employer if employee.medical_aid_employer else '') }}"
+                                       placeholder="0.00"
+                                       oninput="calculateMedicalAidTotal()">
+                                <div class="form-text">Monthly contribution paid by employer (fringe benefit)</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="medical_aid_employee" class="form-label">Employee Contribution (R)</label>
+                                <input type="number" 
+                                       class="form-control" 
+                                       id="medical_aid_employee" 
+                                       name="medical_aid_employee" 
+                                       step="0.01"
+                                       min="0"
+                                       value="{{ form_data.medical_aid_employee if form_data else (employee.medical_aid_employee if employee.medical_aid_employee else '') }}"
+                                       placeholder="0.00"
+                                       oninput="calculateMedicalAidTotal()">
+                                <div class="form-text">Monthly contribution deducted from employee</div>
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <label for="medical_aid_total" class="form-label">Total Monthly Contribution (R)</label>
+                                <input type="number" 
+                                       class="form-control" 
+                                       id="medical_aid_total" 
+                                       name="medical_aid_total" 
+                                       step="0.01"
+                                       min="0"
+                                       value="{{ form_data.medical_aid_total if form_data else (employee.medical_aid_total if employee.medical_aid_total else '') }}"
+                                       placeholder="0.00"
+                                       readonly>
+                                <div class="form-text">Auto-calculated: Employer + Employee contributions</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Form Actions -->
+                        <div class="row">
+                            <div class="col-12">
+                                <hr>
+                                <div class="d-flex justify-content-between">
+                                    <a href="{{ url_for('employees.index') }}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times me-2"></i>
+                                        Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>
+                                        Update Employee
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Medical aid total calculation
+function calculateMedicalAidTotal() {
+    const employerContrib = parseFloat(document.getElementById('medical_aid_employer').value) || 0;
+    const employeeContrib = parseFloat(document.getElementById('medical_aid_employee').value) || 0;
+    const total = employerContrib + employeeContrib;
+    document.getElementById('medical_aid_total').value = total.toFixed(2);
+}
+
+// Identification Type Toggle Functionality for Edit Form
+function toggleIdentificationFields() {
+    const identificationType = document.getElementById('identification_type').value;
+    const saIdField = document.getElementById('sa_id_field');
+    const passportField = document.getElementById('passport_field');
+    const idNumberInput = document.getElementById('id_number');
+    const passportNumberInput = document.getElementById('passport_number');
+    
+    if (identificationType === 'sa_id') {
+        // Show SA ID field, hide passport field
+        saIdField.style.display = 'block';
+        passportField.style.display = 'none';
+        
+        // Clear passport field
+        if (passportNumberInput) {
+            passportNumberInput.value = '';
+            passportNumberInput.removeAttribute('required');
+        }
+        
+        // Set SA ID as required
+        if (idNumberInput) {
+            idNumberInput.setAttribute('required', 'required');
+        }
+        
+    } else {
+        // Show passport field, hide SA ID field
+        saIdField.style.display = 'none';
+        passportField.style.display = 'block';
+        
+        // Clear SA ID field and validation
+        if (idNumberInput) {
+            idNumberInput.value = '';
+            idNumberInput.removeAttribute('required');
+            clearIdValidation();
+        }
+        
+        // Set passport as required
+        if (passportNumberInput) {
+            passportNumberInput.setAttribute('required', 'required');
+        }
+    }
+}
+
+function clearIdValidation() {
+    const idValidationMessage = document.getElementById('id_validation_message');
+    const idSuccessMessage = document.getElementById('id_success_message');
+    const idNumberInput = document.getElementById('id_number');
+    
+    if (idValidationMessage) idValidationMessage.style.display = 'none';
+    if (idSuccessMessage) idSuccessMessage.style.display = 'none';
+    if (idNumberInput) {
+        idNumberInput.classList.remove('is-valid', 'is-invalid');
+    }
+}
+
+function validateAndExtractFromId() {
+    // Only validate if SA ID is selected
+    const identificationType = document.getElementById('identification_type').value;
+    if (identificationType !== 'sa_id') {
+        return;
+    }
+    
+    const idNumberInput = document.getElementById('id_number');
+    const idValidationMessage = document.getElementById('id_validation_message');
+    const idSuccessMessage = document.getElementById('id_success_message');
+    
+    if (!idNumberInput) return;
+    
+    const idNumber = idNumberInput.value.trim();
+    console.log("validateAndExtractFromId called with:", idNumber);
+    
+    // Clear previous validation
+    clearIdValidation();
+    
+    if (!idNumber) {
+        return;
+    }
+    
+    // Basic validation for 13 digits
+    if (!/^\d{13}$/.test(idNumber)) {
+        if (idValidationMessage) {
+            idValidationMessage.textContent = 'ID number must be exactly 13 digits';
+            idValidationMessage.style.display = 'block';
+        }
+        idNumberInput.classList.add('is-invalid');
+        return;
+    }
+    
+    // Show success for now - full validation can be added later
+    if (idSuccessMessage) {
+        idSuccessMessage.style.display = 'block';
+    }
+    idNumberInput.classList.add('is-valid');
+}
+
+// Make functions globally available
+window.toggleIdentificationFields = toggleIdentificationFields;
+window.validateAndExtractFromId = validateAndExtractFromId;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize identification type toggle
+    toggleIdentificationFields();
+    
+    // Calculate medical aid total on page load
+    calculateMedicalAidTotal();
+    
+    // Handle department selection
+    const departmentSelect = document.getElementById('department');
+    const customDeptGroup = document.getElementById('custom_department_group');
+    const customDeptInput = document.getElementById('custom_department');
+    
+    departmentSelect.addEventListener('change', function() {
+        if (this.value === 'Other') {
+            customDeptGroup.style.display = 'block';
+            customDeptInput.required = true;
+        } else {
+            customDeptGroup.style.display = 'none';
+            customDeptInput.required = false;
+            customDeptInput.value = '';
+        }
+    });
+    
+    // Handle salary type change
+    const salaryTypeSelect = document.getElementById('salary_type');
+    const salaryLabel = document.getElementById('salary_label');
+    const salaryUnit = document.getElementById('salary_unit');
+    const salaryHelp = document.getElementById('salary_help');
+    
+    salaryTypeSelect.addEventListener('change', function() {
+        if (this.value === 'hourly') {
+            salaryLabel.textContent = 'Hourly Rate';
+            salaryUnit.textContent = '/hour';
+            salaryHelp.textContent = 'Enter the hourly rate in South African Rand';
+        } else if (this.value === 'monthly') {
+            salaryLabel.textContent = 'Monthly Salary';
+            salaryUnit.textContent = '/month';
+            salaryHelp.textContent = 'Enter the monthly salary amount in South African Rand';
+        } else if (this.value === 'daily') {
+            salaryLabel.textContent = 'Daily Salary';
+            salaryUnit.textContent = '/day';
+            salaryHelp.textContent = 'Enter the daily rate in South African Rand';
+        }
+    });
+    
+    // Form validation
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(event) {
+        // Handle custom department
+        if (departmentSelect.value === 'Other' && customDeptInput.value.trim()) {
+            // Create a hidden input with the custom department value
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'department';
+            hiddenInput.value = customDeptInput.value.trim();
+            form.appendChild(hiddenInput);
+            departmentSelect.removeAttribute('name'); // Remove name to avoid conflict
+        }
+        
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        
+        form.classList.add('was-validated');
+    });
+});
+</script>
+{% endblock %}

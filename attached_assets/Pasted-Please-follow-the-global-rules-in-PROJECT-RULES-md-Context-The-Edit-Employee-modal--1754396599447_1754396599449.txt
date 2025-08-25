@@ -1,0 +1,80 @@
+Please follow the global rules in `PROJECT_RULES.md`
+
+---
+
+### 🧩 Context
+
+The Edit Employee modal (`EditEmployeeModal`) must match the **Add Employee form** (`/employees/new`) in both **field structure** and **behavior**. Currently:
+
+- It does not support the ID vs Passport toggle correctly
+- It may be missing new fields like `identification_type`, `passport_number`, or updated recurring deduction logic
+- JavaScript toggle logic may not reapply correctly when editing
+
+---
+
+### ✅ Required Fixes
+
+1. **Template Structure**
+   - File: `templates/employees/edit_employee_modal.html`
+   - Copy and adapt the relevant field layout from `new.html`, including:
+     - `identification_type` toggle (`South African ID` vs `Passport`)
+     - Conditional visibility of `id_number` and `passport_number` fields
+     - DOB and Gender auto-fill logic when using SA ID
+     - Recurring Deductions list with delete/edit support
+
+2. **JavaScript Enhancements**
+   - File: `static/js/employees.js`
+   - When loading employee data into the modal:
+     - Use `data.identification_type` to toggle the correct fields
+     - If `passport`, show `passport_number` and ensure DOB/gender are editable
+     - If `id_number`, auto-fill DOB/gender and hide `passport_number`
+     - Call the same toggle logic used in the Add form
+
+   Example:
+   ```javascript
+   if (data.identification_type === "passport") {
+       $('#edit_id_number_group').hide();
+       $('#edit_passport_number_group').show();
+       $('#edit_date_of_birth').prop('readonly', false);
+       $('#edit_gender').prop('disabled', false);
+   } else {
+       $('#edit_id_number_group').show();
+       $('#edit_passport_number_group').hide();
+       $('#edit_date_of_birth').prop('readonly', true);
+       $('#edit_gender').prop('disabled', true);
+   }
+Backend Data Prep
+
+File: routes/employees.py
+
+Ensure Employee.to_dict() returns all required fields:
+
+identification_type, passport_number, id_number, etc.
+
+JSON route should return complete employee object for modal to consume
+
+Recurring Deductions
+
+Make sure the modal form shows the employee's current deductions
+
+Users can remove/edit them
+
+Do not re-apply company defaults here
+
+📎 Knock-On Checks
+Verify Edit modal supports both SA ID and Passport-based employees
+
+Ensure no mismatch between Add and Edit validation
+
+Confirm PDF and UI19 generation logic uses the correct ID/passport field
+
+🧪 Output
+Edit modal opens with all fields populated
+
+Toggle works correctly between ID and Passport
+
+DOB and Gender auto-fill/edit logic respected
+
+Recurring deductions reflect current state
+
+Submitting unchanged data causes no errors

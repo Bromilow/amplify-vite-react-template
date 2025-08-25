@@ -1,0 +1,73 @@
+# 🧠 OBJECTIVE:
+Perform a complete scan of the Flask-based Payroll Manager app and generate an updated `TECHNICAL_OVERVIEW.md` file in the root directory. This file should reflect the current state of the app, including architecture, models, routes, database schema, and major features.
+
+# 📋 REQUIRED OUTPUT (TECHNICAL_OVERVIEW.md CONTENT):
+Include the following sections in detail:
+
+1. **Project Overview**
+   - Brief summary of the system's purpose (multi-tenant South African Payroll Manager with company and employee management, payroll processing, and reports).
+
+2. **Technology Stack**
+   - Backend: Flask, SQLAlchemy
+   - Frontend: Bootstrap 5, Chart.js
+   - Database: PostgreSQL
+   - Hosting: Replit
+   - Authentication: Flask-Login
+
+3. **App Structure**
+   - Describe blueprint modules (`auth`, `dashboard`, `employees`, `payroll`, `reports`, `company`)
+   - Folder layout (e.g., `app/routes`, `app/templates`, `app/models`, `app/static`)
+
+4. **Database Models**
+   - List and describe each model:
+     - `User`
+     - `Company`
+     - `Employee`
+     - `PayrollEntry`
+     - `EmployeeRecurringDeduction`
+     - `CompanyDeductionDefault`
+     - `Beneficiary`
+   - Include table fields and relationships (foreign keys, one-to-many, etc.)
+   - Note: Highlight that schema changes require **manual ALTER TABLE** if database already exists (no Flask-Migrate)
+
+5. **Key Functional Features**
+   - Multi-company support with company switching
+   - Employee add/edit/view with banking info and defaults
+   - Payroll processing with verification and finalization
+   - Recurring deductions linked to Beneficiaries
+   - Reports & Exports dashboard (CSV, PDF, EFT)
+   - Company settings page
+   - New redesigned dashboard with statistics and GPT assistant
+
+6. **Routing Overview**
+   - List all major routes grouped by blueprint
+   - Example:
+     - `/dashboard/`
+     - `/employees/add`
+     - `/payroll/process`
+     - `/reports/export/payroll.csv`
+
+7. **Permissions and Roles**
+   - If implemented: explain user roles (admin, accountant, etc.)
+
+8. **Front-End Technologies**
+   - Use of Bootstrap cards and responsive grid layout
+   - Use of Chart.js for visual reporting
+   - JavaScript enhancements (modals, AJAX, filters)
+
+9. **Known Issues or TODOs**
+   - Dashboard layout inconsistencies
+   - Placeholder components in development
+   - Missing calendar view
+   - Potential optimizations in query handling and UI/UX
+
+10. **Deployment Notes**
+   - Replit caveats (no Flask-Migrate, manual schema updates required)
+   - Use of `.env` for config
+   - Debug settings for development
+
+# 📂 OUTPUT INSTRUCTION:
+Save the final generated content to a file named `TECHNICAL_OVERVIEW.md` in the root of the project, replacing any existing file.
+
+# ✅ EXECUTE:
+Scan the current codebase, compile accurate technical information, format in Markdown, and write the updated overview file.

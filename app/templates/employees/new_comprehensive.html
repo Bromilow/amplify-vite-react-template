@@ -1,0 +1,638 @@
+{% extends "base.html" %}
+
+{% block title %}Add New Employee - Payroll Management System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('employees.index') }}">Employees</a></li>
+                    <li class="breadcrumb-item active">Add New Employee</li>
+                </ol>
+            </nav>
+            <h1 class="h2">
+                <i class="fas fa-user-plus me-2"></i>
+                Add New Employee
+            </h1>
+            <p class="text-muted">Complete employee information for payroll and HR management</p>
+        </div>
+        <div class="col-auto">
+            <a href="{{ url_for('employees.index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>
+                Back to Employees
+            </a>
+        </div>
+    </div>
+    
+    <!-- Employee Form -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-user-circle me-2"></i>
+                        Employee Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('employees.new') }}" novalidate>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                        <!-- 1. Personal Information Section -->
+                        <div class="row mb-5">
+                            <div class="col-12">
+                                <h6 class="text-primary mb-3 border-bottom pb-2">
+                                    <i class="fas fa-user me-2"></i>
+                                    1. Personal Information
+                                </h6>
+                            </div>
+                            
+                            <!-- Employee ID (Auto-generated) -->
+                            <div class="col-md-6 mb-3">
+                                <label for="employee_id" class="form-label">Employee ID</label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="employee_id" 
+                                       name="employee_id" 
+                                       value="{{ generated_employee_id if generated_employee_id else 'Will be auto-generated' }}"
+                                       readonly
+                                       style="background-color: var(--bs-secondary-bg);">
+                                <div class="form-text">Auto-generated unique identifier</div>
+                            </div>
+                            
+                            <!-- First Name -->
+                            <div class="col-md-6 mb-3">
+                                <label for="first_name" class="form-label">First Name <span class="text-danger">*</span></label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="first_name" 
+                                       name="first_name" 
+                                       value="{{ form_data.first_name if form_data else '' }}"
+                                       required>
+                            </div>
+                            
+                            <!-- Last Name -->
+                            <div class="col-md-6 mb-3">
+                                <label for="last_name" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="last_name" 
+                                       name="last_name" 
+                                       value="{{ form_data.last_name if form_data else '' }}"
+                                       required>
+                            </div>
+                            
+                            <!-- ID Number -->
+                            <div class="col-md-6 mb-3">
+                                <label for="id_number" class="form-label">ID Number <span class="text-danger">*</span></label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="id_number" 
+                                       name="id_number" 
+                                       value="{{ form_data.id_number if form_data else '' }}"
+                                       placeholder="e.g., 8311155310095"
+                                       maxlength="13"
+                                       pattern="[0-9]{13}"
+                                       required>
+                                <div class="form-text">South African ID number (13 digits)</div>
+                            </div>
+                            
+                            <!-- Date of Birth -->
+                            <div class="col-md-4 mb-3">
+                                <label for="date_of_birth" class="form-label">Date of Birth</label>
+                                <input type="date" 
+                                       class="form-control" 
+                                       id="date_of_birth" 
+                                       name="date_of_birth" 
+                                       value="{{ form_data.date_of_birth if form_data else '' }}">
+                            </div>
+                            
+                            <!-- Gender -->
+                            <div class="col-md-4 mb-3">
+                                <label for="gender" class="form-label">Gender</label>
+                                <select class="form-select" id="gender" name="gender">
+                                    <option value="">Select Gender</option>
+                                    <option value="Male" {{ 'selected' if form_data and form_data.gender == 'Male' else '' }}>Male</option>
+                                    <option value="Female" {{ 'selected' if form_data and form_data.gender == 'Female' else '' }}>Female</option>
+                                    <option value="Other" {{ 'selected' if form_data and form_data.gender == 'Other' else '' }}>Other</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Marital Status -->
+                            <div class="col-md-4 mb-3">
+                                <label for="marital_status" class="form-label">Marital Status</label>
+                                <select class="form-select" id="marital_status" name="marital_status">
+                                    <option value="">Select Status</option>
+                                    <option value="Single" {{ 'selected' if form_data and form_data.marital_status == 'Single' else '' }}>Single</option>
+                                    <option value="Married" {{ 'selected' if form_data and form_data.marital_status == 'Married' else '' }}>Married</option>
+                                    <option value="Divorced" {{ 'selected' if form_data and form_data.marital_status == 'Divorced' else '' }}>Divorced</option>
+                                    <option value="Widowed" {{ 'selected' if form_data and form_data.marital_status == 'Widowed' else '' }}>Widowed</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Tax Number -->
+                            <div class="col-md-6 mb-3">
+                                <label for="tax_number" class="form-label">Tax Number</label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="tax_number" 
+                                       name="tax_number" 
+                                       value="{{ form_data.tax_number if form_data else '' }}"
+                                       placeholder="e.g., 9876543210">
+                                <div class="form-text">SARS Tax Reference Number (optional)</div>
+                            </div>
+                            
+                            <!-- Cell Number -->
+                            <div class="col-md-6 mb-3">
+                                <label for="cell_number" class="form-label">Cell Number <span class="text-danger">*</span></label>
+                                <input type="tel" 
+                                       class="form-control" 
+                                       id="cell_number" 
+                                       name="cell_number" 
+                                       value="{{ form_data.cell_number if form_data else '' }}"
+                                       placeholder="e.g., 0821234567"
+                                       required>
+                            </div>
+                            
+                            <!-- Email Address -->
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email Address</label>
+                                <input type="email" 
+                                       class="form-control" 
+                                       id="email" 
+                                       name="email" 
+                                       value="{{ form_data.email if form_data else '' }}"
+                                       placeholder="employee@company.com">
+                            </div>
+                            
+                            <!-- Physical Address -->
+                            <div class="col-md-6 mb-3">
+                                <label for="physical_address" class="form-label">Physical Address <span class="text-danger">*</span></label>
+                                <textarea class="form-control" 
+                                          id="physical_address" 
+                                          name="physical_address" 
+                                          rows="3"
+                                          placeholder="Full residential address"
+                                          required>{{ form_data.physical_address if form_data else '' }}</textarea>
+                            </div>
+                        </div>
+
+                        <!-- 2. Employment Details Section -->
+                        <div class="row mb-5">
+                            <div class="col-12">
+                                <h6 class="text-primary mb-3 border-bottom pb-2">
+                                    <i class="fas fa-briefcase me-2"></i>
+                                    2. Employment Details
+                                </h6>
+                            </div>
+                            
+                            <!-- Department -->
+                            <div class="col-md-6 mb-3">
+                                <label for="department" class="form-label">Department <span class="text-danger">*</span></label>
+                                <select class="form-select" id="department" name="department" required>
+                                    <option value="">Select Department</option>
+                                    {% for dept in departments %}
+                                    <option value="{{ dept }}" {{ 'selected' if form_data and form_data.department == dept else '' }}>{{ dept }}</option>
+                                    {% endfor %}
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Job Title -->
+                            <div class="col-md-6 mb-3">
+                                <label for="job_title" class="form-label">Job Title <span class="text-danger">*</span></label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="job_title" 
+                                       name="job_title" 
+                                       value="{{ form_data.job_title if form_data else '' }}"
+                                       placeholder="e.g., Senior Software Developer"
+                                       required>
+                            </div>
+                            
+                            <!-- Start Date -->
+                            <div class="col-md-4 mb-3">
+                                <label for="start_date" class="form-label">Start Date <span class="text-danger">*</span></label>
+                                <input type="date" 
+                                       class="form-control" 
+                                       id="start_date" 
+                                       name="start_date" 
+                                       value="{{ form_data.start_date if form_data else '' }}"
+                                       required>
+                            </div>
+                            
+                            <!-- End Date -->
+                            <div class="col-md-4 mb-3">
+                                <label for="end_date" class="form-label">End Date</label>
+                                <input type="date" 
+                                       class="form-control" 
+                                       id="end_date" 
+                                       name="end_date" 
+                                       value="{{ form_data.end_date if form_data else '' }}">
+                                <div class="form-text">Leave empty for permanent employees</div>
+                            </div>
+                            
+                            <!-- Employment Status -->
+                            <div class="col-md-4 mb-3">
+                                <label for="employment_status" class="form-label">Employment Status <span class="text-danger">*</span></label>
+                                <select class="form-select" id="employment_status" name="employment_status" required>
+                                    <option value="">Select Status</option>
+                                    <option value="Full-Time" {{ 'selected' if form_data and form_data.employment_status == 'Full-Time' else '' }}>Full-Time</option>
+                                    <option value="Part-Time" {{ 'selected' if form_data and form_data.employment_status == 'Part-Time' else '' }}>Part-Time</option>
+                                    <option value="Contract" {{ 'selected' if form_data and form_data.employment_status == 'Contract' else '' }}>Contract</option>
+                                    <option value="Temp" {{ 'selected' if form_data and form_data.employment_status == 'Temp' else '' }}>Temporary</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Reporting Manager -->
+                            <div class="col-md-6 mb-3">
+                                <label for="reporting_manager" class="form-label">Reporting Manager</label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="reporting_manager" 
+                                       name="reporting_manager" 
+                                       value="{{ form_data.reporting_manager if form_data else '' }}"
+                                       placeholder="Manager's name">
+                            </div>
+                            
+                            <!-- Union Member -->
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Union Member</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" 
+                                           type="checkbox" 
+                                           id="union_member" 
+                                           name="union_member"
+                                           {{ 'checked' if form_data and form_data.union_member else '' }}>
+                                    <label class="form-check-label" for="union_member">
+                                        Employee is a union member
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3. Compensation Section -->
+                        <div class="row mb-5">
+                            <div class="col-12">
+                                <h6 class="text-primary mb-3 border-bottom pb-2">
+                                    <i class="fas fa-money-bill-wave me-2"></i>
+                                    3. Compensation
+                                </h6>
+                            </div>
+                            
+                            <!-- Salary Type -->
+                            <div class="col-md-4 mb-3">
+                                <label for="salary_type" class="form-label">Salary Type <span class="text-danger">*</span></label>
+                                <select class="form-select" id="salary_type" name="salary_type" required>
+                                    <option value="">Select Type</option>
+                                    <option value="monthly" {{ 'selected' if form_data and form_data.salary_type == 'monthly' else '' }}>Monthly</option>
+                                    <option value="hourly" {{ 'selected' if form_data and form_data.salary_type == 'hourly' else '' }}>Hourly</option>
+                                    <option value="daily" {{ 'selected' if form_data and form_data.salary_type == 'daily' else '' }}>Daily</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Salary Amount -->
+                            <div class="col-md-4 mb-3">
+                                <label for="salary" class="form-label">
+                                    <span id="salary_label">Salary</span> <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R</span>
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="salary" 
+                                           name="salary" 
+                                           step="0.01"
+                                           min="0"
+                                           value="{{ form_data.salary if form_data else '' }}"
+                                           placeholder="0.00"
+                                           required>
+                                    <span class="input-group-text" id="salary_unit">per month</span>
+                                </div>
+                                <div class="form-text" id="salary_help">Monthly salary amount</div>
+                            </div>
+                            
+                            <!-- Overtime Eligible -->
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Overtime</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" 
+                                           type="checkbox" 
+                                           id="overtime_eligible" 
+                                           name="overtime_eligible"
+                                           {{ 'checked' if form_data and form_data.overtime_eligible else 'checked' }}>
+                                    <label class="form-check-label" for="overtime_eligible">
+                                        Eligible for overtime pay
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <!-- Allowances -->
+                            <div class="col-md-6 mb-3">
+                                <label for="allowances" class="form-label">Monthly Allowances</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R</span>
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="allowances" 
+                                           name="allowances" 
+                                           step="0.01"
+                                           min="0"
+                                           value="{{ form_data.allowances if form_data else '0.00' }}"
+                                           placeholder="0.00">
+                                </div>
+                                <div class="form-text">Travel, housing, or other monthly allowances</div>
+                            </div>
+                            
+                            <!-- Bonus Type -->
+                            <div class="col-md-6 mb-3">
+                                <label for="bonus_type" class="form-label">Bonus Type</label>
+                                <select class="form-select" id="bonus_type" name="bonus_type">
+                                    <option value="">No Bonus</option>
+                                    <option value="Fixed" {{ 'selected' if form_data and form_data.bonus_type == 'Fixed' else '' }}>Fixed Annual Bonus</option>
+                                    <option value="Discretionary" {{ 'selected' if form_data and form_data.bonus_type == 'Discretionary' else '' }}>Discretionary Bonus</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 4. Statutory Deductions Section -->
+                        <div class="row mb-5">
+                            <div class="col-12">
+                                <h6 class="text-primary mb-3 border-bottom pb-2">
+                                    <i class="fas fa-calculator me-2"></i>
+                                    4. Statutory Deductions
+                                </h6>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" 
+                                           type="checkbox" 
+                                           id="uif_contributing" 
+                                           name="uif_contributing"
+                                           {{ 'checked' if form_data and form_data.uif_contributing else 'checked' }}>
+                                    <label class="form-check-label" for="uif_contributing">
+                                        <strong>UIF Contributing</strong>
+                                        <div class="form-text">Unemployment Insurance Fund (1% of salary)</div>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" 
+                                           type="checkbox" 
+                                           id="sdl_contributing" 
+                                           name="sdl_contributing"
+                                           {{ 'checked' if form_data and form_data.sdl_contributing else 'checked' }}>
+                                    <label class="form-check-label" for="sdl_contributing">
+                                        <strong>SDL Contributing</strong>
+                                        <div class="form-text">Skills Development Levy (1% of salary)</div>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" 
+                                           type="checkbox" 
+                                           id="paye_exempt" 
+                                           name="paye_exempt"
+                                           {{ 'checked' if form_data and form_data.paye_exempt else '' }}>
+                                    <label class="form-check-label" for="paye_exempt">
+                                        <strong>PAYE Exempt</strong>
+                                        <div class="form-text">Employee is exempt from PAYE tax</div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 5. Medical Aid Section -->
+                        <div class="row mb-5">
+                            <div class="col-12">
+                                <h6 class="text-primary mb-3 border-bottom pb-2">
+                                    <i class="fas fa-heartbeat me-2"></i>
+                                    5. Medical Aid
+                                </h6>
+                            </div>
+                            
+                            <div id="medical_aid_details">
+                                <div class="row">
+                                    <!-- Medical Aid Provider -->
+                                    <div class="col-md-6 mb-3">
+                                        <label for="medical_aid_scheme" class="form-label">Medical Aid Provider</label>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               id="medical_aid_scheme" 
+                                               name="medical_aid_scheme" 
+                                               value="{{ form_data.medical_aid_scheme if form_data else '' }}"
+                                               placeholder="e.g., Discovery Health">
+                                    </div>
+                                    
+                                    <!-- Number of Dependants -->
+                                    <div class="col-md-6 mb-3">
+                                        <label for="medical_aid_dependants" class="form-label">Number of Dependants</label>
+                                        <input type="number" 
+                                               class="form-control" 
+                                               id="medical_aid_dependants" 
+                                               name="medical_aid_dependants" 
+                                               min="0"
+                                               value="{{ form_data.medical_aid_dependants if form_data else '0' }}"
+                                               placeholder="0">
+                                        <div class="form-text">Used for tax credit calculations</div>
+                                    </div>
+                                    
+                                    <!-- Employee Contribution -->
+                                    <div class="col-md-6 mb-3">
+                                        <label for="medical_aid_employee" class="form-label">Employee Contribution</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">R</span>
+                                            <input type="number" 
+                                                   class="form-control" 
+                                                   id="medical_aid_employee" 
+                                                   name="medical_aid_employee" 
+                                                   step="0.01"
+                                                   min="0"
+                                                   value="{{ form_data.medical_aid_employee if form_data else '' }}"
+                                                   placeholder="0.00">
+                                        </div>
+                                        <div class="form-text">Monthly amount deducted from salary</div>
+                                    </div>
+                                    
+                                    <!-- Employer Contribution -->
+                                    <div class="col-md-6 mb-3">
+                                        <label for="medical_aid_employer" class="form-label">Employer Contribution</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">R</span>
+                                            <input type="number" 
+                                                   class="form-control" 
+                                                   id="medical_aid_employer" 
+                                                   name="medical_aid_employer" 
+                                                   step="0.01"
+                                                   min="0"
+                                                   value="{{ form_data.medical_aid_employer if form_data else '' }}"
+                                                   placeholder="0.00">
+                                        </div>
+                                        <div class="form-text">Monthly amount paid by employer</div>
+                                    </div>
+                                    
+                                    <!-- Fringe Benefit -->
+                                    <div class="col-12 mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" 
+                                                   type="checkbox" 
+                                                   id="medical_aid_fringe_benefit" 
+                                                   name="medical_aid_fringe_benefit"
+                                                   {{ 'checked' if form_data and form_data.medical_aid_fringe_benefit else '' }}>
+                                            <label class="form-check-label" for="medical_aid_fringe_benefit">
+                                                Fringe Benefit Applies
+                                                <div class="form-text">Employer contribution is taxable as fringe benefit</div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 6. Leave & Bank Section -->
+                        <div class="row mb-5">
+                            <div class="col-12">
+                                <h6 class="text-primary mb-3 border-bottom pb-2">
+                                    <i class="fas fa-calendar-alt me-2"></i>
+                                    6. Leave & Banking
+                                </h6>
+                            </div>
+                            
+                            <!-- Annual Leave Days -->
+                            <div class="col-md-4 mb-3">
+                                <label for="annual_leave_days" class="form-label">Annual Leave Days <span class="text-danger">*</span></label>
+                                <input type="number" 
+                                       class="form-control" 
+                                       id="annual_leave_days" 
+                                       name="annual_leave_days" 
+                                       min="0"
+                                       max="30"
+                                       value="{{ form_data.annual_leave_days if form_data else '15' }}"
+                                       required>
+                                <div class="form-text">Standard is 15 days per year</div>
+                            </div>
+                            
+                            <!-- Bank Name -->
+                            <div class="col-md-4 mb-3">
+                                <label for="bank_name" class="form-label">Bank Name <span class="text-danger">*</span></label>
+                                <select class="form-select" id="bank_name" name="bank_name" required>
+                                    <option value="">Select Bank</option>
+                                    <option value="ABSA Bank" {{ 'selected' if form_data and form_data.bank_name == 'ABSA Bank' else '' }}>ABSA Bank</option>
+                                    <option value="Standard Bank" {{ 'selected' if form_data and form_data.bank_name == 'Standard Bank' else '' }}>Standard Bank</option>
+                                    <option value="First National Bank (FNB)" {{ 'selected' if form_data and form_data.bank_name == 'First National Bank (FNB)' else '' }}>First National Bank (FNB)</option>
+                                    <option value="Nedbank" {{ 'selected' if form_data and form_data.bank_name == 'Nedbank' else '' }}>Nedbank</option>
+                                    <option value="Capitec Bank" {{ 'selected' if form_data and form_data.bank_name == 'Capitec Bank' else '' }}>Capitec Bank</option>
+                                    <option value="African Bank" {{ 'selected' if form_data and form_data.bank_name == 'African Bank' else '' }}>African Bank</option>
+                                    <option value="Investec" {{ 'selected' if form_data and form_data.bank_name == 'Investec' else '' }}>Investec</option>
+                                    <option value="Other" {{ 'selected' if form_data and form_data.bank_name == 'Other' else '' }}>Other</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Account Type -->
+                            <div class="col-md-4 mb-3">
+                                <label for="account_type" class="form-label">Account Type <span class="text-danger">*</span></label>
+                                <select class="form-select" id="account_type" name="account_type" required>
+                                    <option value="">Select Type</option>
+                                    <option value="Savings" {{ 'selected' if form_data and form_data.account_type == 'Savings' else '' }}>Savings Account</option>
+                                    <option value="Cheque" {{ 'selected' if form_data and form_data.account_type == 'Cheque' else '' }}>Cheque Account</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Account Number -->
+                            <div class="col-md-12 mb-3">
+                                <label for="account_number" class="form-label">Account Number <span class="text-danger">*</span></label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="account_number" 
+                                       name="account_number" 
+                                       value="{{ form_data.account_number if form_data else '' }}"
+                                       placeholder="Bank account number"
+                                       required>
+                                <div class="form-text">Full bank account number for salary payments</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Form Actions -->
+                        <div class="row">
+                            <div class="col-12">
+                                <hr>
+                                <div class="d-flex justify-content-between">
+                                    <a href="{{ url_for('employees.index') }}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times me-2"></i>
+                                        Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>
+                                        Add Employee
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // Salary Type Change Handler
+    const salaryTypeSelect = document.getElementById('salary_type');
+    const salaryLabel = document.getElementById('salary_label');
+    const salaryUnit = document.getElementById('salary_unit');
+    const salaryHelp = document.getElementById('salary_help');
+    
+    function updateSalaryLabels() {
+        if (salaryTypeSelect.value === 'hourly') {
+            salaryLabel.textContent = 'Hourly Rate';
+            salaryUnit.textContent = 'per hour';
+            salaryHelp.textContent = 'Hourly rate amount';
+        } else if (salaryTypeSelect.value === 'daily') {
+            salaryLabel.textContent = 'Daily Salary';
+            salaryUnit.textContent = 'per day';
+            salaryHelp.textContent = 'Daily rate amount';
+        } else {
+            salaryLabel.textContent = 'Monthly Salary';
+            salaryUnit.textContent = 'per month';
+            salaryHelp.textContent = 'Monthly salary amount';
+        }
+    }
+    
+    salaryTypeSelect.addEventListener('change', updateSalaryLabels);
+    updateSalaryLabels(); // Initialize on page load
+    
+    // ID Number Validation
+    const idNumberInput = document.getElementById('id_number');
+    idNumberInput.addEventListener('input', function() {
+        const value = this.value.replace(/\D/g, ''); // Remove non-digits
+        this.value = value.slice(0, 13); // Limit to 13 digits
+    });
+    
+    // Department Custom Option Handler
+    const departmentSelect = document.getElementById('department');
+    departmentSelect.addEventListener('change', function() {
+        if (this.value === 'Other') {
+            const customDept = prompt('Enter custom department name:');
+            if (customDept && customDept.trim()) {
+                // Add new option and select it
+                const newOption = new Option(customDept.trim(), customDept.trim(), true, true);
+                this.insertBefore(newOption, this.lastElementChild);
+            } else {
+                this.value = '';
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

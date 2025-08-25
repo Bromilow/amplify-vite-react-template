@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Payroll Reports & Exports{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h3>Payroll Reports & Exports</h3>
+
+  <form method="GET" class="row g-2 mb-3">
+    <div class="col-md-4">
+      <input type="month" name="period" value="{{ request.args.get('period', '') }}" class="form-control">
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-secondary">Filter</button>
+    </div>
+  </form>
+
+  <form id="bulk-action-form" method="POST" action="{{ url_for('payroll.bulk_actions') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th><input type="checkbox" id="select-all"></th>
+          <th>Employee</th>
+          <th>Month</th>
+          <th>Net Pay</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in payroll_entries %}
+        <tr>
+          <td><input type="checkbox" name="entry_ids" value="{{ entry.id }}"></td>
+          <td>{{ entry.employee.full_name }}</td>
+          <td>{{ entry.month_year }}</td>
+          <td>R{{ entry.net_pay }}</td>
+          <td>
+            {% if entry.is_finalized %}
+              <span class="badge bg-success">Finalized</span>
+            {% elif entry.is_verified %}
+              <span class="badge bg-warning">Verified</span>
+            {% else %}
+              <span class="badge bg-secondary">Draft</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="mt-3 d-flex gap-2">
+      <button type="submit" name="action" value="finalize" class="btn btn-primary">Finalize Selected</button>
+      <button type="submit" name="action" value="payslips" class="btn btn-outline-secondary">Download Payslips</button>
+      <button type="submit" name="action" value="eft" class="btn btn-outline-success">Generate EFT File</button>
+    </div>
+  </form>
+</div>
+
+<script>
+document.getElementById('select-all').addEventListener('change', function() {
+  document.querySelectorAll('input[name="entry_ids"]').forEach(cb => cb.checked = this.checked);
+});
+</script>
+{% endblock %}

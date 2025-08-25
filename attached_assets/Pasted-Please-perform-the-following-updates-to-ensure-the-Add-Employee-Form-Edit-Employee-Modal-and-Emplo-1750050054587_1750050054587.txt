@@ -1,0 +1,46 @@
+Please perform the following updates to ensure the Add Employee Form, Edit Employee Modal, and Employee View window are consistent and complete:
+
+1. **Fix Duplicate Fields**:
+   - Remove the second instance of “Physical Address” under “Leave & Banking” in the Add Employee form.
+   - Ensure address is saved and displayed consistently.
+
+2. **Standardize and Complete Field Sets**:
+
+   ✅ Add the following to the **Edit Employee Modal** (matching the Add form):
+   - Gender (read-only, populated from ID)
+   - Date of Birth (read-only, populated from ID)
+   - Marital Status (dropdown)
+   - Job Title
+   - Reporting Manager
+   - Union Member (checkbox) and Union Name (input shown conditionally)
+   - Employment Status and End Date
+   - Annual Leave Days
+
+   ✅ Also ensure **Medical Aid Information** in the Edit Modal includes:
+   - Medical Aid Member (checkbox)
+   - Medical Aid Scheme
+   - Medical Aid Number
+   - Member Type
+   - Employee Contribution
+   - Employer Contribution
+   - Number of Dependants
+   - Taxable Fringe Benefit
+
+3. **Fix View Window Data Display**:
+   - Only show one “Address Information” card with correct data
+   - Ensure all medical aid fields (as above) are visible if data exists
+   - Include Union Name under “Employment Information” if union member
+
+4. **Field Behavior**:
+   - “Gender” and “Date of Birth” must be **read-only** once auto-filled from the ID.
+   - Show/hide logic:
+     - `Union Name` only shows if `Union Member` is checked
+     - Medical Aid fields only show if `Medical Aid Member` is checked
+
+5. **Consistency Check**:
+   - Match Add, Edit, and View layouts exactly: if a field exists in Add, it must be editable in Edit, and visible in View if populated.
+
+After applying, I will test by:
+- Adding a new employee with all sections filled
+- Editing the employee and confirming all fields are loaded
+- Viewing the employee and checking that all information is presented and no "Not provided" text appears for entered data.

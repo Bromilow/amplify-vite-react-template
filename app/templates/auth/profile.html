@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - Payroll Management{% endblock %}
+
+{% block content %}
+<div class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <div class="col-md-8">
+            <form method="POST" class="card mb-4">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="card-header">
+                    <h4 class="mb-0">Edit Profile</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="first_name" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name or '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="last_name" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name or '' }}">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email Address</label>
+                        <input type="email" class="form-control" value="{{ user.email }}" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cell_number" class="form-label">Cell Number</label>
+                        <input type="text" class="form-control" id="cell_number" name="cell_number" value="{{ user.cell_number or '' }}">
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                        <a href="{{ url_for('auth.reset_password') }}" class="btn btn-outline-secondary">Change Password</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Company Access</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if user.companies %}
+                    <div class="table-responsive">
+                        <table class="table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Company</th>
+                                    <th style="width: 1%;"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for company in user.companies %}
+                                <tr>
+                                    <td>{{ company.name }}</td>
+                                    <td class="text-end">
+                                        <form method="POST" action="{{ url_for('auth.remove_company', company_id=company.id) }}" onsubmit="return confirm('Are you sure you want to remove access to this company? This cannot be undone.');">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                        <p class="p-3 text-muted">No companies assigned</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

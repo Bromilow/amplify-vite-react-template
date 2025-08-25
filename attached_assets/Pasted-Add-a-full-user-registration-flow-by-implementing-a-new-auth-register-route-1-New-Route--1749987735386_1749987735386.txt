@@ -1,0 +1,56 @@
+Add a full user registration flow by implementing a new `/auth/register` route.
+
+1. **New Route: `/auth/register`**
+   - Methods: GET (render form), POST (handle submission)
+   - Template: `templates/auth/register.html`
+
+2. **Registration Form Fields**:
+   - First Name
+   - Last Name
+   - Email (must be unique)
+   - Password + Confirm Password
+   - User Type: Dropdown with two options:
+     - “I am an accountant managing multiple businesses”
+     - “I am a business owner managing my own company”
+   - If “business owner” is selected, show company creation fields:
+     - Company Name
+     - Industry
+     - Registration Number
+     - Email, Phone, Address
+     - Tax Year End (date picker)
+
+3. **POST Logic**:
+   - Validate inputs
+   - Hash password and create new `User`
+     - If “business owner”: create `Company`, link to user, set `is_accountant=False`
+     - If “accountant”: skip company creation, set `is_accountant=True`
+   - Set login session and redirect:
+     - If business owner → `/dashboard`
+     - If accountant → `/companies/new` to start adding companies
+
+4. **User Model Update**:
+   - Confirm `is_accountant` and `is_admin` flags exist
+   - Add optional `is_owner` or similar flag for company managers if needed
+
+5. **Company Creation Logic (reuseable)**:
+   - Refactor `/companies/new` route to accept POST requests
+   - Create new `Company` and associate with `User` via association table
+
+6. **Navbar and Session Improvements**:
+   - Add “Register” button to navbar (only if not logged in)
+   - After login, if no company is associated, redirect to `/companies/new`
+
+7. **Template: `register.html`**:
+   - Build Bootstrap-based form with show/hide JS logic for company fields
+   - Include client-side validation
+
+8. **Optional Enhancements**:
+   - Auto-assign current_company_id to the created company
+   - Flash success message on successful registration
+   - Block duplicate email registrations
+
+Test cases:
+- Register as a business owner → redirected to dashboard with company
+- Register as an accountant → prompted to add companies manually
+
+Ensure all templates follow the dark/light mode toggle and responsive styling.

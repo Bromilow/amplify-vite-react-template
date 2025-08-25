@@ -1,0 +1,916 @@
+<!-- Edit Employee Modal -->
+<div class="modal fade" id="editEmployeeModal" tabindex="-1" aria-labelledby="editEmployeeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editEmployeeModalLabel">
+                    <i class="fas fa-edit me-2"></i>
+                    Edit Employee<span id="editEmployeeName">{% if employee is defined %} – {{ employee.first_name }} {{ employee.last_name }}{% endif %}</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editEmployeeForm" method="POST" class="needs-validation" novalidate data-employee-id="">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="container-fluid">
+                        
+                        <!-- Loading state -->
+                        <div id="editModalLoading" class="text-center py-5">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading employee data...</p>
+                        </div>
+                        
+                        <!-- Employee form content -->
+                        <div id="editModalContent" style="display: none;">
+                            <!-- Personal Information Section -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h6 class="text-muted mb-3">
+                                        <i class="fas fa-user me-2"></i>
+                                        Personal Information
+                                    </h6>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="edit_first_name" class="form-label">First Name <span class="text-danger">*</span></label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="edit_first_name" 
+                                           name="first_name" 
+                                           required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="edit_last_name" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="edit_last_name" 
+                                           name="last_name" 
+                                           required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="edit_employee_id" class="form-label">Employee ID</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="edit_employee_id" 
+                                           name="employee_id" 
+                                           readonly>
+                                    <div class="form-text">Auto-generated employee ID</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="edit_identification_type" class="form-label">Identification Type <span class="text-danger">*</span></label>
+                                    <select class="form-select" 
+                                            id="edit_identification_type" 
+                                            name="identification_type" 
+                                            onchange="toggleEditIdentificationFields()" 
+                                            required>
+                                        <option value="sa_id">South African ID</option>
+                                        <option value="passport">Passport Number</option>
+                                    </select>
+                                    <div class="form-text">Select the type of identification document</div>
+                                </div>
+                                <div class="col-md-6 mb-3" id="edit_sa_id_field">
+                                    <label for="edit_id_number" class="form-label">South African ID Number <span class="text-danger">*</span></label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="edit_id_number" 
+                                           name="id_number" 
+                                           placeholder="e.g., 8311155310095"
+                                           maxlength="13"
+                                           pattern="[0-9]{13}"
+                                           oninput="validateAndExtractFromEditId()">
+                                    <div class="form-text">13-digit SA ID number - Auto-fills date of birth and gender</div>
+                                    <div id="edit_id_validation_message" class="text-danger small" style="display: none;"></div>
+                                    <div id="edit_id_success_message" class="text-success small" style="display: none;">
+                                        <i class="fas fa-check-circle me-1"></i>Valid SA ID - Fields auto-populated
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3" id="edit_passport_field" style="display: none;">
+                                    <label for="edit_passport_number" class="form-label">Passport Number <span class="text-danger">*</span></label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="edit_passport_number" 
+                                           name="passport_number" 
+                                           placeholder="e.g., A1234567"
+                                           maxlength="20">
+                                    <div class="form-text">International passport number</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="edit_tax_number" class="form-label">Tax Number</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="edit_tax_number" 
+                                           name="tax_number">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="edit_cell_number" class="form-label">Cell Number <span class="text-danger">*</span></label>
+                                    <input type="tel" 
+                                           class="form-control" 
+                                           id="edit_cell_number" 
+                                           name="cell_number" 
+                                           placeholder="e.g., 0791234567"
+                                           pattern="^(\+27|0)[6-8][0-9]{8}$"
+                                           oninput="validateSACellNumber(this)"
+                                           required>
+                                    <small class="form-text text-muted">
+                                        Formats: 0791234567 or +27791234567 (will be saved as +27791234567)
+                                    </small>
+                                    <div class="invalid-feedback">
+                                        Please enter a valid South African mobile number (0791234567 or +27791234567).
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="edit_email" class="form-label">Email Address</label>
+                                    <input type="email" 
+                                           class="form-control" 
+                                           id="edit_email" 
+                                           name="email">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="edit_date_of_birth" class="form-label">Date of Birth <span class="text-danger">*</span></label>
+                                    <input type="date" 
+                                           class="form-control" 
+                                           id="edit_date_of_birth" 
+                                           name="date_of_birth" 
+                                           required>
+                                    <div class="form-text" id="edit_dob_help_text">Auto-filled from ID number</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="edit_gender" class="form-label">Gender <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="edit_gender" name="gender" required>
+                                        <option value="">Choose gender...</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                    <div class="form-text" id="edit_gender_help_text">Auto-filled from ID number</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="edit_marital_status" class="form-label">Marital Status</label>
+                                    <select class="form-select" id="edit_marital_status" name="marital_status">
+                                        <option value="">Choose marital status...</option>
+                                        <option value="Single">Single</option>
+                                        <option value="Married">Married</option>
+                                        <option value="Divorced">Divorced</option>
+                                        <option value="Widowed">Widowed</option>
+                                        <option value="Separated">Separated</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 mb-3">
+                                    <label for="edit_physical_address" class="form-label">Physical Address <span class="text-danger">*</span></label>
+                                    <textarea class="form-control" 
+                                              id="edit_physical_address" 
+                                              name="physical_address" 
+                                              rows="3" 
+                                              required></textarea>
+                                </div>
+                            </div>
+                            
+                            <!-- Employment Information Section -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h6 class="text-muted mb-3">
+                                        <i class="fas fa-briefcase me-2"></i>
+                                        Employment Information
+                                    </h6>
+                                </div>
+                                <!-- Left Column -->
+                                <div class="col-md-6">
+                                    <!-- Department (1st field - Tab order 1) -->
+                                    <div class="mb-3">
+                                        <label for="edit_department" class="form-label">Department <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="edit_department" name="department" required tabindex="1">
+                                            <option value="">Choose department...</option>
+                                            <!-- Options will be populated by JavaScript -->
+                                            <option value="Other">Other (specify below)</option>
+                                        </select>
+                                        <div class="invalid-feedback">
+                                            Please select a department.
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Custom Department Field (hidden by default) - positioned directly below department dropdown -->
+                                    <div class="mb-3" id="edit_custom_department_group" style="display: none;">
+                                        <label for="edit_custom_department" class="form-label">Custom Department <span class="text-danger">*</span></label>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               id="edit_custom_department" 
+                                               name="custom_department"
+                                               placeholder="Enter new department name"
+                                               tabindex="2">
+                                        <div class="form-text">Specify the custom department name</div>
+                                        <div class="invalid-feedback">
+                                            Please specify the custom department name.
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Employment Type (3rd field - Tab order 3) -->
+                                    <div class="mb-3">
+                                        <label for="edit_employment_type" class="form-label">Employment Type <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="edit_employment_type" name="employment_type" required tabindex="3">
+                                            <option value="Full-Time">Full-Time</option>
+                                            <option value="Part-Time">Part-Time</option>
+                                            <option value="Contract">Contract</option>
+                                            <option value="Temporary">Temporary</option>
+                                            <option value="Seasonal">Seasonal</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- Start Date (4th field - Tab order 5) -->
+                                    <div class="mb-3">
+                                        <label for="edit_start_date" class="form-label">Start Date <span class="text-danger">*</span></label>
+                                        <input type="date" 
+                                               class="form-control" 
+                                               id="edit_start_date" 
+                                               name="start_date" 
+                                               required
+                                               tabindex="5">
+                                    </div>
+                                </div>
+                                
+                                <!-- Right Column -->
+                                <div class="col-md-6">
+                                    <!-- Job Title (1st field in right column - Tab order 4) -->
+                                    <div class="mb-3">
+                                        <label for="edit_job_title" class="form-label">Job Title <span class="text-danger">*</span></label>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               id="edit_job_title" 
+                                               name="job_title" 
+                                               required
+                                               tabindex="4">
+                                    </div>
+                                    
+                                    <!-- Employment Status (2nd field - Tab order 6) -->
+                                    <div class="mb-3">
+                                        <label for="edit_employment_status" class="form-label">Employment Status <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="edit_employment_status" name="employment_status" required tabindex="6">
+                                            <option value="Active">Active</option>
+                                            <option value="Suspended">Suspended</option>
+                                            <option value="Terminated">Terminated</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- End Date (3rd field - Tab order 7) -->
+                                    <div class="mb-3">
+                                        <label for="edit_end_date" class="form-label">End Date</label>
+                                        <input type="date" 
+                                               class="form-control" 
+                                               id="edit_end_date" 
+                                               name="end_date"
+                                               tabindex="7">
+                                    </div>
+                                </div>
+                                
+                                <!-- Reporting Manager (separate from main grid) -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="edit_reporting_manager" class="form-label">Reporting Manager</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="edit_reporting_manager" 
+                                           name="reporting_manager"
+                                           tabindex="7">
+                                </div>
+                            </div>
+                            
+
+                            
+                            <!-- Compensation Section -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h6 class="text-muted mb-3">
+                                        <i class="fas fa-dollar-sign me-2"></i>
+                                        Compensation Information
+                                    </h6>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="edit_salary_type" class="form-label">Salary Type</label>
+                                    <select class="form-select" id="edit_salary_type" name="salary_type">
+                                        <option value="monthly">Monthly Salary</option>
+                                        <option value="hourly">Hourly Rate</option>
+                                        <option value="daily">Daily Rate</option>
+                                        <option value="piece">Piece Rate</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="edit_salary" class="form-label">
+                                        <span id="edit_salary_label">Salary Amount</span> <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">R</span>
+                                        <input type="number"
+                                               class="form-control"
+                                               id="edit_salary"
+                                               name="salary"
+                                               data-monthly-default=""
+                                               data-hourly-default=""
+                                               data-daily-default=""
+                                               step="0.01"
+                                               min="0"
+                                               required>
+                                        <span class="input-group-text" id="edit_salary_unit">/month</span>
+                                    </div>
+                                    <div class="form-text" id="edit_salary_help">Enter the monthly salary amount in South African Rand</div>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <div class="form-check">
+                                        <input class="form-check-input"
+                                               type="checkbox"
+                                               id="edit_overtime_eligible"
+                                               name="overtime_eligible"
+                                               value="1"
+                                               onchange="toggleEditOvertimeFields()">
+                                        <label class="form-check-label" for="edit_overtime_eligible">
+                                            Overtime Eligible
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="edit_overtime_settings" style="display:none;">
+                                <div class="row mb-3" id="edit_overtime_method_field">
+                                    <div class="col-12">
+                                        <label for="edit_overtime_calc_method" class="form-label">Overtime Calculation Method</label>
+                                        <select class="form-select" id="edit_overtime_calc_method" name="overtime_calc_method">
+                                            <option value="per_hour" selected>Per Hour</option>
+                                            <option value="per_day">Per Day</option>
+                                            <option value="fixed_amount">Fixed Amount</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <label for="edit_ordinary_hours_per_day" class="form-label">Ordinary Hours per Day</label>
+                                        <input type="number"
+                                               class="form-control"
+                                               id="edit_ordinary_hours_per_day"
+                                               name="ordinary_hours_per_day"
+                                               min="0.01" max="24" step="0.01">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="edit_work_days_per_month" class="form-label">Work Days per Month</label>
+                                        <input type="number"
+                                               class="form-control"
+                                               id="edit_work_days_per_month"
+                                               name="work_days_per_month"
+                                               min="0.01" max="31" step="0.01">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label id="edit_derived_hourly_label" for="edit_derived_hourly_rate" class="form-label">Derived Hourly Rate</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">R</span>
+                                            <input type="number" class="form-control" id="edit_derived_hourly_rate" step="0.01" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-4" id="edit_overtime_multiplier_field">
+                                        <label for="edit_overtime_multiplier" class="form-label">Overtime Multiplier</label>
+                                        <input type="number"
+                                               class="form-control"
+                                               id="edit_overtime_multiplier"
+                                               name="overtime_multiplier"
+                                               step="0.01" min="1.00" max="5.0">
+                                        <div class="form-text" id="edit_overtime_multiplier_preview"></div>
+                                    </div>
+                                    <div class="col-md-4" id="edit_sunday_multiplier_field">
+                                        <label for="edit_sunday_multiplier" class="form-label">Sunday Overtime Multiplier</label>
+                                        <input type="number"
+                                               class="form-control"
+                                               id="edit_sunday_multiplier"
+                                               name="sunday_multiplier"
+                                               step="0.01" min="1.00" max="5.0">
+                                        <div class="form-text" id="edit_sunday_multiplier_preview"></div>
+                                    </div>
+                                    <div class="col-md-4" id="edit_holiday_multiplier_field">
+                                        <label for="edit_holiday_multiplier" class="form-label">Public Holiday Overtime Multiplier</label>
+                                        <input type="number"
+                                               class="form-control"
+                                               id="edit_holiday_multiplier"
+                                               name="holiday_multiplier"
+                                               step="0.01" min="1.00" max="5.0">
+                                        <div class="form-text" id="edit_holiday_multiplier_preview"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6 mb-3">
+                                    <label for="edit_allowances" class="form-label">Monthly Allowances</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">R</span>
+                                        <input type="number"
+                                               class="form-control"
+                                               id="edit_allowances"
+                                               name="allowances"
+                                               step="0.01"
+                                               min="0">
+                                        <span class="input-group-text">/month</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="edit_bonus_type" class="form-label">Bonus Type</label>
+                                    <select class="form-select" id="edit_bonus_type" name="bonus_type">
+                                        <option value="">No Bonus</option>
+                                        <option value="Annual">Annual</option>
+                                        <option value="Performance-based">Performance-based</option>
+                                        <option value="Fixed">Fixed</option>
+                                        <option value="Discretionary">Discretionary</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Statutory Deductions Section -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h6 class="text-muted mb-3">
+                                        <i class="fas fa-calculator me-2"></i>
+                                        Statutory Deductions
+                                    </h6>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" 
+                                               type="checkbox" 
+                                               id="edit_uif_contributing" 
+                                               name="uif_contributing" 
+                                               value="1">
+                                        <label class="form-check-label" for="edit_uif_contributing">
+                                            UIF Contributing
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" 
+                                               type="checkbox" 
+                                               id="edit_sdl_contributing" 
+                                               name="sdl_contributing" 
+                                               value="1">
+                                        <label class="form-check-label" for="edit_sdl_contributing">
+                                            SDL Contributing
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" 
+                                               type="checkbox" 
+                                               id="edit_paye_exempt" 
+                                               name="paye_exempt" 
+                                               value="1">
+                                        <label class="form-check-label" for="edit_paye_exempt">
+                                            PAYE Exempt
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+
+                            
+                            <!-- Banking Information Section -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h6 class="text-muted mb-3">
+                                        <i class="fas fa-university me-2"></i>
+                                        Banking Information
+                                    </h6>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="edit_bank_name" class="form-label">Bank Name <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="edit_bank_name" name="bank_name" required>
+                                        <option value="">Choose bank...</option>
+                                        <option value="ABSA Bank">ABSA Bank</option>
+                                        <option value="Standard Bank">Standard Bank</option>
+                                        <option value="First National Bank">First National Bank</option>
+                                        <option value="Nedbank">Nedbank</option>
+                                        <option value="Capitec Bank">Capitec Bank</option>
+                                        <option value="African Bank">African Bank</option>
+                                        <option value="Investec">Investec</option>
+                                        <option value="Bidvest Bank">Bidvest Bank</option>
+                                        <option value="Discovery Bank">Discovery Bank</option>
+                                        <option value="TymeBank">TymeBank</option>
+                                        <option value="Bank Zero">Bank Zero</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="edit_account_number" class="form-label">Account Number <span class="text-danger">*</span></label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="edit_account_number" 
+                                           name="account_number" 
+                                           required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="edit_account_type" class="form-label">Account Type</label>
+                                    <select class="form-select" id="edit_account_type" name="account_type">
+                                        <option value="Savings">Savings</option>
+                                        <option value="Cheque">Cheque</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="edit_annual_leave_days" class="form-label">Annual Leave Days</label>
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="edit_annual_leave_days" 
+                                           name="annual_leave_days" 
+                                           min="0" 
+                                           max="365">
+                                </div>
+                            </div>
+                            
+                            <!-- Recurring Deductions Section -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h6 class="text-muted mb-3">
+                                        <i class="fas fa-cogs me-2"></i>
+                                        Recurring Deductions
+                                    </h6>
+                                </div>
+                                <div class="col-12 mb-2">
+                                    <div class="form-text">medical aid, pension, garnishee orders, etc.</div>
+                                </div>
+                            </div>
+
+                            <!-- Recurring Deductions Details -->
+                            <div id="edit_recurring_deductions_details">
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <div class="card border-info">
+                                            <div class="card-header bg-light">
+                                                <h6 class="card-title mb-0">
+                                                    <i class="fas fa-list me-2"></i>
+                                                    Configure Recurring Deductions
+                                                </h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm" id="edit_deductions_table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th width="30%">Beneficiary</th>
+                                                                <th width="15%">Type</th>
+                                                                <th width="18%">Deduction Type</th>
+                                                                <th width="37%">Value</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="edit_deductions_tbody">
+                                                            <!-- Deduction rows will be populated by JavaScript -->
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                                <div class="d-flex justify-content-between align-items-center mt-3">
+                                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="addEditDeductionRow()">
+                                                        <i class="fas fa-plus me-1"></i>
+                                                        Add New Deduction
+                                                    </button>
+                                                    <div class="alert alert-info py-2 mb-0 flex-grow-1 ms-3">
+                                                        <small>
+                                                            <i class="fas fa-info-circle me-1"></i>
+                                                            <strong>Note:</strong> Current employee deductions are loaded. Modify amounts or remove deductions as needed.
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="editSaveBtn">
+                        <span id="editSaveBtnText">
+                            <i class="fas fa-save me-2"></i>
+                            Save Changes
+                        </span>
+                        <span id="editSaveBtnSpinner" class="d-none">
+                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            Saving...
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Modal utility functions for Edit Employee modal
+
+
+    function loadEditEmployeeDeductions() {
+        // This function would load existing employee deductions
+        // Implementation depends on the employee data structure
+        console.log('Loading employee deductions for edit modal...');
+    }
+
+    function addEditDeductionRow() {
+        const tbody = document.getElementById('edit_deductions_tbody');
+        const rowCount = tbody.children.length;
+        
+        // Build beneficiary options from stored data
+        let beneficiaryOptions = '<option value="">Select Beneficiary...</option>';
+        if (window.editModalBeneficiaries && window.editModalBeneficiaries.length > 0) {
+            window.editModalBeneficiaries.forEach(beneficiary => {
+                beneficiaryOptions += `<option value="${beneficiary.id}" data-type="${beneficiary.type}">${beneficiary.name}</option>`;
+            });
+        }
+        
+        const newRow = document.createElement('tr');
+        newRow.innerHTML = `
+            <td>
+                <select class="form-select form-select-sm" name="deduction_beneficiary_id[]" onchange="updateEditBeneficiaryType(this)">
+                    ${beneficiaryOptions}
+                </select>
+            </td>
+            <td>
+                <span class="badge bg-secondary dynamic-type">Select Beneficiary</span>
+            </td>
+            <td>
+                <select class="form-select form-select-sm" name="deduction_amount_type[]" onchange="updateEditDeductionValueField(this)">
+                    <option value="fixed">Fixed Amount</option>
+                    <option value="percent">Percentage</option>
+                </select>
+            </td>
+            <td>
+                <div class="d-flex align-items-center">
+                    <div class="input-group input-group-sm flex-grow-1">
+                        <span class="input-group-text deduction-prefix">R</span>
+                        <input type="number" 
+                               class="form-control" 
+                               name="deduction_value[]" 
+                               value="0.00"
+                               step="0.01" 
+                               min="0"
+                               placeholder="0.00">
+                    </div>
+                    <button type="button" class="btn btn-outline-danger btn-sm ms-2" onclick="removeEditDeductionRow(this)" title="Remove this deduction">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        
+        tbody.appendChild(newRow);
+    }
+
+    function removeEditDeductionRow(button) {
+        const row = button.closest('tr');
+        if (row) {
+            row.remove();
+        }
+    }
+
+    function updateEditDeductionValueField(selectElement) {
+        const row = selectElement.closest('tr');
+        const prefix = row.querySelector('.deduction-prefix');
+        const valueField = row.querySelector('input[name="deduction_value[]"]');
+
+        if (selectElement.value === 'percent') {
+            prefix.textContent = '%';
+            valueField.disabled = false;
+            valueField.placeholder = '0.00';
+            valueField.removeAttribute('title');
+        } else if (selectElement.value === 'fixed') {
+            prefix.textContent = 'R';
+            valueField.disabled = false;
+            valueField.placeholder = '0.00';
+            valueField.removeAttribute('title');
+        } else {
+            prefix.textContent = 'R';
+            valueField.value = '';
+            valueField.disabled = true;
+            valueField.placeholder = 'Auto-calculated';
+            valueField.title = "This deduction will be automatically calculated using the employee’s Medical Aid information";
+        }
+    }
+
+    function updateEditBeneficiaryType(selectElement) {
+        const row = selectElement.closest('tr');
+        const typeBadge = row.querySelector('.dynamic-type');
+        const selectedOption = selectElement.options[selectElement.selectedIndex];
+        const amountTypeSelect = row.querySelector('select[name="deduction_amount_type[]"]');
+
+        if (selectedOption.value) {
+            const type = selectedOption.getAttribute('data-type') || 'Unknown';
+            typeBadge.textContent = type;
+            if (amountTypeSelect) {
+                if (type === 'Medical Aid') {
+                    if (!Array.from(amountTypeSelect.options).some(o => o.value === 'calculated')) {
+                        amountTypeSelect.insertAdjacentHTML('beforeend', '<option value="calculated">Calculated</option>');
+                    }
+                } else {
+                    const opt = Array.from(amountTypeSelect.options).find(o => o.value === 'calculated');
+                    if (opt) opt.remove();
+                    if (amountTypeSelect.value === 'calculated') {
+                        amountTypeSelect.value = 'fixed';
+                        updateEditDeductionValueField(amountTypeSelect);
+                    }
+                }
+            }
+        } else {
+            typeBadge.textContent = 'Select Beneficiary';
+        }
+    }
+
+    let editSalaryTypeSelect, editSalaryInput, editSalaryLabel, editSalaryUnit, editSalaryHelp;
+    let editOvertimeEligibleCheckbox, editOvertimeSettings, editOvertimeMethodSelect;
+
+    function updateEditSalaryLabels() {
+        if (!editSalaryTypeSelect || !editSalaryInput || !editSalaryLabel || !editSalaryUnit || !editSalaryHelp) return;
+        const type = editSalaryTypeSelect.value;
+        if (type === 'hourly') {
+            editSalaryLabel.textContent = 'Hourly Rate';
+            editSalaryUnit.textContent = '/hour';
+            editSalaryHelp.textContent = 'Enter the hourly rate in South African Rand';
+            if (!editSalaryInput.value && editSalaryInput.dataset.hourlyDefault) {
+                editSalaryInput.value = editSalaryInput.dataset.hourlyDefault;
+            }
+            document.getElementById('edit_derived_hourly_rate').value = editSalaryInput.value;
+        } else if (type === 'monthly') {
+            editSalaryLabel.textContent = 'Monthly Salary';
+            editSalaryUnit.textContent = '/month';
+            editSalaryHelp.textContent = 'Enter the monthly salary amount in South African Rand';
+            if (!editSalaryInput.value && editSalaryInput.dataset.monthlyDefault) {
+                editSalaryInput.value = editSalaryInput.dataset.monthlyDefault;
+            }
+            const hrs = parseFloat(document.getElementById('edit_ordinary_hours_per_day').value || 8);
+            const days = parseInt(document.getElementById('edit_work_days_per_month').value || 22);
+            document.getElementById('edit_derived_hourly_rate').value = (editSalaryInput.value/(hrs*days)).toFixed(2);
+        } else if (type === 'daily') {
+            editSalaryLabel.textContent = 'Daily Rate';
+            editSalaryUnit.textContent = '/day';
+            editSalaryHelp.textContent = 'Enter the daily rate in South African Rand';
+            if (!editSalaryInput.value && editSalaryInput.dataset.dailyDefault) {
+                editSalaryInput.value = editSalaryInput.dataset.dailyDefault;
+            }
+            const hrs = parseFloat(document.getElementById('edit_ordinary_hours_per_day').value || 8);
+            document.getElementById('edit_derived_hourly_rate').value = (editSalaryInput.value/hrs).toFixed(2);
+        } else if (type === 'piece') {
+            editSalaryLabel.textContent = 'Piece Rate';
+            editSalaryUnit.textContent = '/piece';
+            editSalaryHelp.textContent = 'Enter the rate per piece in South African Rand';
+            if (!editSalaryInput.value && editSalaryInput.dataset.pieceDefault) {
+                editSalaryInput.value = editSalaryInput.dataset.pieceDefault;
+            }
+            document.getElementById('edit_derived_hourly_rate').value = '0.00';
+        } else {
+            editSalaryLabel.textContent = 'Salary Amount';
+            editSalaryUnit.textContent = '';
+            editSalaryHelp.textContent = 'Enter the salary amount in South African Rand';
+        }
+    }
+
+    function calculateEditDerivedHourlyRate() {
+        const type = editSalaryTypeSelect.value;
+        const salaryVal = parseFloat(editSalaryInput.value) || 0;
+        const hours = parseFloat(document.getElementById('edit_ordinary_hours_per_day').value) || 0;
+        const days = parseFloat(document.getElementById('edit_work_days_per_month').value) || 0;
+
+        if (editOvertimeMethodSelect && editOvertimeMethodSelect.value === 'fixed_amount') {
+            return parseFloat(document.getElementById('edit_derived_hourly_rate').value) || 0;
+        }
+
+        if (type === 'hourly') return salaryVal;
+        if (type === 'daily') return hours ? salaryVal / hours : 0;
+        if (type === 'piece') return 0; // Piece work doesn't have a derived hourly rate
+        return hours && days ? salaryVal / (hours * days) : 0;
+    }
+
+    function updateEditMultiplierPreviews() {
+        const rate = parseFloat(document.getElementById('edit_derived_hourly_rate').value) || 0;
+        const ot = parseFloat(document.getElementById('edit_overtime_multiplier').value) || 0;
+        const sun = parseFloat(document.getElementById('edit_sunday_multiplier').value) || 0;
+        const hol = parseFloat(document.getElementById('edit_holiday_multiplier').value) || 0;
+        document.getElementById('edit_overtime_multiplier_preview').textContent = rate ? `R${(rate * ot).toFixed(2)}` : '';
+        document.getElementById('edit_sunday_multiplier_preview').textContent = rate ? `R${(rate * sun).toFixed(2)}` : '';
+        document.getElementById('edit_holiday_multiplier_preview').textContent = rate ? `R${(rate * hol).toFixed(2)}` : '';
+    }
+
+    function updateEditDerivedHourly() {
+        updateEditSalaryLabels();
+        const rate = calculateEditDerivedHourlyRate();
+        document.getElementById('edit_derived_hourly_rate').value = rate.toFixed(2);
+        updateEditMultiplierPreviews();
+    }
+
+    function toggleEditOvertimeFields() {
+        const visible = editOvertimeEligibleCheckbox && editOvertimeEligibleCheckbox.checked;
+        if (editOvertimeSettings) editOvertimeSettings.style.display = visible ? 'block' : 'none';
+    }
+
+    function updateEditOvertimeMethodFields() {
+        if (!editOvertimeMethodSelect) return;
+        const method = editOvertimeMethodSelect.value;
+        const hrs = document.getElementById('edit_ordinary_hours_per_day');
+        const days = document.getElementById('edit_work_days_per_month');
+        const derived = document.getElementById('edit_derived_hourly_rate');
+        const derivedLabel = document.getElementById('edit_derived_hourly_label');
+
+        if (method === 'fixed_amount') {
+            if (hrs) { hrs.value = 0; hrs.disabled = true; hrs.required = false; }
+            if (days) { days.value = 0; days.disabled = true; days.required = false; }
+            if (derived) derived.readOnly = false;
+            if (derivedLabel) derivedLabel.textContent = 'Hourly Rate';
+        } else {
+            if (hrs) { hrs.disabled = false; hrs.required = true; }
+            if (days) {
+                days.disabled = false;
+                days.required = method === 'per_day';
+            }
+            if (derived) derived.readOnly = true;
+            if (derivedLabel) derivedLabel.textContent = 'Derived Hourly Rate';
+        }
+        updateEditDerivedHourly();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        editSalaryTypeSelect = document.getElementById('edit_salary_type');
+        editSalaryInput = document.getElementById('edit_salary');
+        editSalaryLabel = document.getElementById('edit_salary_label');
+        editSalaryUnit = document.getElementById('edit_salary_unit');
+        editSalaryHelp = document.getElementById('edit_salary_help');
+
+        editOvertimeEligibleCheckbox = document.getElementById('edit_overtime_eligible');
+        editOvertimeSettings = document.getElementById('edit_overtime_settings');
+        editOvertimeMethodSelect = document.getElementById('edit_overtime_calc_method');
+
+        if (editSalaryTypeSelect) {
+            editSalaryTypeSelect.addEventListener('change', () => {
+                editSalaryInput.value = '';
+                updateEditSalaryLabels();
+                updateEditDerivedHourly();
+            });
+        }
+
+        if (editOvertimeEligibleCheckbox) {
+            editOvertimeEligibleCheckbox.addEventListener('change', toggleEditOvertimeFields);
+        }
+
+        if (editOvertimeMethodSelect) {
+            editOvertimeMethodSelect.addEventListener('change', updateEditOvertimeMethodFields);
+        }
+
+        const hoursInput = document.getElementById('edit_ordinary_hours_per_day');
+        const daysInput = document.getElementById('edit_work_days_per_month');
+        const otInput = document.getElementById('edit_overtime_multiplier');
+        const sunInput = document.getElementById('edit_sunday_multiplier');
+        const holInput = document.getElementById('edit_holiday_multiplier');
+        const derivedInput = document.getElementById('edit_derived_hourly_rate');
+        [editSalaryInput, hoursInput, daysInput].forEach(el => {
+            if (el) el.addEventListener('input', updateEditDerivedHourly);
+        });
+        [otInput, sunInput, holInput, derivedInput].forEach(el => {
+            if (el) el.addEventListener('input', updateEditMultiplierPreviews);
+        });
+
+        toggleEditOvertimeFields();
+        updateEditOvertimeMethodFields();
+        updateEditDerivedHourly();
+
+        document.querySelectorAll('#edit_deductions_tbody select[name="deduction_beneficiary_id[]"]').forEach(sel => sel.dispatchEvent(new Event('change')));
+        document.querySelectorAll('#edit_deductions_tbody select[name="deduction_amount_type[]"]').forEach(sel => updateEditDeductionValueField(sel));
+        
+        // Handle department selection in edit modal
+        const editDepartmentSelect = document.getElementById('edit_department');
+        const editCustomDeptGroup = document.getElementById('edit_custom_department_group');
+        const editCustomDeptInput = document.getElementById('edit_custom_department');
+        
+        if (editDepartmentSelect) {
+            editDepartmentSelect.addEventListener('change', function() {
+                if (this.value === 'Other') {
+                    editCustomDeptGroup.style.display = 'block';
+                    editCustomDeptInput.required = true;
+                } else {
+                    editCustomDeptGroup.style.display = 'none';
+                    editCustomDeptInput.required = false;
+                    editCustomDeptInput.value = '';
+                }
+            });
+        }
+
+        // South African Cell Number Validation (global function for edit modal)
+        window.validateSACellNumber = function(input) {
+            const value = input.value.trim();
+            const isValid = /^(\+27|0)[6-8][0-9]{8}$/.test(value);
+            
+            if (value && !isValid) {
+                input.setCustomValidity('Please enter a valid South African mobile number (0791234567 or +27791234567).');
+                input.classList.add('is-invalid');
+                input.classList.remove('is-valid');
+            } else if (value && isValid) {
+                input.setCustomValidity('');
+                input.classList.remove('is-invalid');
+                input.classList.add('is-valid');
+            } else {
+                input.setCustomValidity('');
+                input.classList.remove('is-invalid', 'is-valid');
+            }
+        };
+    });
+</script>

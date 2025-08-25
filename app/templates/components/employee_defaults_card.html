@@ -1,0 +1,56 @@
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-puzzle-piece me-2"></i>
+                    New Employee Defaults
+                </h5>
+                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#employeeDefaultsModal">
+                    <i class="fas fa-edit me-1"></i>
+                    Edit Defaults
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6 class="text-muted mb-2">Payroll Defaults</h6>
+                        <p class="small mb-1"><strong>Salary Type:</strong> {{ company.default_salary_type or 'Monthly' }}</p>
+                        <p class="small mb-1"><strong>Monthly Salary:</strong> {{ 'R' + "{:,.2f}".format(company.default_salary) if company.default_salary else 'Not set' }}</p>
+                        <p class="small mb-1"><strong>Hourly Rate:</strong> {{ 'R' + "{:,.2f}".format(company.default_hourly_rate) if company.default_hourly_rate else 'Not set' }}</p>
+                        {% if company.default_daily_rate is not none %}
+                        <p class="small mb-1"><strong>Daily Rate:</strong> R{{ "{:,.2f}".format(company.default_daily_rate) }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-muted mb-2">Work Schedule & Multipliers</h6>
+                        <p class="small mb-1"><strong>Hours/Day:</strong> {{ company.default_ordinary_hours_per_day or 8 }}</p>
+                        <p class="small mb-1"><strong>Days/Month:</strong> {{ company.default_work_days_per_month or 22 }}</p>
+                        <p class="small mb-1"><strong>Overtime:</strong> {{ company.overtime_multiplier or 1.50 }}x</p>
+                        <p class="small mb-1"><strong>Sunday:</strong> {{ company.sunday_multiplier or 2.00 }}x</p>
+                        <p class="small mb-1"><strong>Holiday:</strong> {{ company.public_holiday_multiplier or 2.50 }}x</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-muted mb-2">Statutory & SARS</h6>
+                        <p class="small mb-1"><strong>UIF:</strong>
+                            <span class="badge bg-{{ 'success' if company.default_uif else 'secondary' }}">
+                                {{ company.uif_percent or 1.00 }}%
+                            </span>
+                        </p>
+                        <p class="small mb-1"><strong>SDL:</strong>
+                            <span class="badge bg-{{ 'success' if company.default_sdl else 'secondary' }}">
+                                {{ company.sdl_percent or 1.00 }}%
+                            </span>
+                        </p>
+                        <p class="small mb-1"><strong>UIF Cap:</strong> R{{ "{:,.0f}".format(company.uif_monthly_ceiling) if company.uif_monthly_ceiling else '17,712' }}</p>
+                        <p class="small mb-1"><strong>PAYE Exempt:</strong>
+                            <span class="badge bg-{{ 'warning' if company.default_paye_exempt else 'success' }}">
+                                {{ 'Yes' if company.default_paye_exempt else 'No' }}
+                            </span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

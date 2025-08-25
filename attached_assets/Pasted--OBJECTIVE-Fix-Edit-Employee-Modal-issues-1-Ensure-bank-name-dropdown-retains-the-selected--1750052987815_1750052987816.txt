@@ -1,0 +1,52 @@
+ ✅ OBJECTIVE:
+ Fix Edit Employee Modal issues:
+ 1. Ensure bank name dropdown retains the selected value when editing an existing employee.
+ 2. Ensure all fields match the Add Employee form and View Employee screen in label, order, and visibility.
+ 3. Ensure all conditional fields (e.g., Union Name, Medical Aid fields) correctly show/hide based on checkboxes.
+ 4. Ensure input values populate correctly on modal load and save properly on submit.
+
+ 🔍 TARGET: Edit Employee Modal Form
+
+ 🔧 FIXES TO APPLY:
+ ----------------------
+ ✅ Bank Name Dropdown:
+ - Ensure selected value is passed correctly to the dropdown when rendering the modal
+ - Example: <option selected="selected">ABSA</option> if ABSA is current bank
+ - Use Jinja2 templating: set selected if `employee.bank_name == option`
+
+ ✅ Match Add/Edit/View Field Sets:
+ Ensure the following fields are PRESENT and in correct order:
+ Personal Info:
+ - First Name, Last Name, Employee ID (readonly), SA ID (readonly), Tax Number, Cell Number, Email
+ - Date of Birth (readonly), Gender (readonly), Marital Status, Physical Address
+
+ Employment Info:
+ - Department, Job Title, Start Date, End Date, Reporting Manager, Employment Status
+ - Union Member (checkbox) → shows "Union Name" field when checked
+
+ Compensation:
+ - Salary Type, Monthly Salary, Overtime Eligible, Allowances, Bonus Type
+
+ Deductions:
+ - UIF Contributing, SDL Contributing, PAYE Exempt
+
+ Medical Aid (conditional on checkbox):
+ - Medical Aid Member (checkbox)
+ - Medical Aid Scheme, Member Type, Employee Contribution, Employer Contribution
+ - Taxable Fringe Benefit, Medical Aid Number, Number of Dependants
+
+ Leave & Banking:
+ - Annual Leave Days, Bank Name (dropdown), Account Number, Account Type (dropdown)
+
+ ⚠️ Validation:
+ - Readonly fields: SA ID, DOB, Gender, Employee ID
+
+
+ ✅ Post-Save:
+ - Verify that saving updates the employee model correctly in the database
+ - Reload updated data in employee view immediately after update
+
+ 🔄 Test Cases:
+ 1. Open Edit modal for employee with full banking info — confirm dropdown shows correct bank
+ 2. Submit form and verify changes persist
+ 3. correctly match all fields across add employee, edit employee, and view employee

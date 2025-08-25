@@ -1,0 +1,77 @@
+Please follow the global rules in `PROJECT_RULES.md`
+
+---
+
+### 🧩 Context
+
+The current employee form accepts arbitrary cell phone numbers without validation or formatting. This causes data inconsistencies and fails compliance requirements.
+
+---
+
+### ✅ Required Update: South African Cell Number Validation and Formatting
+
+---
+
+### 1️⃣ Cell Number Validation
+
+- **Valid prefixes**: Must start with `06`, `07`, or `08` (South African mobile numbers)
+- **Length**: Must be exactly 10 digits
+- **Pattern**: `^0[6-8][0-9]{8}$`
+
+---
+
+### 2️⃣ Format Conversion (on Save)
+
+- When the user submits a number like `0791234567`, store it as `+27791234567`
+- Conversion rule:
+  - Replace the leading `0` with `+27`
+  - Result: `+27xxxxxxxxx`
+
+---
+
+### 3️⃣ Error Handling
+
+- If the number is:
+  - Less than 10 digits
+  - Has an invalid prefix (e.g., 05x or 01x)
+  - Includes non-numeric characters
+- Then:
+  - Show an inline validation error:  
+    ❌ “Please enter a valid South African mobile number starting with 06, 07, or 08.”
+
+---
+
+### 4️⃣ UI Enhancements
+
+- In both `add_employee.html` and `edit_employee_modal.html`, below the cell number input:
+  - Add a label or note:
+    ```html
+    <small class="form-text text-muted">
+      Example: 0791234567 will be saved as +27791234567
+    </small>
+    ```
+
+---
+
+### 5️⃣ Affected Files and Areas
+
+- `templates/employees/new.html` → Add Employee form
+- `templates/employees/edit_employee_modal.html` → Edit Employee modal
+- `routes/employees.py` → Normalize and validate phone number before saving
+- Optional: Add helper function like `normalize_cell_number()` in `utils/formatters.py`
+
+---
+
+### 🧪 Output
+
+- ✅ User enters: `0812345678` → stored as `+27812345678`
+- ✅ Invalid input like `0512345678` shows validation error
+- ✅ Add + Edit forms both support this logic
+- ✅ Error messages and examples shown inline
+
+---
+
+### 📎 Knock-On Check
+
+- Update any export views or API responses to ensure cell numbers are consistently formatted
+- Review company-wide employee imports to see if they require the same transformation

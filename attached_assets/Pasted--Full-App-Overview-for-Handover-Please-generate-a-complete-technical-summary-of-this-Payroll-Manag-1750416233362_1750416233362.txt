@@ -1,0 +1,78 @@
+✅ Full App Overview for Handover
+Please generate a complete technical summary of this Payroll Manager application, suitable for onboarding a new developer. Include the following:
+
+1. Project Overview
+A short description of the app’s purpose
+
+Current tech stack (Flask, PostgreSQL, Bootstrap, Chart.js, SQLAlchemy, etc.)
+
+Multi-tenant support details (e.g., how users access multiple companies)
+
+2. Directory & Module Structure
+List all blueprints (e.g., auth, employees, payroll, reports, etc.)
+
+Summary of what each module/blueprint handles
+
+3. Database Models
+List all SQLAlchemy models with:
+
+Table name
+
+Key fields and relationships
+
+Newly added fields (e.g., ordinary_hours_per_day, overtime_calc_method, etc.)
+
+Any manual ALTER TABLE SQL statements required for schema updates due to recent changes (important since db.create_all() doesn’t update existing schemas)
+
+4. Key Features & Flows
+Authentication & Role System
+
+Add/Edit Employee forms: salary types (hourly/daily/monthly), overtime logic
+
+Payroll Processing modal and Real-Time Preview
+
+Recurring deductions & company defaults (e.g., CompanyDeductionDefault)
+
+PDF payslip generation
+
+Reporting dashboard
+
+User profile page (current status and what works)
+
+Admin/company switching logic
+
+5. Recent Changes & Outstanding Items
+Summary of recently added features:
+
+Flexible salary & overtime logic
+
+Removal of monthly_work_hours as a primary input
+
+Derived hourly rate calculations
+
+Any pending bugs, TODOs, or areas for improvement, such as:
+
+UI refinements (e.g., form layout for compensation info)
+
+New profile features and company deletion warnings
+
+Inactive or placeholder pages (like Reports or Settings)
+
+6. Known Issues or Errors
+Any columns missing in the DB that caused UndefinedColumn errors
+
+Any forms still referencing outdated fields (e.g., Other Deductions)
+
+Notes on data validation that may be incomplete or bypassed
+
+7. Setup Notes
+Required .env or configuration values
+
+Database creation/setup steps
+
+Notes about lack of Flask-Migrate and manual schema sync requirements
+
+If running on Replit, mention how the environment is started and where logs can be found
+
+Return the overview in Markdown format with clear headings so we can document this or paste it into Notion or a README for developer onboarding.
+

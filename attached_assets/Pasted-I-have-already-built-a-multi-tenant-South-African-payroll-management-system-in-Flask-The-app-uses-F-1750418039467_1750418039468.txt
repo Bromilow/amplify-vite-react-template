@@ -1,0 +1,26 @@
+I have already built a multi-tenant South African payroll management system in Flask. The app uses Flask Blueprints, SQLAlchemy, and Bootstrap 5, and includes core modules for employee management, payroll processing, payslip generation (WeasyPrint), company defaults, and recurring deductions.
+
+I have already defined all models, including User, Company, Employee, PayrollEntry, Beneficiary, EmployeeRecurringDeduction, and CompanyDeductionDefault, with all the necessary fields and relationships. The database schema is fully documented, and recent ALTER TABLE updates have been manually applied. Payroll calculations are SARS-compliant and based on average-to-date annualization for PAYE, UIF/SDL logic, and medical aid tax credits.
+
+**I do not want to change any existing code at this stage.** This is purely a request for information in order to fully understand how the current payroll processing flow is implemented so I can build new UI and functionality on top of what exists.
+
+Please review the current codebase and provide:
+
+1. A list of all **Flask routes, templates, and JS functions** involved in payroll processing (e.g., `@app.route('/payroll/process/<employee_id>')`, modals, and any AJAX handlers).
+2. A breakdown of how the **payroll modal UI** works:
+   - Which fields are shown and how they are populated?
+   - Is `salary_type` dynamically adjusting the visible inputs?
+   - Is the hourly rate previewed before calculation?
+3. The function(s) that perform the **gross pay and deduction calculations**:
+   - Where is PAYE calculated?
+   - Is there a centralized `PayrollService` or is the logic spread across views/forms?
+4. Where is the **average-to-date PAYE projection logic** implemented?
+   - Is it considering prior `PayrollEntry` records in the current tax year?
+5. How are recurring deductions pulled and applied when processing a payslip?
+6. What happens when payroll is submitted? Is the entry marked `is_verified` immediately or only after confirmation?
+7. Is there any **preventive logic** that stops payroll being processed twice for the same employee and period?
+8. What fields are used in **payslip generation**, and is it based solely on `PayrollEntry` or does it query live data from `Employee` or `Company`?
+9. If payroll is edited after being processed, is the original entry updated, or a new one created?
+10. Confirm how **monthly reports or payroll summaries** are generated, if any exist.
+
+Please keep your response specific to the payroll processing pipeline only (UI + logic + storage). Do not include authentication, employee CRUD, or dashboard features — those are already handled.

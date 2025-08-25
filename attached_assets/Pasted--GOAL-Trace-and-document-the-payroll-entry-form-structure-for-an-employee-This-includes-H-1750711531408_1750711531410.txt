@@ -1,0 +1,53 @@
+# ✅ GOAL: Trace and document the payroll entry form structure for an employee
+# 🔍 This includes: HTML structure, input field names/IDs, data pre-filling, JS logic, and backend integration
+
+# STEP 1: Locate the payroll entry modal or form template
+# - Search `templates/payroll/` for form files (likely in a modal)
+# - Identify file (e.g. `entry_modal.html`, `payroll_form.html`)
+
+# STEP 2: List all input fields in the form
+# - Document each field:
+#   - Field label
+#   - HTML `name` and `id`
+#   - Input type (text, number, hidden, select)
+#   - Default value binding (Jinja `{{ ... }}`)
+#   - Required/optional
+
+# STEP 3: Check JavaScript enhancements
+# - Inspect `/static/js/payroll.js` or similar
+# - Look for:
+#   - Real-time calculations
+#   - Field dependencies (e.g., overtime rate auto-calc)
+#   - Validation hooks
+
+# STEP 4: Confirm form submission method
+# - Look at `form action=...` or JS `fetch/AJAX` call
+# - Confirm which route is called (`/payroll/save-entry` or similar)
+# - Identify data payload structure (e.g., `FormData` or JSON)
+
+# STEP 5: Trace to backend processing
+# - Go to `routes/payroll.py`
+# - Find the route handling form data (e.g., `@app.route("/payroll/save-entry", methods=["POST"])`)
+# - Confirm:
+#   - What fields are extracted (e.g., `request.form["ordinary_hours"]`)
+#   - Validation logic
+#   - Data saved to `PayrollEntry` model
+
+# STEP 6: Identify how fields are populated
+# - Are hours/salary rates auto-filled?
+# - Are prior values from `PayrollEntry` pre-loaded?
+# - How are multipliers handled (company default vs employee override)?
+
+# STEP 7: Check form reuse for edit vs create
+# - Is the form modal reused for both creating and editing?
+# - If editing: what API route returns the existing data?
+#   (e.g., `GET /payroll/<employee_id>/entry`)
+
+# OUTPUT:
+# - Clean list of all form fields and data bindings
+# - Logic flow: from form load ➝ input ➝ validation ➝ save ➝ reload
+# - JS enhancements and validation details
+
+# BONUS: Suggest any missing fields (e.g., "Unpaid Leave Hours") or logic gaps
+
+# ✅ This will give a full picture of how payroll entry is structured and processed for each employee.

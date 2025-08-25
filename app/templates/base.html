@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{% block title %}Payroll Management System{% endblock %}</title>
+    
+    <!-- Bootstrap CSS with Replit theme -->
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome for icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
+    
+    <!-- Theme Toggle Styles -->
+    <style>
+        /* Theme Variables */
+        :root {
+            --theme-bg: #121212;
+            --theme-text: #f0f0f0;
+            --theme-card-bg: #1e1e1e;
+            --theme-border: #333;
+            --theme-navbar-bg: #212529;
+            --theme-footer-bg: #212529;
+            --theme-input-bg: #2d3436;
+            --theme-input-border: #495057;
+        }
+
+        /* Light Mode Variables */
+        body.light-mode {
+            --theme-bg: #ffffff;
+            --theme-text: #222222;
+            --theme-card-bg: #ffffff;
+            --theme-border: #dee2e6;
+            --theme-navbar-bg: #f8f9fa;
+            --theme-footer-bg: #f8f9fa;
+            --theme-input-bg: #ffffff;
+            --theme-input-border: #ced4da;
+        }
+
+        /* Base Theme Styles */
+        body {
+            background-color: var(--theme-bg) !important;
+            color: var(--theme-text) !important;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Navbar Theme */
+        body.light-mode .navbar-dark {
+            background-color: var(--theme-navbar-bg) !important;
+        }
+
+        body.light-mode .navbar-dark .navbar-brand,
+        body.light-mode .navbar-dark .nav-link {
+            color: #222222 !important;
+        }
+
+        body.light-mode .navbar-dark .nav-link:hover {
+            color: #007bff !important;
+        }
+
+        /* Card Theme */
+        body.light-mode .card {
+            background-color: var(--theme-card-bg) !important;
+            border-color: var(--theme-border) !important;
+            color: var(--theme-text) !important;
+        }
+
+        body.light-mode .card-header {
+            background-color: #f8f9fa !important;
+            border-bottom-color: var(--theme-border) !important;
+            color: var(--theme-text) !important;
+        }
+
+        /* Table Theme */
+        body.light-mode .table {
+            color: var(--theme-text) !important;
+        }
+
+        body.light-mode .table-dark {
+            background-color: #f8f9fa !important;
+            color: #222222 !important;
+        }
+
+        body.light-mode .table-striped > tbody > tr:nth-of-type(odd) > td {
+            background-color: rgba(0, 0, 0, 0.05) !important;
+        }
+
+        /* Form Theme */
+        body.light-mode .form-control,
+        body.light-mode .form-select {
+            background-color: var(--theme-input-bg) !important;
+            border-color: var(--theme-input-border) !important;
+            color: var(--theme-text) !important;
+        }
+
+        body.light-mode .form-control:focus,
+        body.light-mode .form-select:focus {
+            background-color: var(--theme-input-bg) !important;
+            border-color: #007bff !important;
+            color: var(--theme-text) !important;
+        }
+
+        /* Button Theme */
+        body.light-mode .btn-outline-secondary {
+            color: #6c757d !important;
+            border-color: #6c757d !important;
+        }
+
+        body.light-mode .btn-outline-secondary:hover {
+            background-color: #6c757d !important;
+            color: #ffffff !important;
+        }
+
+        /* Footer Theme */
+        body.light-mode footer {
+            background-color: var(--theme-footer-bg) !important;
+            color: #222222 !important;
+        }
+
+        body.light-mode footer .text-muted {
+            color: #6c757d !important;
+        }
+
+        /* Dropdown Theme */
+        body.light-mode .dropdown-menu {
+            background-color: var(--theme-card-bg) !important;
+            border-color: var(--theme-border) !important;
+        }
+
+        body.light-mode .dropdown-item {
+            color: var(--theme-text) !important;
+        }
+
+        body.light-mode .dropdown-item:hover {
+            background-color: #f8f9fa !important;
+        }
+
+        /* Alert Theme */
+        body.light-mode .alert-success {
+            background-color: #d1e7dd !important;
+            border-color: #badbcc !important;
+            color: #0f5132 !important;
+        }
+
+        body.light-mode .alert-danger {
+            background-color: #f8d7da !important;
+            border-color: #f5c2c7 !important;
+            color: #842029 !important;
+        }
+
+        body.light-mode .alert-warning {
+            background-color: #fff3cd !important;
+            border-color: #ffecb5 !important;
+            color: #664d03 !important;
+        }
+
+        body.light-mode .alert-info {
+            background-color: #d1ecf1 !important;
+            border-color: #b8daff !important;
+            color: #055160 !important;
+        }
+
+        /* Theme Toggle Styling */
+        #themeToggle {
+            cursor: pointer;
+        }
+
+        .form-check-label {
+            cursor: pointer;
+            font-size: 1.1rem;
+        }
+
+        /* Badge Theme */
+        body.light-mode .badge {
+            color: #ffffff !important;
+        }
+
+        /* List Group Theme */
+        body.light-mode .list-group-item {
+            background-color: var(--theme-card-bg) !important;
+            border-color: var(--theme-border) !important;
+            color: var(--theme-text) !important;
+        }
+
+        body.light-mode .list-group-item:hover {
+            background-color: #f8f9fa !important;
+        }
+
+        /* Payroll Reports Deduction Column Grouping */
+        body.light-mode .deductions-header {
+            background-color: #e9ecef !important;
+            border-left: 3px solid #6c757d !important;
+            border-right: 3px solid #6c757d !important;
+        }
+
+        body.light-mode .deductions-subheader th.deductions-column {
+            background-color: #f8f9fa !important;
+            border-left: 1px solid #dee2e6 !important;
+            border-right: 1px solid #dee2e6 !important;
+        }
+
+        body.light-mode .deductions-column {
+            background-color: #f8f9fa !important;
+            border-left: 1px solid #dee2e6 !important;
+            border-right: 1px solid #dee2e6 !important;
+        }
+
+        body.light-mode tbody tr:hover .deductions-column {
+            background-color: #e9ecef !important;
+        }
+
+        /* Text colors for labels */
+        body.light-mode .form-check-label {
+            color: #222222 !important;
+        }
+
+        /* Modal Theme */
+        body.light-mode .modal-content {
+            background-color: var(--theme-card-bg) !important;
+            color: var(--theme-text) !important;
+        }
+
+        body.light-mode .modal-header {
+            border-bottom-color: var(--theme-border) !important;
+        }
+
+        body.light-mode .modal-footer {
+            border-top-color: var(--theme-border) !important;
+        }
+
+        /* Progress Bar Theme */
+        body.light-mode .progress {
+            background-color: #e9ecef !important;
+        }
+
+        /* Breadcrumb Theme */
+        body.light-mode .breadcrumb {
+            background-color: #f8f9fa !important;
+        }
+
+        body.light-mode .breadcrumb-item a {
+            color: #007bff !important;
+        }
+
+        /* Secondary Navbar Theme */
+        body.light-mode #secondaryNav {
+            background-color: #f8f9fa !important;
+        }
+
+        body.light-mode #secondaryNav.navbar-dark {
+            background-color: #f8f9fa !important;
+        }
+
+        body.light-mode #secondaryNav .navbar-nav .nav-link {
+            color: #333333 !important;
+        }
+
+        body.light-mode #secondaryNav .navbar-nav .nav-link:hover {
+            color: #007bff !important;
+        }
+
+        body.light-mode #secondaryNav .navbar-nav .nav-link.active {
+            color: #007bff !important;
+            font-weight: 600;
+        }
+
+        body.light-mode #secondaryNav .navbar-toggler {
+            border-color: #333333;
+        }
+
+        /* Business Type Badge Theme */
+        body.light-mode .badge.bg-light {
+            background-color: #6c757d !important;
+            color: #ffffff !important;
+        }
+
+        body.dark-mode .badge.bg-light {
+            background-color: #495057 !important;
+            color: #ffffff !important;
+        }
+    </style>
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <!-- Top Navigation (Always Visible) -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('dashboard.index') }}">
+                <i class="fas fa-calculator me-2"></i>
+                Payroll Management
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topNavbar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="topNavbar">
+                <ul class="navbar-nav me-auto">
+                    {% if current_user.is_authenticated and current_user.is_accountant %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint and 'accountant_dashboard' in request.endpoint %}active{% endif %}" 
+                               href="{{ url_for('accountant_dashboard.dashboard') }}">
+                                <i class="fas fa-briefcase me-1"></i>
+                                Portfolio Dashboard
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+                
+                <ul class="navbar-nav">
+                    {% if current_user.is_authenticated %}
+                        <!-- Set user companies list for template use -->
+                        {% set user_companies = current_user.companies.all() %}
+                        {% set selected_company_id = session.get('selected_company_id') %}
+                        
+                        <!-- Company Selector Dropdown (Multi-Company Users Only) -->
+                        {% if user_companies|length > 1 %}
+                            <li class="nav-item dropdown me-3">
+                                <a class="nav-link dropdown-toggle" href="#" id="companyDropdown" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-building me-1"></i>
+                                    {% if selected_company_id %}
+                                        {% for company in user_companies %}
+                                            {% if company.id == selected_company_id %}
+                                                {{ company.name }}
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% else %}
+                                        Select Company
+                                    {% endif %}
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><h6 class="dropdown-header">Available Companies</h6></li>
+                                    {% for company in user_companies %}
+                                        <li>
+                                            <a class="dropdown-item {% if company.id == selected_company_id %}active{% endif %}" 
+                                               href="{{ url_for('dashboard.select_company', company_id=company.id) }}">
+                                                <i class="fas fa-building me-2"></i>{{ company.name }}
+                                            </a>
+                                        </li>
+                                    {% endfor %}
+                                    {% if selected_company_id %}
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a class="dropdown-item text-muted" href="{{ url_for('dashboard.clear_company') }}">
+                                                <i class="fas fa-times me-2"></i>Clear Selection
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </li>
+                        {% elif user_companies|length == 1 %}
+                            <!-- Show current company for single-company users -->
+                            <li class="nav-item me-3">
+                                <span class="navbar-text">
+                                    <i class="fas fa-building me-1"></i>{{ user_companies[0].name }}
+                                </span>
+                            </li>
+                        {% endif %}
+                        
+                        <!-- New Company Button (Accountants Only) -->
+                        {% if current_user.is_accountant %}
+                        <li class="nav-item me-3">
+                            <a href="{{ url_for('dashboard.new_company') }}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus me-1"></i>New Company
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        <!-- Theme Toggle -->
+                        <li class="nav-item me-3">
+                            <div class="form-check form-switch d-flex align-items-center">
+                                <input class="form-check-input me-2" type="checkbox" id="themeToggle" role="switch">
+                                <label class="form-check-label text-light" for="themeToggle">
+                                    <i class="fas fa-sun" id="lightIcon" style="display: none;"></i>
+                                    <i class="fas fa-moon" id="darkIcon"></i>
+                                </label>
+                            </div>
+                        </li>
+                        
+                        <!-- Notifications -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle position-relative" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-bell"></i>
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notification-count" style="display: none;">
+                                    0
+                                </span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationsDropdown" style="width: 350px;">
+                                <li class="dropdown-header d-flex justify-content-between align-items-center">
+                                    <span>Notifications</span>
+                                    <button class="btn btn-sm btn-link text-muted" onclick="markAllNotificationsRead()" style="font-size: 0.75rem;">
+                                        Mark all read
+                                    </button>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <div id="notifications-list" style="max-height: 300px; overflow-y: auto;">
+                                    <li class="dropdown-item-text text-center text-muted py-3">
+                                        <i class="fas fa-bell-slash fa-2x mb-2 d-block"></i>
+                                        No notifications
+                                    </li>
+                                </div>
+                                <li><hr class="dropdown-divider"></li>
+                                <li class="dropdown-item-text text-center">
+                                    <a href="{{ url_for('reminders.index') }}" class="btn btn-sm btn-outline-primary">
+                                        Manage Reminders
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+
+                        <!-- Admin Menu (Global Admins and Power Users) -->
+                        {% if current_user.is_global_admin or current_user.is_power_user %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-shield-alt me-1"></i>Admin
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+                                {% if current_user.is_global_admin %}
+                                <li><a class="dropdown-item" href="{{ url_for('admin.dashboard') }}"><i class="fas fa-tachometer-alt me-2"></i>Admin Dashboard</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('admin.sars_settings') }}"><i class="fas fa-cogs me-2"></i>SARS Settings</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('admin.documents') }}"><i class="fas fa-file-alt me-2"></i>System Documents</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="testNotificationDispatch()"><i class="fas fa-bell me-2"></i>Test Notifications</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                {% endif %}
+                                {% if current_user.is_power_user %}
+                                <li><a class="dropdown-item" href="{{ url_for('admin_compliance.compliance_rules') }}"><i class="fas fa-gavel me-2"></i>Compliance Rules</a></li>
+                                {% endif %}
+                            </ul>
+                        </li>
+                        {% endif %}
+                        
+                        <!-- User Menu -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user-circle me-1"></i>
+                                {{ current_user.full_name }}
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}"><i class="fas fa-user me-2"></i>Profile</a></li>
+                                <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Settings</a></li>
+                                <li><a class="dropdown-item" href="#"><i class="fas fa-question-circle me-2"></i>Help Center</a></li>
+                                <li><a class="dropdown-item" href="#"><i class="fas fa-envelope me-2"></i>Contact Support</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('auth.register') }}">
+                                <i class="fas fa-user-plus me-1"></i>Register
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('auth.login') }}">
+                                <i class="fas fa-sign-in-alt me-1"></i>Login
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Second Navigation (Company-Specific, Conditional) -->
+    {% if current_user.is_authenticated and session.get('selected_company_id') and not (request.endpoint and ('accountant_dashboard' in request.endpoint or 'auth' in request.endpoint)) %}
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom" id="secondaryNav">
+            <div class="container">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#companyNavbar">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                
+                <div class="collapse navbar-collapse" id="companyNavbar">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.blueprint == 'dashboard' %}active{% endif %}"
+                               href="{{ url_for('dashboard.overview') }}">
+                                <i class="fas fa-tachometer-alt me-1"></i>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.blueprint == 'employees' %}active{% endif %}"
+                               href="{{ url_for('employees.index') }}">
+                                <i class="fas fa-users me-1"></i>
+                                Employees
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            {% if selected_company_id %}
+                                <a class="nav-link {% if request.endpoint and 'beneficiar' in request.endpoint %}active{% endif %}"
+                                   href="{{ url_for('company.beneficiaries', company_id=selected_company_id) }}">
+                                    <i class="fas fa-handshake me-1"></i>
+                                    Beneficiaries
+                                </a>
+                            {% else %}
+                                <a class="nav-link disabled text-muted" href="#" onclick="return false;">
+                                    <i class="fas fa-handshake me-1"></i>
+                                    Beneficiaries
+                                </a>
+                            {% endif %}
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.blueprint == 'payroll' and not (request.endpoint and request.endpoint.startswith('payroll.reports')) %}active{% endif %}"
+                               href="{{ url_for('payroll.index') }}">
+                                <i class="fas fa-money-bill-wave me-1"></i>
+                                Payroll
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'reports.reports_dashboard' %}active{% endif %}"
+                               href="{{ url_for('reports.reports_dashboard') }}">
+                                <i class="fas fa-chart-bar me-1"></i>
+                                Reports &amp; Exports
+                            </a>
+                        </li>
+                    </ul>
+                    <div class="d-flex ms-auto">
+                        <a href="{{ url_for('company.settings') }}" class="btn btn-sm btn-outline-secondary d-flex align-items-center">
+                            <i class="bi bi-gear-fill me-1"></i> Company Settings
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    {% endif %}
+    
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container mt-3">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    
+    <!-- Main Content -->
+    <main class="py-4">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Payroll Management System</h6>
+                    <p class="mb-0 text-muted">Streamlined payroll processing and employee management.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0 text-muted">
+                        <i class="fas fa-calendar me-1"></i>
+                        {{ moment().format('YYYY') if moment else '2024' }} - All rights reserved
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- jQuery (required for some interactive features) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Inputmask for form field formatting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/inputmask/5.0.8/inputmask.min.js"></script>
+    
+    <!-- Theme Toggle JavaScript -->
+    <script>
+        // Theme management system
+        class ThemeManager {
+            constructor() {
+                this.toggle = document.getElementById('themeToggle');
+                this.lightIcon = document.getElementById('lightIcon');
+                this.darkIcon = document.getElementById('darkIcon');
+                this.body = document.body;
+                
+                this.init();
+            }
+            
+            init() {
+                // Load saved theme or default to dark
+                const savedTheme = localStorage.getItem('theme') || 'dark';
+                this.setTheme(savedTheme);
+                
+                // Add event listener for toggle
+                if (this.toggle) {
+                    this.toggle.addEventListener('change', () => {
+                        const newTheme = this.toggle.checked ? 'light' : 'dark';
+                        this.setTheme(newTheme);
+                    });
+                }
+            }
+            
+            setTheme(theme) {
+                if (theme === 'light') {
+                    this.body.classList.add('light-mode');
+                    this.body.classList.remove('dark-mode');
+                    if (this.toggle) this.toggle.checked = true;
+                    if (this.lightIcon) this.lightIcon.style.display = 'inline';
+                    if (this.darkIcon) this.darkIcon.style.display = 'none';
+                    
+                    // Update Bootstrap data-bs-theme attribute
+                    document.documentElement.setAttribute('data-bs-theme', 'light');
+                    
+                    // Update secondary navbar theme
+                    const secondaryNav = document.getElementById('secondaryNav');
+                    if (secondaryNav) {
+                        secondaryNav.className = secondaryNav.className
+                            .replace('navbar-dark bg-dark', 'navbar-light bg-light');
+                    }
+                } else {
+                    this.body.classList.add('dark-mode');
+                    this.body.classList.remove('light-mode');
+                    if (this.toggle) this.toggle.checked = false;
+                    if (this.lightIcon) this.lightIcon.style.display = 'none';
+                    if (this.darkIcon) this.darkIcon.style.display = 'inline';
+                    
+                    // Update Bootstrap data-bs-theme attribute
+                    document.documentElement.setAttribute('data-bs-theme', 'dark');
+                    
+                    // Update secondary navbar theme
+                    const secondaryNav = document.getElementById('secondaryNav');
+                    if (secondaryNav) {
+                        secondaryNav.className = secondaryNav.className
+                            .replace('navbar-light bg-light', 'navbar-dark bg-dark');
+                    }
+                }
+                
+                // Save to localStorage
+                localStorage.setItem('theme', theme);
+                
+                // Dispatch theme change event for other components
+                window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme } }));
+            }
+            
+            getCurrentTheme() {
+                return this.body.classList.contains('light-mode') ? 'light' : 'dark';
+            }
+        }
+        
+        // Initialize theme manager when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            window.themeManager = new ThemeManager();
+        });
+        
+        // Utility function for other scripts to access current theme
+        function getCurrentTheme() {
+            return window.themeManager ? window.themeManager.getCurrentTheme() : 'dark';
+        }
+        
+        // Function to manually set theme (for other scripts)
+        function setTheme(theme) {
+            if (window.themeManager) {
+                window.themeManager.setTheme(theme);
+            }
+        }
+    </script>
+    
+    <script src="{{ url_for('static', filename='js/navbar.js') }}"></script>
+    <!-- Custom JavaScript -->
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
