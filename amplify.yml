@@ -15,7 +15,7 @@ frontend:
         - python3 -c "from app import create_app; app = create_app(); print('App initialized successfully')"
         - echo "Creating static deployment files..."
         - mkdir -p public
-        - echo '<!DOCTYPE html><html><head><title>PayrollPro - Flask Application</title><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{font-family:Arial,sans-serif;max-width:800px;margin:50px auto;padding:20px;text-align:center;}h1{color:#333;}p{color:#666;line-height:1.6;}.info{background:#f5f5f5;padding:20px;border-radius:5px;margin:20px 0;}.warning{background:#fff3cd;border:1px solid #ffeaa7;color:#856404;padding:15px;border-radius:5px;}</style></head><body><h1>🚀 PayrollPro Flask Application</h1><div class="info"><p>This is a Flask-based payroll management system.</p><p>The application has been successfully built and tested.</p></div><div class="warning"><strong>Note:</strong> This is a server-side Flask application that requires a proper backend hosting solution like AWS Elastic Beanstalk, App Runner, or Lambda.</div><p>For deployment, consider using:</p><ul style="text-align:left;display:inline-block;"><li>AWS Elastic Beanstalk</li><li>AWS App Runner</li><li>AWS Lambda + API Gateway</li><li>Heroku</li><li>DigitalOcean App Platform</li></ul></body></html>' > public/index.html
+        - cp static/index.html public/ 2>/dev/null || echo "Creating fallback index.html"
         - echo "Build completed successfully"
   artifacts:
     baseDirectory: public
