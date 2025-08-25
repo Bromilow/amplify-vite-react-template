@@ -91,6 +91,7 @@ def create_app(config_name=None):
     from app.routes.admin_compliance import admin_compliance_bp
     from app.routes.reminders import reminders_bp
     from app.routes.notifications import notifications_bp
+    from app.routes.health import health_bp
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -104,6 +105,7 @@ def create_app(config_name=None):
     app.register_blueprint(admin_compliance_bp)
     app.register_blueprint(reminders_bp)
     app.register_blueprint(notifications_bp)
+    app.register_blueprint(health_bp)
     
     # Create database tables
     with app.app_context():

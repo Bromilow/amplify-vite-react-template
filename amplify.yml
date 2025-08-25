@@ -6,24 +6,14 @@ frontend:
         - echo "Installing Python dependencies..."
         - python3 -m pip install --upgrade pip
         - python3 -m pip install -r requirements.txt
+        - echo "Dependencies installed successfully"
     build:
       commands:
+        - echo "Testing application imports..."
+        - python3 test_imports.py
         - echo "Building Flask application..."
         - python3 -c "from app import create_app; app = create_app(); print('App initialized successfully')"
-  artifacts:
-    baseDirectory: /
-    files:
-      - '**/*'
-  cache:
-    paths:
-      - node_modules/**/*
-      - .venv/**/*
-      - __pycache__/**/*
-backend:
-  phases:
-    build:
-      commands:
-        - echo "No backend build required for Flask app"
+        - echo "Build completed successfully"
   artifacts:
     baseDirectory: /
     files:

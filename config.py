@@ -6,8 +6,8 @@ class Config:
     # Secret key for sessions and CSRF protection
     SECRET_KEY = os.environ.get('SESSION_SECRET', 'dev-secret-key-change-in-production')
     
-    # Database configuration
-    DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///employees.db')
+    # Database configuration - use /tmp for Amplify compatibility
+    DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:////tmp/employees.db')
     SQLALCHEMY_DATABASE_URI = DATABASE_URL
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
@@ -31,6 +31,9 @@ class DevelopmentConfig(Config):
     """Development-specific configuration"""
     DEBUG = True
     SESSION_COOKIE_SECURE = False
+    # Use local database for development
+    DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///employees.db')
+    SQLALCHEMY_DATABASE_URI = DATABASE_URL
 
 class ProductionConfig(Config):
     """Production-specific configuration"""
